@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poll Generator: 8 Types of Polls You Can Create for Free</title>
+    <meta name="description" content="Discover 8 types of online polls you can create for free. From ranked choice to RSVP, find the right poll type with examples.">
+    <link rel="canonical" href="https://votegenerator.com/blog/poll-types-guide">
+    <meta property="og:title" content="Poll Generator: 8 Types of Polls You Can Create for Free">
+    <meta property="og:description" content="Discover 8 types of online polls you can create for free. From ranked choice to RSVP, find the right poll type with examples.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/poll-types-guide">
+    <meta property="og:image" content="https://votegenerator.com/og-image-types.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Poll Generator: 8 Types of Polls You Can Create for Free","description":"Discover 8 types of online polls you can create for free. From ranked choice to RSVP, find the right poll type with examples.","image":"https://votegenerator.com/og-image-types.jpg","datePublished":"2026-04-04","dateModified":"2026-04-04","author":{"@type":"Organization","name":"VoteGenerator"},"publisher":{"@type":"Organization","name":"VoteGenerator","logo":{"@type":"ImageObject","url":"https://votegenerator.com/logo.png"}}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What poll type should I use for a quick yes/no decision?","acceptedAnswer":{"@type":"Answer","text":"Use a Yes/No poll (or binary poll) when you need a simple, binary decision. Examples: 'Should we reschedule the meeting?' or 'Do you prefer remote or in-office work?'"}},{"@type":"Question","name":"Which poll type is best for prioritization?","acceptedAnswer":{"@type":"Answer","text":"Ranked Choice polls are ideal for prioritization. Voters rank options by preference, revealing not just what's most popular but the order of importance."}},{"@type":"Question","name":"Can I use a visual poll to get design feedback?","acceptedAnswer":{"@type":"Answer","text":"Yes. Visual polls let voters choose between images instead of text. Perfect for design feedback, layout preferences, or color schemes."}},{"@type":"Question","name":"What's the difference between a poll and a survey?","acceptedAnswer":{"@type":"Answer","text":"Polls are typically 1-3 quick questions with simple answers. Surveys are longer, multi-question forms for detailed feedback. VoteGenerator supports both."}},{"@type":"Question","name":"Can I use an RSVP poll to track event attendance?","acceptedAnswer":{"@type":"Answer","text":"Yes. RSVP polls are specifically designed for event tracking. They let attendees indicate whether they're coming, and you get a clear count of confirmed guests."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --coal: #141414;
+            --ink: #1c1917;
+            --warm-white: #fffdf9;
+            --warm-rule: #e8e3db;
+            --body: #3d3530;
+            --muted: #7c7068;
+            --violet: #6d28d9;
+            --violet-pale: #f5f3ff;
+            --violet-border: #ddd6fe;
+            --orange: #ea580c;
+            --teal: #0d9488;
+
+            /* Poll type accent colours */
+            --c1: #6d28d9; --c2: #0d9488; --c3: #ea580c;
+            --c4: #0369a1; --c5: #be185d; --c6: #65a30d;
+            --c7: #b45309; --c8: #374151;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Figtree', sans-serif; background: var(--warm-white); color: var(--body); line-height: 1.75; }
+
+        /* PROGRESS */
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--violet), var(--orange)); transform-origin: left; transform: scaleX(0); z-index: 200; transition: transform 0.08s linear; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 100; background: var(--coal); border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo img { height: 28px; width: auto; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+        .nav-link:hover { color: white; }
+        .nav-cta { display: inline-flex; align-items: center; gap: 6px; background: var(--orange); color: white; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s, transform 0.15s; white-space: nowrap; }
+        .nav-cta:hover { background: #c2410c; transform: translateY(-1px); }
+
+        /* HERO */
+        .hero { background: var(--coal); position: relative; overflow: hidden; padding: 0 28px; }
+        .hero::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 60px), repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 60px); }
+        .hero::after { content: '8'; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); font-family: 'Cormorant Garamond', Georgia, serif; font-size: 320px; font-weight: 700; color: rgba(255,255,255,0.03); line-height: 1; pointer-events: none; user-select: none; }
+        .hero-inner { max-width: 1280px; margin: 0 auto; padding: 80px 0 72px; position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 340px; gap: 64px; align-items: center; }
+        .hero-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .eyebrow-chip { background: var(--orange); color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .eyebrow-date { font-size: 12px; color: rgba(255,255,255,0.3); }
+        .hero h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 700; color: white; line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 20px; }
+        .hero h1 em { font-style: italic; color: #fbbf24; }
+        .hero-deck { font-size: 17px; color: rgba(255,255,255,0.5); margin-bottom: 32px; max-width: 500px; line-height: 1.65; }
+        .hero-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--orange); color: white; padding: 13px 26px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-btn:hover { background: #c2410c; transform: translateY(-2px); }
+        .hero-index { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; }
+        .hero-index-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 16px; }
+        .poll-index-list { display: flex; flex-direction: column; gap: 2px; }
+        .poll-index-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+        .poll-index-item:hover { background: rgba(255,255,255,0.06); }
+        .pil-num { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0; }
+        .pil-label { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 500; }
+        .hero-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.08) 70%, transparent); }
+
+        /* LAYOUT */
+        .page-body { max-width: 1280px; margin: 0 auto; padding: 64px 28px; display: grid; grid-template-columns: 1fr 280px; gap: 72px; align-items: start; }
+        .article { min-width: 0; }
+
+        /* INTRO */
+        .intro { font-size: 18px; color: var(--body); line-height: 1.85; margin-bottom: 48px; padding-bottom: 48px; border-bottom: 2px solid var(--warm-rule); }
+
+        /* SECTION HEADER */
+        .section-divider { display: flex; align-items: center; gap: 16px; margin: 56px 0 0; }
+        .section-divider-line { flex: 1; height: 1px; background: var(--warm-rule); }
+        .section-divider-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+
+        /* POLL TYPE CARD */
+        .poll-card { margin: 28px 0; border: 1px solid var(--warm-rule); border-radius: 20px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04); scroll-margin-top: 76px; }
+        .poll-card-head { display: flex; align-items: center; gap: 20px; padding: 28px 32px; border-bottom: 1px solid var(--warm-rule); }
+        .poll-card-num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 52px; font-weight: 700; line-height: 1; flex-shrink: 0; }
+        .poll-card-icon { font-size: 36px; flex-shrink: 0; }
+        .poll-card-meta { flex: 1; }
+        .poll-card-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.75rem; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.2; }
+        .poll-card-subtitle { font-size: 14px; color: var(--muted); margin-top: 4px; }
+        .poll-card-body { padding: 28px 32px; }
+        .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .info-box { border-radius: 12px; padding: 16px 18px; }
+        .info-box-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+        .info-box-text { font-size: 14px; line-height: 1.6; color: var(--body); }
+        .info-box.what { background: var(--violet-pale); border: 1px solid var(--violet-border); }
+        .info-box.what .info-box-label { color: var(--violet); }
+        .info-box.when { background: #fef3c7; border: 1px solid #fde68a; }
+        .info-box.when .info-box-label { color: #92400e; }
+        .examples { background: var(--warm-white); border: 1px solid var(--warm-rule); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+        .examples-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+        .examples ul { list-style: none; margin: 0; }
+        .examples ul li { padding: 7px 0 7px 20px; position: relative; font-size: 14px; color: var(--body); border-bottom: 1px solid var(--warm-rule); line-height: 1.5; }
+        .examples ul li:last-child { border-bottom: none; }
+        .examples ul li::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-weight: 700; }
+        .pro-tip { display: flex; gap: 10px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-size: 14px; color: #7c2d12; }
+        .pro-tip-icon { flex-shrink: 0; font-size: 16px; }
+        .poll-cta { display: inline-flex; align-items: center; gap: 6px; background: var(--coal); color: white; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
+        .poll-cta:hover { background: #333; }
+
+        /* Left accent strip per card */
+        .poll-card { border-left: 5px solid var(--warm-rule); }
+        .poll-card[data-accent="1"] { border-left-color: var(--c1); }
+        .poll-card[data-accent="2"] { border-left-color: var(--c2); }
+        .poll-card[data-accent="3"] { border-left-color: var(--c3); }
+        .poll-card[data-accent="4"] { border-left-color: var(--c4); }
+        .poll-card[data-accent="5"] { border-left-color: var(--c5); }
+        .poll-card[data-accent="6"] { border-left-color: var(--c6); }
+        .poll-card[data-accent="7"] { border-left-color: var(--c7); }
+        .poll-card[data-accent="8"] { border-left-color: var(--c8); }
+
+        .poll-card[data-accent="1"] .poll-card-num { color: var(--c1); }
+        .poll-card[data-accent="2"] .poll-card-num { color: var(--c2); }
+        .poll-card[data-accent="3"] .poll-card-num { color: var(--c3); }
+        .poll-card[data-accent="4"] .poll-card-num { color: var(--c4); }
+        .poll-card[data-accent="5"] .poll-card-num { color: var(--c5); }
+        .poll-card[data-accent="6"] .poll-card-num { color: var(--c6); }
+        .poll-card[data-accent="7"] .poll-card-num { color: var(--c7); }
+        .poll-card[data-accent="8"] .poll-card-num { color: var(--c8); }
+
+        /* CTA BLOCK */
+        .cta-block { background: var(--coal); border-radius: 20px; padding: 44px 36px; text-align: center; margin: 48px 0; position: relative; overflow: hidden; }
+        .cta-block::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 12px); }
+        .cta-block h3 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: white; margin-bottom: 10px; position: relative; letter-spacing: -0.01em; }
+        .cta-block p { color: rgba(255,255,255,0.5); margin-bottom: 24px; font-size: 16px; position: relative; }
+        .cta-block-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--orange); color: white; padding: 13px 30px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; position: relative; }
+        .cta-block-btn:hover { background: #c2410c; transform: translateY(-2px); }
+
+        /* DECISION TREE */
+        .article h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2rem; font-weight: 700; color: var(--ink); margin: 56px 0 20px; letter-spacing: -0.01em; scroll-margin-top: 76px; }
+        .article p { font-size: 16px; color: var(--body); margin-bottom: 18px; line-height: 1.8; }
+        strong { color: var(--ink); font-weight: 600; }
+
+        .decision-box { background: white; border: 1px solid var(--warm-rule); border-radius: 20px; padding: 32px; margin: 24px 0; }
+        .decision-box h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; color: var(--ink); margin-bottom: 20px; }
+        .decision-box p { font-size: 15px; margin-bottom: 0; }
+        .decision-tree { list-style: none; margin: 0; }
+        .decision-tree > li { padding: 12px 0; border-bottom: 1px solid var(--warm-rule); font-size: 15px; color: var(--body); display: flex; align-items: flex-start; gap: 12px; }
+        .decision-tree > li:last-child { border-bottom: none; }
+        .dt-q { flex: 1; }
+        .dt-a { font-weight: 700; color: var(--violet); font-size: 14px; white-space: nowrap; background: var(--violet-pale); padding: 3px 10px; border-radius: 100px; flex-shrink: 0; }
+        .dt-nested { margin-top: 8px; list-style: none; }
+        .dt-nested li { display: flex; align-items: center; gap: 10px; padding: 6px 0 6px 16px; font-size: 14px; position: relative; }
+        .dt-nested li::before { content: '↳'; position: absolute; left: 0; color: var(--muted); }
+        .dt-nested .dt-a { font-size: 12px; }
+        .decision-default { background: var(--violet-pale); border: 1px solid var(--violet-border); border-radius: 12px; padding: 16px 20px; margin-top: 20px; font-size: 15px; color: #3730a3; }
+
+        /* FAQ */
+        .faq { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        details.faq-item { background: white; border: 1px solid var(--warm-rule); border-radius: 12px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--violet); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; font-weight: 600; font-size: 15px; color: var(--ink); cursor: pointer; list-style: none; user-select: none; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 24px; height: 24px; border-radius: 6px; background: var(--warm-white); border: 1px solid var(--warm-rule); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--violet); border-color: var(--violet); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 0 22px 18px; font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+        /* RELATED */
+        .related { margin-top: 52px; padding-top: 36px; border-top: 2px solid var(--warm-rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: white; border: 1px solid var(--warm-rule); border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 14px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--violet); transform: translateX(4px); color: var(--violet); }
+        .related-arrow { color: var(--violet); }
+
+        /* SIDEBAR */
+        .sidebar { position: sticky; top: 74px; }
+        .toc-box { background: white; border: 1px solid var(--warm-rule); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+        .toc-head { background: var(--coal); padding: 14px 18px; display: flex; align-items: center; gap: 8px; }
+        .toc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+        .toc-head-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .toc-links { padding: 10px; }
+        .toc-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px; text-decoration: none; font-size: 12.5px; font-weight: 500; color: var(--muted); transition: background 0.15s, color 0.15s; }
+        .toc-link:hover, .toc-link.active { background: var(--violet-pale); color: var(--violet); }
+        .toc-num { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; }
+
+        .sidebar-cta { background: var(--coal); border-radius: 16px; padding: 22px; }
+        .sidebar-cta-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 700; color: white; margin-bottom: 6px; letter-spacing: -0.01em; }
+        .sidebar-cta-sub { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 16px; }
+        .sidebar-cta-btn { display: flex; align-items: center; justify-content: center; background: var(--orange); color: white; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; transition: background 0.2s; }
+        .sidebar-cta-btn:hover { background: #c2410c; }
+
+        /* FOOTER */
+        .foot { background: var(--coal); color: rgba(255,255,255,0.35); text-align: center; padding: 32px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; transition: color 0.15s; }
+        .foot-links a:hover { color: white; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1000px) {
+            .hero-inner { grid-template-columns: 1fr; }
+            .hero-index { display: none; }
+        }
+        @media (max-width: 860px) {
+            .page-body { grid-template-columns: 1fr; gap: 40px; padding: 40px 20px; }
+            .sidebar { position: static; }
+            .toc-box { display: none; }
+            .info-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 560px) {
+            .hero { padding: 0 20px; }
+            .hero-inner { padding: 52px 0 44px; }
+            .nav-link { display: none; }
+            .poll-card-head { padding: 20px 20px; }
+            .poll-card-body { padding: 20px 20px; }
+            .cta-block { padding: 32px 20px; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-logo"><img src="/logo.svg" alt="VoteGenerator"></a>
+        <div class="nav-right">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/how-to-create-poll" class="nav-link">How It Works</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create a Poll →</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div>
+            <div class="hero-eyebrow">
+                <span class="eyebrow-chip">Reference Guide</span>
+                <span class="eyebrow-date">April 4, 2026</span>
+            </div>
+            <h1>8 Types of Polls<br>You Can Create <em>for Free</em></h1>
+            <p class="hero-deck">From ranked choice voting to RSVP tracking — the complete guide to choosing the right poll type, with real examples for every scenario.</p>
+            <a href="https://votegenerator.com/create" class="hero-btn">Create Your Poll →</a>
+        </div>
+        <div class="hero-index">
+            <div class="hero-index-label">All 8 Types</div>
+            <div class="poll-index-list">
+                <a href="#multiple-choice" class="poll-index-item"><div class="pil-num" style="background:var(--c1)">1</div><span class="pil-label">Multiple Choice</span></a>
+                <a href="#ranked-choice" class="poll-index-item"><div class="pil-num" style="background:var(--c2)">2</div><span class="pil-label">Ranked Choice</span></a>
+                <a href="#this-or-that" class="poll-index-item"><div class="pil-num" style="background:var(--c3)">3</div><span class="pil-label">This or That</span></a>
+                <a href="#meeting-poll" class="poll-index-item"><div class="pil-num" style="background:var(--c4)">4</div><span class="pil-label">Meeting Poll</span></a>
+                <a href="#rating-scale" class="poll-index-item"><div class="pil-num" style="background:var(--c5)">5</div><span class="pil-label">Rating Scale</span></a>
+                <a href="#rsvp" class="poll-index-item"><div class="pil-num" style="background:var(--c6)">6</div><span class="pil-label">RSVP</span></a>
+                <a href="#visual" class="poll-index-item"><div class="pil-num" style="background:var(--c7)">7</div><span class="pil-label">Visual Poll</span></a>
+                <a href="#survey" class="poll-index-item"><div class="pil-num" style="background:var(--c8)">8</div><span class="pil-label">Survey</span></a>
+            </div>
+        </div>
+    </div>
+</section>
+<div class="hero-rule"></div>
+
+<div class="page-body">
+    <article class="article">
+
+        <p class="intro">The right poll type makes all the difference. Choosing the wrong format wastes time, confuses voters, and yields unclear results. VoteGenerator supports 8 distinct poll types, each optimised for specific scenarios. This guide explains when to use each one.</p>
+
+        <!-- 1. Multiple Choice -->
+        <div class="poll-card" id="multiple-choice" data-accent="1">
+            <div class="poll-card-head">
+                <div class="poll-card-num">01</div>
+                <div class="poll-card-icon">☑️</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Multiple Choice Polls</div>
+                    <div class="poll-card-subtitle">The most versatile poll type — works for 80% of scenarios</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Voters select one answer from a list of 2+ options.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Multiple choice is the most versatile poll type. Use it for preferences, feedback, decisions, or any scenario where you want a single answer per person.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>"Where should our team go for lunch?" (pizza, burger, sushi, salad)</li>
+                        <li>"What's your biggest blocker this week?" (lack of resources, unclear requirements, external dependencies)</li>
+                        <li>"Which feature should we build next?" (dark mode, API, export, mobile app)</li>
+                        <li>"How satisfied are you with our service?" (very satisfied → very dissatisfied)</li>
+                    </ul>
+                </div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Multiple Choice Poll →</a>
+            </div>
+        </div>
+
+        <!-- 2. Ranked Choice -->
+        <div class="poll-card" id="ranked-choice" data-accent="2">
+            <div class="poll-card-head">
+                <div class="poll-card-num">02</div>
+                <div class="poll-card-icon">🏆</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Ranked Choice Polls</div>
+                    <div class="poll-card-subtitle">Reveals full preference order, not just what won</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Voters rank options by preference (1st, 2nd, 3rd…). Results show the full preference order — not just the winner.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Use ranked choice when you want to understand priorities, not just which option is most popular. Ideal for selecting winners fairly or distributing resources.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Ranking features by importance: "Rank these features by priority" (mobile app, API, offline mode, dark mode)</li>
+                        <li>Selecting a team lunch venue when there are strong disagreements</li>
+                        <li>Voting for awards or team members</li>
+                        <li>Prioritising company initiatives for next quarter</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> Ranked choice prevents vote-splitting where a popular option loses because the popular vote is divided. It ensures the strongest overall preference wins.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Ranked Choice Poll →</a>
+            </div>
+        </div>
+
+        <!-- 3. This or That -->
+        <div class="poll-card" id="this-or-that" data-accent="3">
+            <div class="poll-card-head">
+                <div class="poll-card-num">03</div>
+                <div class="poll-card-icon">⚡</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">This or That Polls</div>
+                    <div class="poll-card-subtitle">Highest response rates — fastest to complete</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Binary choice with visual comparison. Voters choose between exactly two options, often with images side-by-side.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Ideal for A/B decisions and design feedback. The side-by-side layout makes comparison effortless. Use when you want maximum participation.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Design choices: "Version A or Version B?" (comparing two layouts or logos)</li>
+                        <li>Feature comparison: "macOS or Windows?"</li>
+                        <li>Product choices: "Coffee or tea?"</li>
+                        <li>Strategic decisions: "Launch early or polish more?"</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> This or That polls have the highest response rates because they're so simple. Use them when you want maximum participation with minimal friction.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a This or That Poll →</a>
+            </div>
+        </div>
+
+        <!-- 4. Meeting Poll -->
+        <div class="poll-card" id="meeting-poll" data-accent="4">
+            <div class="poll-card-head">
+                <div class="poll-card-num">04</div>
+                <div class="poll-card-icon">📅</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Meeting Polls</div>
+                    <div class="poll-card-subtitle">Replaces email chains about "what time works?"</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Specialised poll for finding the best meeting time. Voters indicate availability across multiple time slots.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Any time you need to schedule a meeting, sync, or call with multiple people. Especially useful for distributed teams spanning time zones.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Scheduling a team all-hands: "Which day/time works best for next week's meeting?"</li>
+                        <li>Finding a 1-on-1 slot: "When can we sync this week?"</li>
+                        <li>Planning a client call across time zones</li>
+                        <li>Booking a recurring meeting that works for all attendees</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> Meeting polls save hours compared to back-and-forth emails. Many people can vote in seconds, and you get a clear view of best times instantly.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Meeting Poll →</a>
+            </div>
+        </div>
+
+        <!-- 5. Rating Scale -->
+        <div class="poll-card" id="rating-scale" data-accent="5">
+            <div class="poll-card-head">
+                <div class="poll-card-num">05</div>
+                <div class="poll-card-icon">⭐</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Rating Scale Polls</div>
+                    <div class="poll-card-subtitle">Captures strength of opinion, not just direction</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Voters rate something on a numeric scale (1–5, 1–10, or custom range).</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Rating scales are perfect for feedback that requires nuance. Unlike binary yes/no, ratings capture the strength of opinion and give you numeric data to track over time.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>NPS: "On a scale of 1–10, how likely are you to recommend us?"</li>
+                        <li>Event feedback: "Rate today's workshop from 1 (poor) to 5 (excellent)"</li>
+                        <li>Product satisfaction: "How happy are you with the new dashboard?" (1–5 stars)</li>
+                        <li>Meeting effectiveness: "How useful was today's call?"</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> Rating scales give you numeric data you can average and compare over time — making them ideal for tracking satisfaction trends across quarters.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Rating Scale Poll →</a>
+            </div>
+        </div>
+
+        <!-- 6. RSVP -->
+        <div class="poll-card" id="rsvp" data-accent="6">
+            <div class="poll-card-head">
+                <div class="poll-card-num">06</div>
+                <div class="poll-card-icon">🎟️</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">RSVP Polls</div>
+                    <div class="poll-card-subtitle">Real-time attendee counts, zero email friction</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Attendance tracker. Voters indicate "Yes," "No," or "Maybe" to attend an event. Gives you a live headcount.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Use for any event where you need to track attendance. Cleaner than email RSVPs, gives you real-time attendee counts, and requires no account from voters.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Company event: "Can you make the holiday party on Dec 15?"</li>
+                        <li>Team offsite: "Are you attending the 3-day offsite next month?"</li>
+                        <li>Lunch outing: "In or out for today's team lunch?"</li>
+                        <li>Conference: "Will you be at the annual conference?"</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> RSVP polls give you a live count of attendees. You'll know immediately if 5 or 50 people are coming, so you can plan catering, space, and materials accordingly.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create an RSVP Poll →</a>
+            </div>
+        </div>
+
+        <!-- 7. Visual Poll -->
+        <div class="poll-card" id="visual" data-accent="7">
+            <div class="poll-card-head">
+                <div class="poll-card-num">07</div>
+                <div class="poll-card-icon">🖼️</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Visual Polls</div>
+                    <div class="poll-card-subtitle">Highest engagement for design and creative feedback</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Voters choose between images instead of text. Each option is a picture, making voting visual and intuitive.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Use whenever you're asking about visual preferences (designs, layouts, products). Visual choices are faster and clearer than text descriptions of the same content.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Website design feedback: "Which homepage layout do you prefer?" (3 mockups side-by-side)</li>
+                        <li>Logo selection: "Which logo design wins?" (4 concepts)</li>
+                        <li>Room design: "Which conference room setup?" (photos of different layouts)</li>
+                        <li>Product selection: "Which product colour?" (colour swatches or product photos)</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> Visual polls get the highest engagement because people prefer looking at images over reading options. Perfect for creative and design feedback sessions.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Visual Poll →</a>
+            </div>
+        </div>
+
+        <!-- 8. Survey -->
+        <div class="poll-card" id="survey" data-accent="8">
+            <div class="poll-card-head">
+                <div class="poll-card-num">08</div>
+                <div class="poll-card-icon">📋</div>
+                <div class="poll-card-meta">
+                    <div class="poll-card-title">Survey Polls</div>
+                    <div class="poll-card-subtitle">Multiple questions, one form — for detailed feedback</div>
+                </div>
+            </div>
+            <div class="poll-card-body">
+                <div class="info-row">
+                    <div class="info-box what"><div class="info-box-label">What it is</div><div class="info-box-text">Multi-question forms that combine multiple question types in one poll — mixing multiple choice, ratings, rankings, and text responses.</div></div>
+                    <div class="info-box when"><div class="info-box-label">When to use it</div><div class="info-box-text">Use surveys when you have multiple questions for the same group. Surveys collect more detailed feedback than single-question polls.</div></div>
+                </div>
+                <div class="examples">
+                    <div class="examples-label">Real-world examples</div>
+                    <ul>
+                        <li>Post-event feedback: "How was our conference?" (5 questions covering content, venue, speakers, food, likelihood to return)</li>
+                        <li>Customer satisfaction: Ask about product, support, pricing, and likelihood to recommend in one form</li>
+                        <li>Employee pulse survey: Work-life balance, growth opportunities, team dynamics, salary satisfaction</li>
+                        <li>Product feedback: Features, pricing, and competitor comparison in one survey</li>
+                    </ul>
+                </div>
+                <div class="pro-tip"><span class="pro-tip-icon">💡</span><span><strong>Pro tip:</strong> Surveys take longer to complete than single polls, so keep them focused. 5–10 questions is ideal. More than that and you'll see significant drop-off rates.</span></div>
+                <a href="https://votegenerator.com/create" class="poll-cta">Create a Survey →</a>
+            </div>
+        </div>
+
+        <div class="cta-block">
+            <h3>All 8 Poll Types. Free.</h3>
+            <p>Create, share, and analyse any poll type with VoteGenerator — no signup required.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Make Your First Poll →</a>
+        </div>
+
+        <h2 id="which-type">Which Poll Type Should You Use?</h2>
+        <p>Use this decision guide to pick the right poll type for your situation:</p>
+        <div class="decision-box">
+            <h3>Quick Decision Guide</h3>
+            <ul class="decision-tree">
+                <li><div class="dt-q"><strong>Schedule a meeting?</strong></div><span class="dt-a">Meeting Poll</span></li>
+                <li><div class="dt-q"><strong>Track event attendance?</strong></div><span class="dt-a">RSVP Poll</span></li>
+                <li>
+                    <div class="dt-q">
+                        <strong>Get one simple answer?</strong>
+                        <ul class="dt-nested">
+                            <li><span>Binary choice (A vs B)</span><span class="dt-a">This or That</span></li>
+                            <li><span>Multiple options</span><span class="dt-a">Multiple Choice</span></li>
+                        </ul>
+                    </div>
+                </li>
+                <li><div class="dt-q"><strong>Understand priorities or rankings?</strong></div><span class="dt-a">Ranked Choice</span></li>
+                <li><div class="dt-q"><strong>Get feedback on a scale?</strong></div><span class="dt-a">Rating Scale</span></li>
+                <li><div class="dt-q"><strong>Ask about visual preferences?</strong></div><span class="dt-a">Visual Poll</span></li>
+                <li><div class="dt-q"><strong>Ask multiple questions?</strong></div><span class="dt-a">Survey</span></li>
+            </ul>
+            <div class="decision-default">💡 <strong>Still unsure?</strong> When in doubt, start with a Multiple Choice poll. It's the most flexible format and works for the vast majority of polling scenarios.</div>
+        </div>
+
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <div class="faq">
+            <details class="faq-item"><summary>What poll type should I use for a quick yes/no decision? <span class="faq-ico">+</span></summary><div class="faq-ans">If you want a true binary choice, use a "This or That" poll for the visual side-by-side comparison, or "Multiple Choice" with just two options (yes/no). If you want to include a "Maybe" option, use RSVP poll format.</div></details>
+            <details class="faq-item"><summary>Which poll type is best for prioritisation? <span class="faq-ico">+</span></summary><div class="faq-ans">Ranked Choice polls are ideal for prioritisation. Voters rank options by preference, revealing not just what's most popular but the order of importance. This prevents vote-splitting where a mediocre option wins because the popular vote is divided.</div></details>
+            <details class="faq-item"><summary>Can I use a visual poll to get design feedback? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. Visual polls let voters choose between images instead of text. They're perfect for design feedback, layout preferences, colour schemes, logo selection, or any scenario where visual comparison is important.</div></details>
+            <details class="faq-item"><summary>What's the difference between a poll and a survey? <span class="faq-ico">+</span></summary><div class="faq-ans">Polls are typically 1–3 quick questions with simple answers. Surveys are longer, multi-question forms for detailed feedback. VoteGenerator supports both — single-question polls and multi-question surveys.</div></details>
+            <details class="faq-item"><summary>Can I use an RSVP poll to track event attendance? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. RSVP polls are specifically designed for event tracking. They let attendees indicate whether they're coming (Yes/No/Maybe) and give you a clear count of confirmed guests in real-time.</div></details>
+            <details class="faq-item"><summary>Can I combine multiple poll types in one form? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes — use the Survey poll type. Surveys let you include multiple questions with different answer formats in one form. You can mix multiple choice, rating scales, ranking, and text responses.</div></details>
+            <details class="faq-item"><summary>Which poll type gets the most responses? <span class="faq-ico">+</span></summary><div class="faq-ans">Short, simple polls get the most responses. "This or That" polls have the highest response rate because they're the fastest to complete. Rating scales and multiple choice come next. Longer surveys get lower response rates because they take more time.</div></details>
+            <details class="faq-item"><summary>Can I add images to any poll type? <span class="faq-ico">+</span></summary><div class="faq-ans">Most poll types support adding images to options. Visual polls are specifically designed for image-based voting. You can also add images to multiple choice polls and other types for more engaging presentations.</div></details>
+        </div>
+
+        <div class="related">
+            <p class="related-label">Continue Reading</p>
+            <div class="related-links">
+                <a href="https://votegenerator.com/blog/how-to-create-a-poll.html" class="related-link">How to Create a Poll Online <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/free-poll-maker-comparison.html" class="related-link">Best Free Poll Makers Compared <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="related-link">How to Create a Survey <span class="related-arrow">→</span></a>
+            </div>
+        </div>
+
+    </article>
+
+    <aside class="sidebar">
+        <div class="toc-box">
+            <div class="toc-head"><div class="toc-dot"></div><span class="toc-head-label">Poll Types</span></div>
+            <div class="toc-links">
+                <a href="#multiple-choice" class="toc-link"><div class="toc-num" style="background:var(--c1)">1</div>Multiple Choice</a>
+                <a href="#ranked-choice" class="toc-link"><div class="toc-num" style="background:var(--c2)">2</div>Ranked Choice</a>
+                <a href="#this-or-that" class="toc-link"><div class="toc-num" style="background:var(--c3)">3</div>This or That</a>
+                <a href="#meeting-poll" class="toc-link"><div class="toc-num" style="background:var(--c4)">4</div>Meeting Poll</a>
+                <a href="#rating-scale" class="toc-link"><div class="toc-num" style="background:var(--c5)">5</div>Rating Scale</a>
+                <a href="#rsvp" class="toc-link"><div class="toc-num" style="background:var(--c6)">6</div>RSVP</a>
+                <a href="#visual" class="toc-link"><div class="toc-num" style="background:var(--c7)">7</div>Visual Poll</a>
+                <a href="#survey" class="toc-link"><div class="toc-num" style="background:var(--c8)">8</div>Survey</a>
+                <a href="#which-type" class="toc-link"><div class="toc-num" style="background:var(--muted)">?</div>Which Type?</a>
+            </div>
+        </div>
+        <div class="sidebar-cta">
+            <div class="sidebar-cta-title">Create a Free Poll</div>
+            <div class="sidebar-cta-sub">No signup. Share in 60 seconds.</div>
+            <a href="https://votegenerator.com/create" class="sidebar-cta-btn">Get Started →</a>
+        </div>
+    </aside>
+</div>
+
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Poll</a>
+        <a href="https://votegenerator.com">Home</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>© 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => {
+        const d = document.documentElement;
+        prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')';
+    }, { passive: true });
+    const sections = document.querySelectorAll('[id]');
+    const links = document.querySelectorAll('.toc-link');
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                links.forEach(l => l.classList.remove('active'));
+                const a = document.querySelector('.toc-link[href="#' + e.target.id + '"]');
+                if (a) a.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

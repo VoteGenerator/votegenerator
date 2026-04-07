@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoteGenerator vs StrawPoll (2026): Which Is Better? Honest Comparison</title>
+    <meta name="description" content="VoteGenerator vs StrawPoll compared honestly: poll types, free tier limits, ranked choice, anonymity, and data export. Find out which tool wins for your use case.">
+    <meta name="keywords" content="VoteGenerator vs StrawPoll, StrawPoll alternative, best free poll maker 2026, StrawPoll comparison, free ranked choice voting tool">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/votegenerator-vs-strawpoll.html">
+    <meta property="og:title" content="VoteGenerator vs StrawPoll (2026): Honest Comparison">
+    <meta property="og:description" content="Poll types, free tier limits, ranked choice, and data export compared. Which free poll maker wins for your use case?">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/votegenerator-vs-strawpoll">
+    <meta property="og:image" content="https://votegenerator.com/og-image.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "VoteGenerator vs StrawPoll (2026): Which Free Poll Maker Is Better?",
+        "description": "Honest side-by-side comparison of VoteGenerator and StrawPoll. Poll types, free tier limits, anonymity, exports, and best use cases.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "image": "https://votegenerator.com/og-image.png",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/votegenerator-vs-strawpoll" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "Is VoteGenerator better than StrawPoll?",
+                "acceptedAnswer": { "@type": "Answer", "text": "It depends on your use case. VoteGenerator is better if you need ranked choice voting, meeting scheduling polls, rating scales, visual polls, or a survey with multiple question types — it has 8 poll types vs StrawPoll's 3-4. StrawPoll is better if you need unlimited free responses, since VoteGenerator's free plan caps at 100 responses per poll." }
+            },
+            {
+                "@type": "Question",
+                "name": "Does VoteGenerator have unlimited free responses?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. VoteGenerator's free plan allows up to 100 responses per poll and 3 active polls at once. StrawPoll offers unlimited responses on its free tier. If you need more than 100 respondents on the free tier, StrawPoll or VoteGenerator's paid plan ($19/month for 10,000 responses) are your options." }
+            },
+            {
+                "@type": "Question",
+                "name": "Does VoteGenerator have ranked choice voting?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Ranked choice voting using instant runoff is built into VoteGenerator and is completely free. StrawPoll does not offer ranked choice voting." }
+            },
+            {
+                "@type": "Question",
+                "name": "What poll types does VoteGenerator offer that StrawPoll does not?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator has 8 poll types including Ranked Choice, Meeting Poll (availability scheduling like Doodle), This or That (pairwise), Rating Scale, RSVP, Visual Poll (image options), and Survey (multi-section). StrawPoll focuses on basic multiple choice and a few simple variations." }
+            },
+            {
+                "@type": "Question",
+                "name": "Is StrawPoll completely free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, StrawPoll's core poll creation is completely free with unlimited responses. They have a premium tier with additional features, but the free tier has no response limits." }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I export results from VoteGenerator for free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "PNG chart export is free on all VoteGenerator plans. CSV data export requires a paid plan (Pro at $19/month). StrawPoll's free export options are limited." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the best StrawPoll alternative?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator is the strongest StrawPoll alternative if you need more poll types, especially ranked choice voting, meeting scheduling, rating scales, or visual polls. It requires no signup from respondents and has 9 built-in poll types, all free." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Mulish:ital,wght@0,300;0,400;0,600;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --vg:       #6C3CE1;
+            --vg-dk:    #2B1055;
+            --vg-lt:    #9B72FF;
+            --vg-dim:   rgba(108,60,225,0.07);
+            --vg-pale:  #F3EEFF;
+            --ink:      #0d0f14;
+            --ink-mid:  #1e2433;
+            --ink-soft: #4a5568;
+            --bg:       #f7f8fc;
+            --white:    #ffffff;
+            --border:   #e1e5ef;
+            --win-g:    #15803d;
+            --win-bg:   #f0fdf4;
+            --win-bd:   #86efac;
+            --tie-g:    #64748b;
+            --sp-g:     #374151;
+            --mono:     'DM Mono', monospace;
+        }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Mulish',sans-serif; background:var(--bg); color:var(--ink); overflow-x:hidden; }
+
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--vg),var(--vg-lt)); z-index:2000; transition:width 0.1s linear; }
+
+        /* ── Sticky compare bar ── */
+        .sticky-bar {
+            position:fixed; top:0; left:0; right:0; z-index:1000;
+            background:var(--ink); height:48px; display:flex; align-items:center;
+            justify-content:space-between; padding:0 20px; gap:12px;
+            transform:translateY(-100%); transition:transform 0.25s ease;
+            border-bottom:2px solid var(--vg);
+        }
+        .sticky-bar.visible { transform:translateY(0); }
+        .sb-vs { display:flex; align-items:center; gap:8px; }
+        .sb-tool { font-family:'Kanit',sans-serif; font-weight:700; font-size:0.85rem; color:#fff; letter-spacing:0.02em; }
+        .sb-tool.vg-color { color:var(--vg-lt); }
+        .sb-divider { font-family:'Kanit',sans-serif; font-size:0.75rem; color:rgba(255,255,255,0.35); letter-spacing:0.1em; }
+        .sb-cta { background:var(--vg); color:#fff; font-family:'Kanit',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.06em; padding:7px 16px; border-radius:4px; text-decoration:none; white-space:nowrap; transition:background 0.15s; }
+        .sb-cta:hover { background:var(--vg-lt); }
+
+        /* ── Nav ── */
+        .nav { background:var(--ink); height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Kanit',sans-serif; font-weight:700; font-size:0.95rem; color:#fff; letter-spacing:0.03em; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'Kanit',sans-serif; font-size:0.7rem; font-weight:500; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Kanit',sans-serif; font-size:0.8rem; font-weight:600; color:var(--vg-lt); text-decoration:none; letter-spacing:0.04em; }
+        .nav-cta:hover { color:#fff; }
+
+        /* ── Hero ── */
+        .hero { background:var(--ink); color:#fff; padding:60px 24px 52px; position:relative; overflow:hidden; }
+        .hero::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--vg),transparent); }
+        .hero-glow { position:absolute; top:-80px; left:-40px; width:500px; height:500px; background:radial-gradient(circle,rgba(108,60,225,0.15) 0%,transparent 65%); pointer-events:none; }
+        .hero-inner { max-width:960px; margin:0 auto; position:relative; }
+        .hero-breadcrumb { font-family:'Kanit',sans-serif; font-size:0.7rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:16px; }
+        .hero h1 { font-family:'Kanit',sans-serif; font-size:clamp(2rem,5vw,3rem); font-weight:800; line-height:1.1; letter-spacing:-0.01em; margin-bottom:14px; }
+        .hero h1 .hl { color:var(--vg-lt); }
+        .hero-sub { font-family:'Mulish',sans-serif; font-size:1.05rem; line-height:1.68; color:rgba(255,255,255,0.58); max-width:580px; font-weight:300; }
+        .hero-meta { margin-top:22px; display:flex; gap:18px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'Kanit',sans-serif; font-size:0.76rem; color:rgba(255,255,255,0.35); font-weight:500; }
+        .hero-meta span strong { color:rgba(255,255,255,0.65); }
+
+        /* ── Quick verdict ── */
+        .quick-verdict {
+            background:var(--vg-pale); border:2px solid var(--vg); border-radius:8px;
+            padding:24px 28px; margin:0 auto 0;
+            max-width:960px;
+        }
+        .qv-wrap { max-width:960px; margin:0 auto; padding:32px 24px 0; }
+        .qv-label { font-family:'Kanit',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--vg); margin-bottom:10px; }
+        .qv-title { font-family:'Kanit',sans-serif; font-size:1.15rem; font-weight:700; color:var(--vg-dk); margin-bottom:12px; }
+        .qv-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .qv-box { background:var(--white); border-radius:6px; padding:16px 18px; border-left:3px solid; }
+        .qv-box.vg { border-color:var(--vg); }
+        .qv-box.sp { border-color:#94a3b8; }
+        .qv-box-tool { font-family:'Kanit',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+        .qv-box.vg .qv-box-tool { color:var(--vg); }
+        .qv-box.sp .qv-box-tool { color:var(--sp-g); }
+        .qv-box ul { list-style:none; display:flex; flex-direction:column; gap:4px; }
+        .qv-box li { font-family:'Mulish',sans-serif; font-size:0.86rem; color:var(--ink-mid); padding-left:14px; position:relative; line-height:1.5; }
+        .qv-box.vg li::before { content:'✓'; position:absolute; left:0; color:var(--vg); font-weight:700; }
+        .qv-box.sp li::before { content:'✓'; position:absolute; left:0; color:#64748b; font-weight:700; }
+
+        /* ── Layout ── */
+        .page { max-width:980px; margin:0 auto; padding:52px 24px 80px; }
+
+        /* ── Section headings ── */
+        .section-head { display:flex; align-items:center; gap:14px; margin:52px 0 20px; }
+        .section-head h2 { font-family:'Kanit',sans-serif; font-size:1.5rem; font-weight:700; color:var(--ink); letter-spacing:-0.01em; }
+        .section-head:first-child { margin-top:0; }
+        .win-badge { font-family:'Kanit',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; border-radius:20px; padding:3px 10px; white-space:nowrap; }
+        .win-vg { background:var(--win-bg); color:var(--win-g); border:1px solid var(--win-bd); }
+        .win-sp { background:#f8fafc; color:#475569; border:1px solid #cbd5e1; }
+        .win-tie { background:#fafaf9; color:#78716c; border:1px solid #d6d3d1; }
+
+        /* ── Body text ── */
+        .article p { font-size:1.02rem; line-height:1.82; color:var(--ink-mid); margin-bottom:18px; font-weight:300; }
+        .article p strong { color:var(--ink); font-weight:700; }
+        .lead { font-size:1.1rem!important; line-height:1.78!important; font-weight:400!important; margin-bottom:28px!important; }
+
+        .accuracy-note { font-family:'Kanit',sans-serif; font-size:0.74rem; color:var(--ink-soft); background:var(--white); border:1px solid var(--border); border-radius:4px; padding:9px 14px; margin-bottom:28px; }
+
+        /* ── Main comparison table ── */
+        .comp-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:20px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+        table.comp { width:100%; border-collapse:collapse; min-width:540px; }
+        table.comp thead tr { background:var(--ink); }
+        table.comp th { font-family:'Kanit',sans-serif; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:14px 16px; text-align:left; color:rgba(255,255,255,0.65); }
+        table.comp th.vg-col { color:var(--vg-lt); }
+        table.comp .group-row td { background:var(--vg-dim); padding:8px 16px; }
+        table.comp .group-row .group-label { font-family:'Kanit',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--vg); }
+        table.comp tbody tr:not(.group-row) td { padding:11px 16px; border-bottom:1px solid var(--border); font-family:'Mulish',sans-serif; font-size:0.9rem; vertical-align:middle; }
+        table.comp tbody tr:not(.group-row):last-child td { border-bottom:none; }
+        table.comp td:first-child { color:var(--ink-mid); font-weight:600; }
+        table.comp .vg-cell { background:rgba(108,60,225,0.04); }
+        table.comp .sp-cell { }
+        .cell-win { font-family:'Kanit',sans-serif; font-weight:600; font-size:0.88rem; color:var(--win-g); }
+        .cell-lose { font-family:'Kanit',sans-serif; font-weight:500; font-size:0.88rem; color:#94a3b8; }
+        .cell-tie { font-family:'Mulish',sans-serif; font-size:0.88rem; color:var(--ink-soft); }
+        .cell-note { display:block; font-family:'Mulish',sans-serif; font-size:0.74rem; color:#94a3b8; margin-top:2px; font-weight:300; }
+        .winner-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--win-g); margin-right:5px; vertical-align:middle; }
+
+        /* ── Poll type cards ── */
+        .type-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:20px 0; }
+        .tc { background:var(--white); border:1px solid var(--border); border-radius:7px; padding:14px 16px; }
+        .tc.vg-only { border-top:3px solid var(--vg); }
+        .tc.both { border-top:3px solid #94a3b8; }
+        .tc-tag { font-family:'Kanit',sans-serif; font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:5px; display:block; }
+        .tc.vg-only .tc-tag { color:var(--vg); }
+        .tc.both .tc-tag { color:#64748b; }
+        .tc-name { font-family:'Kanit',sans-serif; font-weight:700; font-size:0.92rem; color:var(--ink); margin-bottom:4px; }
+        .tc-desc { font-family:'Mulish',sans-serif; font-size:0.78rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* ── Limit side-by-side ── */
+        .limit-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .lc { border-radius:8px; overflow:hidden; }
+        .lc-h { padding:13px 18px; }
+        .lc.vg .lc-h { background:var(--vg); color:#fff; }
+        .lc.sp .lc-h { background:var(--ink-mid); color:#fff; }
+        .lc-tool { font-family:'Kanit',sans-serif; font-weight:700; font-size:0.9rem; }
+        .lc-body { background:var(--white); border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; }
+        .lc-row { display:flex; justify-content:space-between; align-items:center; padding:9px 16px; border-bottom:1px solid var(--border); }
+        .lc-row:last-child { border-bottom:none; }
+        .lc-k { font-family:'Mulish',sans-serif; font-size:0.82rem; color:var(--ink-soft); }
+        .lc-v { font-family:var(--mono); font-size:0.8rem; font-weight:500; }
+        .v-ok { color:var(--win-g); }
+        .v-warn { color:#d97706; }
+        .v-bad { color:#dc2626; }
+
+        /* ── Choose section ── */
+        .choose-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .choose-card { border-radius:8px; overflow:hidden; }
+        .cc-h { padding:16px 20px; }
+        .choose-card.vg .cc-h { background:var(--vg); }
+        .choose-card.sp .cc-h { background:var(--ink-mid); }
+        .cc-if { font-family:'Kanit',sans-serif; font-size:0.64rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.5); margin-bottom:3px; }
+        .cc-name { font-family:'Kanit',sans-serif; font-weight:700; font-size:1.05rem; color:#fff; }
+        .cc-body { background:var(--white); border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; padding:14px 20px; }
+        .cc-body ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .cc-body li { font-family:'Mulish',sans-serif; font-size:0.86rem; color:var(--ink-mid); padding-left:16px; position:relative; line-height:1.5; }
+        .choose-card.vg .cc-body li::before { content:'✓'; position:absolute; left:0; color:var(--vg); font-weight:700; }
+        .choose-card.sp .cc-body li::before { content:'✓'; position:absolute; left:0; color:#64748b; font-weight:700; }
+
+        /* ── Callout ── */
+        .callout { background:var(--vg-dim); border-left:3px solid var(--vg); border-radius:4px; padding:16px 20px; margin:20px 0; }
+        .callout p { font-size:0.96rem!important; color:var(--ink-mid)!important; margin:0!important; font-weight:400!important; }
+        .callout strong { color:var(--ink)!important; }
+
+        /* ── Verdict ── */
+        .verdict { background:var(--ink); border-radius:10px; padding:32px 36px; margin:28px 0; position:relative; overflow:hidden; }
+        .verdict::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--vg),var(--vg-lt)); }
+        .verd-label { font-family:'Kanit',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:8px; }
+        .verd-title { font-family:'Kanit',sans-serif; font-weight:800; font-size:1.2rem; color:#fff; margin-bottom:14px; letter-spacing:-0.01em; }
+        .verd-body { font-family:'Mulish',sans-serif; font-size:0.97rem; line-height:1.75; color:rgba(255,255,255,0.65); }
+        .verd-body strong { color:#fff; }
+
+        /* ── CTA ── */
+        .cta-block { background:var(--vg); border-radius:10px; padding:36px 32px; text-align:center; margin:48px 0; }
+        .cta-block h3 { font-family:'Kanit',sans-serif; font-weight:800; font-size:1.4rem; color:#fff; margin-bottom:8px; letter-spacing:-0.01em; }
+        .cta-block p { font-family:'Mulish',sans-serif; font-size:0.94rem; color:rgba(255,255,255,0.75); margin-bottom:22px; font-weight:300; }
+        .cta-btn { display:inline-block; background:#fff; color:var(--vg); font-family:'Kanit',sans-serif; font-weight:700; font-size:0.9rem; letter-spacing:0.04em; padding:13px 30px; border-radius:5px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,0.3); }
+
+        /* ── FAQ ── */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--white); border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--vg); }
+        details.faq summary { padding:16px 20px; font-family:'Kanit',sans-serif; font-weight:600; font-size:0.96rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; letter-spacing:0.01em; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--vg); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .faq-ans { padding:4px 20px 18px; font-family:'Mulish',sans-serif; font-size:0.93rem; line-height:1.75; color:var(--ink-mid); font-weight:300; }
+
+        /* ── Related ── */
+        .related { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:22px 24px; margin-top:40px; }
+        .related h3 { font-family:'Kanit',sans-serif; font-weight:700; font-size:1rem; color:var(--ink); margin-bottom:12px; }
+        .related ul { list-style:none; display:flex; flex-wrap:wrap; gap:10px; }
+        .related a { font-family:'Mulish',sans-serif; font-size:0.85rem; color:var(--vg); text-decoration:none; background:var(--vg-dim); border:1px solid rgba(108,60,225,0.2); border-radius:4px; padding:5px 12px; transition:background 0.15s; }
+        .related a:hover { background:var(--vg-pale); }
+
+        /* ── Footer ── */
+        .footer { background:var(--ink); color:rgba(255,255,255,0.4); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Kanit',sans-serif; font-weight:800; font-size:1rem; color:#fff; margin-bottom:6px; letter-spacing:0.02em; }
+        .footer p { font-family:'Mulish',sans-serif; font-size:0.83rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:18px; }
+        .footer-links a { font-family:'Kanit',sans-serif; font-size:0.78rem; font-weight:500; color:rgba(255,255,255,0.5); text-decoration:none; letter-spacing:0.04em; }
+        .footer-links a:hover { color:#fff; }
+
+        @media(max-width:800px) {
+            .qv-grid,.limit-grid,.choose-grid { grid-template-columns:1fr; }
+            .type-grid { grid-template-columns:1fr 1fr; }
+            .sticky-bar .sb-vs .sb-tool:last-of-type { display:none; }
+        }
+        @media(max-width:520px) { .type-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+
+<div id="prog"></div>
+
+<!-- Sticky bar appears on scroll -->
+<div class="sticky-bar" id="sticky">
+    <div class="sb-vs">
+        <span class="sb-tool vg-color">VoteGenerator</span>
+        <span class="sb-divider">VS</span>
+        <span class="sb-tool">StrawPoll</span>
+    </div>
+    <a href="https://votegenerator.com/create" class="sb-cta">Try VoteGenerator Free &rarr;</a>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Comparison</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Try free &rarr;</a>
+</nav>
+
+<header class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+        <p class="hero-breadcrumb">Poll Tool Comparisons &middot; 2026</p>
+        <h1><span class="hl">VoteGenerator</span> vs StrawPoll:<br>Which Free Poll Maker Is Better?</h1>
+        <p class="hero-sub">An honest, feature-by-feature breakdown. We cover poll types, free tier limits, ranked choice, data export, and anonymity — then tell you exactly which to use and when.</p>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Updated <strong>April 2026</strong></span>
+            <span>Verified from <strong>live product data</strong></span>
+        </div>
+    </div>
+</header>
+
+<!-- Quick verdict — AEO / featured snippet target -->
+<div class="qv-wrap">
+    <div class="quick-verdict">
+        <div class="qv-label">Quick Answer</div>
+        <div class="qv-title">VoteGenerator vs StrawPoll: which should you choose?</div>
+        <div class="qv-grid">
+            <div class="qv-box vg">
+                <div class="qv-box-tool">Use VoteGenerator if you need:</div>
+                <ul>
+                    <li>Ranked choice voting (instant runoff)</li>
+                    <li>Meeting scheduling polls (like Doodle)</li>
+                    <li>Rating scales, RSVP, or visual polls</li>
+                    <li>A multi-section survey</li>
+                    <li>Dot voting or pairwise (This or That)</li>
+                    <li>Audience under 100 people (free tier)</li>
+                </ul>
+            </div>
+            <div class="qv-box sp">
+                <div class="qv-box-tool">Use StrawPoll if you need:</div>
+                <ul>
+                    <li>More than 100 responses for free</li>
+                    <li>Unlimited active polls on the free tier</li>
+                    <li>Basic multiple-choice only</li>
+                    <li>A familiar, widely recognised platform</li>
+                    <li>Poll data stored indefinitely for free</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="page article" id="article">
+
+    <div class="accuracy-note"><strong>Data accuracy:</strong> VoteGenerator features verified from the April 2026 product codebase. StrawPoll data based on publicly available information at time of publication. Free tier limits are subject to change — always verify on each tool's pricing page before committing.</div>
+
+    <!-- Overview -->
+    <div class="section-head" id="overview"><h2>Overview</h2></div>
+    <p class="lead">These two tools are not interchangeable. VoteGenerator wins on poll type depth — 8 types including ranked choice and meeting scheduling that StrawPoll simply does not have. StrawPoll wins on free response volume — unlimited responses on the free tier versus VoteGenerator's 100-response cap. Which advantage matters more depends entirely on what you are trying to do.</p>
+    <p>StrawPoll has been running since 2009 and has hosted tens of millions of polls. It is the familiar name in quick community polling, particularly in Discord servers and online communities. The free tier is genuinely generous.</p>
+    <p>VoteGenerator is newer and built around a wider range of poll formats. The key differentiator is poll type depth — you can run a ranked choice election, a Doodle-style scheduling poll, a visual poll where respondents pick between images, and a dot-voting prioritisation session, all for free. The 100-response cap is the significant tradeoff.</p>
+
+    <!-- Full comparison table -->
+    <div class="section-head" id="comparison"><h2>Full Feature Comparison</h2></div>
+
+    <div class="comp-wrap">
+        <table class="comp">
+            <thead>
+                <tr>
+                    <th style="width:38%;">Feature</th>
+                    <th class="vg-col" style="width:28%;">VoteGenerator</th>
+                    <th style="width:22%;">StrawPoll</th>
+                    <th style="width:12%;">Edge</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="group-row"><td colspan="4"><span class="group-label">Setup &amp; Access</span></td></tr>
+                <tr>
+                    <td>Creator signup required</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>No</span></td>
+                    <td><span class="cell-win">No</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Respondent signup required</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Never</span></td>
+                    <td><span class="cell-win">Never</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Setup speed</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Under 1 min</span></td>
+                    <td><span class="cell-win">Under 1 min</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+
+                <tr class="group-row"><td colspan="4"><span class="group-label">Free Tier Limits</span></td></tr>
+                <tr>
+                    <td>Responses per poll (free)</td>
+                    <td class="vg-cell"><span class="cell-lose">100 max</span><span class="cell-note">Pro = 10,000 at $19/mo</span></td>
+                    <td><span class="cell-win">Unlimited</span></td>
+                    <td><span class="win-badge win-sp">StrawPoll</span></td>
+                </tr>
+                <tr>
+                    <td>Active polls simultaneously (free)</td>
+                    <td class="vg-cell"><span class="cell-lose">3 at once</span></td>
+                    <td><span class="cell-win">Unlimited</span></td>
+                    <td><span class="win-badge win-sp">StrawPoll</span></td>
+                </tr>
+                <tr>
+                    <td>Poll data retention (free)</td>
+                    <td class="vg-cell"><span class="cell-lose">30 days</span></td>
+                    <td><span class="cell-win">Indefinite</span></td>
+                    <td><span class="win-badge win-sp">StrawPoll</span></td>
+                </tr>
+
+                <tr class="group-row"><td colspan="4"><span class="group-label">Poll Types Available Free</span></td></tr>
+                <tr>
+                    <td>Multiple choice (single or multi-select)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-win">Yes</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Ranked choice / instant runoff</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes — built in</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Meeting / scheduling poll</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes — Doodle-style</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Rating scale (1–5, 1–10)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Visual poll (image options)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>RSVP (Yes / No / Maybe)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>This or That (pairwise A vs B)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Dot voting (allocate points)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Survey (multi-section, multi-question)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Total free poll types</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>8 types</span></td>
+                    <td><span class="cell-lose">3–4 types</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+
+                <tr class="group-row"><td colspan="4"><span class="group-label">Privacy &amp; Anonymity</span></td></tr>
+                <tr>
+                    <td>Anonymous voting by default</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-win">Yes</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>IP logged in results</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>No</span></td>
+                    <td><span class="cell-tie">Limited</span></td>
+                    <td><span class="cell-tie">&mdash;</span></td>
+                </tr>
+                <tr>
+                    <td>Anti-duplicate / fraud protection</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-win">Yes</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+
+                <tr class="group-row"><td colspan="4"><span class="group-label">Results &amp; Export</span></td></tr>
+                <tr>
+                    <td>Real-time results</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes</span></td>
+                    <td><span class="cell-win">Yes</span></td>
+                    <td><span class="cell-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>PNG chart export (free)</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Yes — all plans</span></td>
+                    <td><span class="cell-lose">Limited</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>CSV data export (free)</td>
+                    <td class="vg-cell"><span class="cell-lose">Paid only</span><span class="cell-note">Pro $19/mo</span></td>
+                    <td><span class="cell-lose">Limited</span></td>
+                    <td><span class="cell-tie">&mdash;</span></td>
+                </tr>
+                <tr>
+                    <td>Geographic stats</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Pro plan</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Device breakdown</td>
+                    <td class="vg-cell"><span class="cell-win"><span class="winner-dot"></span>Pro plan</span></td>
+                    <td><span class="cell-lose">No</span></td>
+                    <td><span class="win-badge win-vg">VoteGenerator</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Poll types -->
+    <div class="section-head" id="poll-types">
+        <h2>Poll Types</h2>
+        <span class="win-badge win-vg">VoteGenerator wins</span>
+    </div>
+    <p>This is the clearest difference between the two tools. VoteGenerator has 9 built-in poll types, all free. StrawPoll covers basic voting. If anything beyond multiple choice matters to you, VoteGenerator is the only option here.</p>
+
+    <div class="type-grid">
+        <div class="tc both">
+            <span class="tc-tag">Both tools</span>
+            <div class="tc-name">Multiple Choice</div>
+            <div class="tc-desc">Single or multi-select from a list. The foundational poll type on both platforms.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Ranked Choice</div>
+            <div class="tc-desc">Voters drag to rank. Instant runoff algorithm finds true consensus. Not available on StrawPoll.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Meeting Poll</div>
+            <div class="tc-desc">Doodle-style scheduling. Show time slots, let people mark their availability.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">This or That</div>
+            <div class="tc-desc">Pairwise A vs B comparisons. Great for design decisions and narrowing options fast.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Rating Scale</div>
+            <div class="tc-desc">Star or number ratings per option (1–5). Used for CSAT, NPS-style feedback, quality scoring.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">RSVP</div>
+            <div class="tc-desc">Yes / No / Maybe with instant headcount. Event attendance in one click.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Visual Poll</div>
+            <div class="tc-desc">Upload images as the options. Best for design reviews, product selection, photo contests.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Dot Voting</div>
+            <div class="tc-desc">Each voter gets limited points to allocate across options. Shows intensity of preference.</div>
+        </div>
+        <div class="tc vg-only">
+            <span class="tc-tag">VoteGenerator only</span>
+            <div class="tc-name">Survey</div>
+            <div class="tc-desc">Multiple sections and question types in one form. For structured feedback and customer surveys.</div>
+        </div>
+    </div>
+
+    <!-- Free tier limits -->
+    <div class="section-head" id="limits">
+        <h2>Free Tier Limits</h2>
+        <span class="win-badge win-sp">StrawPoll wins</span>
+    </div>
+    <p>This is StrawPoll's genuine, significant advantage. If your poll will receive more than 100 responses, its free tier is the only realistic option without paying. There is no workaround on VoteGenerator's free plan — 100 is the hard cap.</p>
+
+    <div class="limit-grid">
+        <div class="lc vg">
+            <div class="lc-h"><div class="lc-tool">VoteGenerator — Free</div></div>
+            <div class="lc-body">
+                <div class="lc-row"><span class="lc-k">Responses / poll</span><span class="lc-v v-warn">100 max</span></div>
+                <div class="lc-row"><span class="lc-k">Active polls at once</span><span class="lc-v v-warn">3</span></div>
+                <div class="lc-row"><span class="lc-k">Data retained</span><span class="lc-v v-warn">30 days</span></div>
+                <div class="lc-row"><span class="lc-k">Respondent signup</span><span class="lc-v v-ok">Never</span></div>
+                <div class="lc-row"><span class="lc-k">PNG export</span><span class="lc-v v-ok">Free</span></div>
+                <div class="lc-row"><span class="lc-k">CSV export</span><span class="lc-v v-bad">Paid ($19/mo)</span></div>
+            </div>
+        </div>
+        <div class="lc sp">
+            <div class="lc-h"><div class="lc-tool">StrawPoll — Free</div></div>
+            <div class="lc-body">
+                <div class="lc-row"><span class="lc-k">Responses / poll</span><span class="lc-v v-ok">Unlimited</span></div>
+                <div class="lc-row"><span class="lc-k">Active polls at once</span><span class="lc-v v-ok">Unlimited</span></div>
+                <div class="lc-row"><span class="lc-k">Data retained</span><span class="lc-v v-ok">Indefinitely</span></div>
+                <div class="lc-row"><span class="lc-k">Respondent signup</span><span class="lc-v v-ok">Never</span></div>
+                <div class="lc-row"><span class="lc-k">Results export</span><span class="lc-v v-warn">Limited</span></div>
+                <div class="lc-row"><span class="lc-k">CSV export</span><span class="lc-v v-warn">Limited</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <p><strong>If you need more than 100 responses and more than basic multiple choice:</strong> VoteGenerator Pro at $19/month raises the limit to 10,000 responses per poll and adds CSV export, geographic stats, and device breakdown — while keeping all 8 poll types.</p>
+    </div>
+
+    <!-- Which to choose -->
+    <div class="section-head" id="when"><h2>Which Should You Choose?</h2></div>
+
+    <div class="choose-grid">
+        <div class="choose-card vg">
+            <div class="cc-h">
+                <div class="cc-if">Choose this if:</div>
+                <div class="cc-name">VoteGenerator</div>
+            </div>
+            <div class="cc-body">
+                <ul>
+                    <li>You need ranked choice voting</li>
+                    <li>You want a meeting scheduling poll</li>
+                    <li>You need rating scales for feedback or CSAT</li>
+                    <li>Visual polls (images as options) matter</li>
+                    <li>You are running a multi-section survey</li>
+                    <li>Dot voting for team prioritisation</li>
+                    <li>Your poll audience is under 100 people</li>
+                    <li>You want PNG export of results for free</li>
+                </ul>
+            </div>
+        </div>
+        <div class="choose-card sp">
+            <div class="cc-h">
+                <div class="cc-if">Choose this if:</div>
+                <div class="cc-name">StrawPoll</div>
+            </div>
+            <div class="cc-body">
+                <ul>
+                    <li>You expect more than 100 responses for free</li>
+                    <li>Basic multiple-choice is all you need</li>
+                    <li>You need unlimited active polls simultaneously</li>
+                    <li>You prefer an established, widely recognised tool</li>
+                    <li>Poll data needs to be stored indefinitely for free</li>
+                    <li>Large community voting (Discord, forums, etc.)</li>
+                    <li>You want unlimited polling without a paid plan</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="section-head" id="verdict"><h2>The Verdict</h2></div>
+
+    <div class="verdict">
+        <div class="verd-label">Bottom Line</div>
+        <div class="verd-title">Different tools for different jobs — the right one is the one that matches your constraint</div>
+        <div class="verd-body">
+            <strong>If you need ranked choice voting, meeting scheduling, rating scales, or anything beyond basic multiple choice, VoteGenerator is the clear answer.</strong> No other free poll tool ships 8 poll types including ranked choice, Doodle-style scheduling, visual image polls, and dot voting. For teams, educators, event organisers, and anyone collecting structured feedback, this variety is genuinely useful.
+            <br><br>
+            <strong>If you need to reach more than 100 people for free, StrawPoll is the practical choice.</strong> Its unlimited free tier is a real advantage that VoteGenerator cannot match without a paid plan. For Discord communities, subreddit polls, or any audience in the hundreds or thousands, StrawPoll's free capacity wins.
+            <br><br>
+            The two tools are not in direct competition for the same job. VoteGenerator is for structured, varied polling where format matters. StrawPoll is for simple, high-volume community voting where format is secondary to reach.
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-block">
+        <h3>Ready to Try VoteGenerator?</h3>
+        <p>8 poll types, ranked choice included, no signup required from you or your respondents.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create a Free Poll &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <div class="section-head" id="faq"><h2>Frequently Asked Questions</h2></div>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>Is VoteGenerator better than StrawPoll?</summary>
+            <div class="faq-ans">It depends on what you need. VoteGenerator is better for poll type variety — ranked choice voting, meeting scheduling, rating scales, and 6 other formats that StrawPoll does not have. StrawPoll is better for response volume — its free tier is unlimited, while VoteGenerator's free tier caps at 100 responses per poll. Neither tool is objectively better; the right choice depends on whether poll format or free response capacity matters more to you.</div>
+        </details>
+        <details class="faq">
+            <summary>Does VoteGenerator have unlimited free responses?</summary>
+            <div class="faq-ans">No. VoteGenerator's free plan allows up to 100 responses per poll and 3 active polls simultaneously. If you need more than 100 responses, you can use StrawPoll's free tier (unlimited) or upgrade to VoteGenerator Pro at $19/month, which raises the limit to 10,000 responses per poll and adds CSV export, geographic stats, and device breakdown.</div>
+        </details>
+        <details class="faq">
+            <summary>Does VoteGenerator have ranked choice voting?</summary>
+            <div class="faq-ans">Yes. Ranked choice voting using an instant runoff algorithm is built into VoteGenerator and available on the free tier. Voters drag options to rank them by preference. Results show round-by-round elimination until a winner emerges. StrawPoll does not offer ranked choice voting.</div>
+        </details>
+        <details class="faq">
+            <summary>What is the best StrawPoll alternative?</summary>
+            <div class="faq-ans">VoteGenerator is the strongest alternative if you need more poll types — especially ranked choice voting, meeting scheduling polls (Doodle-style), rating scales, or visual polls with image options. All 8 poll types are free. If you specifically need unlimited free responses, StrawPoll is hard to beat on that metric alone.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I use VoteGenerator for anonymous polls?</summary>
+            <div class="faq-ans">Yes. VoteGenerator polls are anonymous by default. Respondents do not need to create an account or log in. IP addresses are not stored in poll results. StrawPoll also supports anonymous voting. Both tools show aggregate results only — vote counts and percentages, not individual voter information.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I export my poll results?</summary>
+            <div class="faq-ans">VoteGenerator offers PNG chart export free on all plans. CSV export of raw response data requires a paid plan (Pro at $19/month). StrawPoll's free export options are limited. If data export is important to you, VoteGenerator Pro is the stronger option between the two.</div>
+        </details>
+        <details class="faq">
+            <summary>Is StrawPoll completely free?</summary>
+            <div class="faq-ans">StrawPoll's core poll creation is free with unlimited responses. They offer a premium tier with additional features, but the free tier has no response caps. This is StrawPoll's primary advantage over VoteGenerator's free plan.</div>
+        </details>
+    </div>
+
+    <div class="related">
+        <h3>Related Comparisons &amp; Guides</h3>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/ranked-choice-voting.html">Ranked Choice Voting Guide</a></li>
+            <li><a href="https://votegenerator.com/blog/free-poll-maker-comparison.html">Free Poll Makers Compared</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-poll.html">How to Create a Poll</a></li>
+            <li><a href="https://votegenerator.com/blog/team-meeting-poll.html">Meeting Poll Guide</a></li>
+            <li><a href="https://votegenerator.com/blog/poll-types-guide.html">All Poll Types Explained</a></li>
+        </ul>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>8 poll types. No signup required. 100% free.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Poll</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+    // Progress bar
+    const bar = document.getElementById('prog');
+    const sticky = document.getElementById('sticky');
+    const hero = document.getElementById('hero');
+
+    window.addEventListener('scroll', () => {
+        const d = document.documentElement;
+        bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+        // Show sticky bar after hero
+        const heroBottom = hero.getBoundingClientRect().bottom;
+        sticky.classList.toggle('visible', heroBottom < 0);
+    });
+</script>
+</body>
+</html>

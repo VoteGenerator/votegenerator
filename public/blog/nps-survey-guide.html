@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPS Survey: What It Is, How to Calculate It, and What Your Score Means | VoteGenerator</title>
+    <meta name="description" content="Complete NPS guide: what Net Promoter Score means, how to calculate it, what counts as a good score, when to send surveys, and a free template to start today.">
+    <meta name="keywords" content="NPS survey, net promoter score, NPS calculation, what is NPS, NPS template, NPS score meaning, promoters detractors passives">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/nps-survey-guide.html">
+    <meta property="og:title" content="NPS Survey: What It Is, How to Calculate It, and What Your Score Means">
+    <meta property="og:description" content="The complete NPS guide — calculation, benchmarks, best practices, and a free template.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/nps-survey-guide">
+    <meta property="og:image" content="https://votegenerator.com/og-image-nps.jpg">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "NPS Survey: What It Is, How to Calculate It, and What Your Score Means",
+        "description": "Complete NPS guide with calculation formula, score benchmarks, best practices, and a free template.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "image": "https://votegenerator.com/og-image-nps.jpg",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/nps-survey-guide" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is a good NPS score?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Any score above 0 means more promoters than detractors, which is good. Above 50 is excellent. Above 70 is world-class. Always compare against your own industry — a score of 45 is strong for telecom but weak for consumer software." }
+            },
+            {
+                "@type": "Question",
+                "name": "How often should I measure NPS?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Quarterly is the standard cadence. Measuring more frequently than monthly risks survey fatigue. Annual measurements miss important trends. Track NPS over quarters to see whether loyalty is improving or declining." }
+            },
+            {
+                "@type": "Question",
+                "name": "What follow-up question should I ask after the NPS question?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Ask everyone: 'What is the primary reason for your score?' For detractors specifically, also ask: 'What would make you more likely to recommend us?' These two questions turn a number into an action list." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the NPS formula?",
+                "acceptedAnswer": { "@type": "Answer", "text": "NPS = % of Promoters (scores 9-10) minus % of Detractors (scores 0-6). Passives (scores 7-8) are excluded from the calculation. The result is a number between -100 and +100." }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I segment my NPS results?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Break NPS down by product, customer size, tenure, region, or support channel. A company-wide NPS of 45 might hide a 65 in one product line and 25 in another. Segmentation shows where loyalty is strong and where it needs work." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink:       #0d1117;
+            --ink-mid:   #1f2937;
+            --ink-soft:  #4b5563;
+            --cobalt:    #1d4ed8;
+            --cobalt-lt: #3b82f6;
+            --cobalt-dim: rgba(29,78,216,0.08);
+            --cream:     #f9f8f6;
+            --cream-mid: #edeae4;
+            --warm-white:#fffef9;
+            --promote-g: #16a34a;
+            --promote-bg:#f0fdf4;
+            --passive-g: #d97706;
+            --passive-bg:#fffbeb;
+            --detract-g: #dc2626;
+            --detract-bg:#fef2f2;
+            --mono:      'DM Mono', monospace;
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+        html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden;}
+
+        #prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--cobalt),var(--cobalt-lt));z-index:1000;transition:width 0.1s linear;}
+
+        /* Nav */
+        .nav{position:sticky;top:0;background:var(--ink);z-index:100;height:52px;display:flex;align-items:center;padding:0 24px;gap:10px;}
+        .nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+        .nav-logo img{width:26px;height:26px;}
+        .nav-logo-text{font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.95rem;color:#fff;}
+        .nav-div{width:1px;height:20px;background:rgba(255,255,255,0.18);margin:0 6px;}
+        .nav-tag{font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;}
+        .nav-cta{margin-left:auto;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:700;color:var(--cobalt-lt);text-decoration:none;}
+        .nav-cta:hover{color:#fff;}
+
+        /* Hero */
+        .hero{background:var(--ink);color:#fff;padding:72px 24px 64px;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(29,78,216,0.18) 0%,transparent 60%);pointer-events:none;}
+        .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cobalt-lt),transparent);opacity:0.4;}
+        .hero-inner{max-width:820px;margin:0 auto;position:relative;}
+        .hero-label{font-family:'DM Sans',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--cobalt-lt);margin-bottom:16px;}
+        .hero h1{font-family:'Marcellus',serif;font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.14;margin-bottom:20px;}
+        .hero h1 em{font-style:normal;color:var(--cobalt-lt);}
+        .hero-sub{font-size:1.05rem;line-height:1.7;color:rgba(255,255,255,0.62);max-width:580px;font-weight:300;margin-bottom:28px;}
+        .hero-stats{display:flex;gap:36px;flex-wrap:wrap;}
+        .stat-n{font-family:'Marcellus',serif;font-size:2rem;color:var(--cobalt-lt);line-height:1;}
+        .stat-l{font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.4);margin-top:3px;letter-spacing:0.04em;}
+        .hero-meta{margin-top:28px;display:flex;gap:20px;flex-wrap:wrap;}
+        .hero-meta span{font-family:'DM Sans',sans-serif;font-size:0.78rem;color:rgba(255,255,255,0.35);}
+        .hero-meta span strong{color:rgba(255,255,255,0.65);}
+
+        /* Layout */
+        .page{max-width:1100px;margin:0 auto;padding:52px 24px 80px;display:grid;grid-template-columns:1fr 252px;gap:52px;align-items:start;}
+
+        /* Article */
+        .article h2{font-family:'Marcellus',serif;font-size:1.75rem;color:var(--ink);margin:52px 0 18px;line-height:1.25;}
+        .article h2:first-child{margin-top:0;}
+        .article h3{font-family:'DM Sans',sans-serif;font-weight:700;font-size:1.02rem;color:var(--cobalt);margin:28px 0 12px;letter-spacing:0.01em;}
+        .article p{font-size:1.04rem;line-height:1.84;color:var(--ink-mid);margin-bottom:20px;font-weight:300;}
+        .article ul{margin-left:22px;margin-bottom:18px;}
+        .article li{font-size:1rem;line-height:1.75;color:var(--ink-mid);margin-bottom:8px;font-weight:300;}
+        .article strong{color:var(--ink);font-weight:600;}
+        .lead{font-size:1.14rem!important;line-height:1.76!important;font-weight:400!important;margin-bottom:32px!important;}
+
+        /* NPS Scale visual */
+        .nps-scale{border-radius:8px;overflow:hidden;margin:28px 0;border:1px solid var(--cream-mid);}
+        .scale-bar{height:44px;background:linear-gradient(90deg,#dc2626 0%,#ef4444 25%,#f59e0b 40%,#fbbf24 55%,#22c55e 75%,#16a34a 100%);position:relative;display:flex;}
+        .scale-seg{flex:1;display:flex;align-items:center;justify-content:center;}
+        .scale-seg:nth-child(1){flex:7;} /* 0-6 detractors */
+        .scale-seg:nth-child(2){flex:2;} /* 7-8 passives */
+        .scale-seg:nth-child(3){flex:2;} /* 9-10 promoters */
+        .scale-seg span{font-family:'DM Sans',sans-serif;font-size:0.7rem;font-weight:700;color:#fff;letter-spacing:0.08em;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,0.4);}
+        .scale-numbers{display:flex;background:var(--ink);}
+        .scale-num{flex:1;text-align:center;font-family:var(--mono);font-size:0.75rem;color:rgba(255,255,255,0.6);padding:6px 2px;}
+        .scale-groups{display:grid;grid-template-columns:7fr 2fr 2fr;}
+        .scale-group{padding:14px 16px;text-align:center;}
+        .scale-group.detract{background:var(--detract-bg);}
+        .scale-group.passive{background:var(--passive-bg);}
+        .scale-group.promote{background:var(--promote-bg);}
+        .sg-range{font-family:var(--mono);font-size:0.9rem;font-weight:500;display:block;margin-bottom:2px;}
+        .sg-name{font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:700;display:block;margin-bottom:2px;}
+        .sg-desc{font-family:'DM Sans',sans-serif;font-size:0.72rem;color:var(--ink-soft);}
+        .detract .sg-range,.detract .sg-name{color:var(--detract-g);}
+        .passive .sg-range,.passive .sg-name{color:var(--passive-g);}
+        .promote .sg-range,.promote .sg-name{color:var(--promote-g);}
+
+        /* Three group cards */
+        .group-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0;}
+        .g-card{border-radius:6px;padding:20px;}
+        .g-card.promote{background:var(--promote-bg);border:1px solid #bbf7d0;}
+        .g-card.passive{background:var(--passive-bg);border:1px solid #fde68a;}
+        .g-card.detract{background:var(--detract-bg);border:1px solid #fecaca;}
+        .g-label{font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
+        .g-card.promote .g-label{color:var(--promote-g);}
+        .g-card.passive .g-label{color:var(--passive-g);}
+        .g-card.detract .g-label{color:var(--detract-g);}
+        .g-score{font-family:'Marcellus',serif;font-size:1.4rem;margin-bottom:6px;}
+        .g-card.promote .g-score{color:var(--promote-g);}
+        .g-card.passive .g-score{color:var(--passive-g);}
+        .g-card.detract .g-score{color:var(--detract-g);}
+        .g-desc{font-family:'DM Sans',sans-serif;font-size:0.84rem;line-height:1.55;color:var(--ink-mid);}
+
+        /* Formula box */
+        .formula-box{background:var(--ink);border-radius:8px;padding:28px 32px;margin:24px 0;}
+        .formula-title{font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px;}
+        .formula{font-family:var(--mono);font-size:1.15rem;color:#fff;margin-bottom:16px;padding:14px 20px;background:rgba(255,255,255,0.06);border-radius:4px;letter-spacing:0.04em;}
+        .formula-steps{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+        .formula-step{font-family:'DM Sans',sans-serif;font-size:0.88rem;color:rgba(255,255,255,0.7);display:flex;gap:10px;align-items:baseline;}
+        .step-n{font-family:var(--mono);font-size:0.78rem;color:var(--cobalt-lt);flex-shrink:0;}
+
+        /* Worked example */
+        .example-box{background:var(--warm-white);border:1px solid var(--cream-mid);border-radius:8px;overflow:hidden;margin:24px 0;}
+        .example-head{background:var(--cobalt-dim);padding:14px 20px;border-bottom:1px solid var(--cream-mid);}
+        .example-head span{font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--cobalt);}
+        .example-body{padding:20px;}
+        .example-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--cream-mid);}
+        .example-row:last-child{border-bottom:none;}
+        .ex-label{font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--ink-mid);}
+        .ex-value{font-family:var(--mono);font-size:0.88rem;font-weight:500;}
+        .ex-promote{color:var(--promote-g);}
+        .ex-passive{color:var(--passive-g);}
+        .ex-detract{color:var(--detract-g);}
+        .ex-result{font-family:var(--mono);font-size:1rem;font-weight:500;color:var(--detract-g);}
+        .ex-note{font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--ink-soft);margin-top:12px;font-style:italic;}
+
+        /* Benchmark visual */
+        .bench{margin:24px 0;display:flex;flex-direction:column;gap:8px;}
+        .bench-row{display:flex;align-items:center;gap:14px;}
+        .bench-label{font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--ink-mid);width:120px;flex-shrink:0;}
+        .bench-bar-wrap{flex:1;background:var(--cream-mid);border-radius:3px;height:10px;overflow:hidden;}
+        .bench-bar{height:100%;border-radius:3px;}
+        .bench-score{font-family:var(--mono);font-size:0.82rem;font-weight:500;width:70px;text-align:right;flex-shrink:0;}
+        .b-wc .bench-bar{background:#16a34a;width:100%;}     .b-wc .bench-score{color:#16a34a;}
+        .b-ex .bench-bar{background:#4ade80;width:72%;}      .b-ex .bench-score{color:#22c55e;}
+        .b-gd .bench-bar{background:#fbbf24;width:51%;}      .b-gd .bench-score{color:var(--passive-g);}
+        .b-ok .bench-bar{background:#f97316;width:30%;}      .b-ok .bench-score{color:#ea580c;}
+        .b-bd .bench-bar{background:#ef4444;width:10%;}      .b-bd .bench-score{color:var(--detract-g);}
+        .b-neg .bench-bar{background:#dc2626;width:0%;}      .b-neg .bench-score{color:var(--detract-g);}
+
+        /* Callout */
+        .callout{background:var(--cobalt-dim);border-left:3px solid var(--cobalt);border-radius:4px;padding:18px 22px;margin:22px 0;}
+        .callout p{font-size:0.97rem!important;color:var(--ink-mid)!important;margin:0!important;font-weight:400!important;}
+
+        /* Template */
+        .template{background:var(--ink);border-radius:8px;overflow:hidden;margin:24px 0;}
+        .tpl-head{padding:16px 22px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+        .tpl-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.95rem;color:#fff;}
+        .tpl-meta{font-family:'DM Sans',sans-serif;font-size:0.74rem;color:rgba(255,255,255,0.4);}
+        .tpl-body{padding:20px 22px;}
+        .tpl-q{display:flex;gap:14px;margin-bottom:14px;}
+        .tpl-qn{font-family:var(--mono);font-size:0.78rem;color:var(--cobalt-lt);flex-shrink:0;padding-top:2px;}
+        .tpl-qtext{font-family:'DM Sans',sans-serif;font-size:0.92rem;color:rgba(255,255,255,0.85);line-height:1.55;font-weight:300;}
+        .tpl-qtype{font-family:'DM Sans',sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.35);display:block;margin-top:3px;}
+        .copy-tpl{font-family:'DM Sans',sans-serif;font-size:0.72rem;font-weight:700;background:var(--cobalt);color:#fff;border:none;border-radius:4px;padding:8px 16px;cursor:pointer;letter-spacing:0.04em;transition:background 0.15s;}
+        .copy-tpl:hover{background:var(--cobalt-lt);}
+
+        /* FAQ */
+        .faq-list{margin:14px 0;display:flex;flex-direction:column;gap:8px;}
+        details.faq{background:var(--warm-white);border:1px solid var(--cream-mid);border-radius:6px;overflow:hidden;}
+        details.faq[open]{border-color:var(--cobalt);}
+        details.faq summary{padding:16px 20px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.95rem;color:var(--ink);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;}
+        details.faq summary::after{content:'+';font-size:1.2rem;color:var(--cobalt);flex-shrink:0;transition:transform 0.2s;}
+        details.faq[open] summary::after{transform:rotate(45deg);}
+        details.faq summary::-webkit-details-marker{display:none;}
+        .faq-ans{padding:4px 20px 18px;font-size:0.94rem;line-height:1.75;color:var(--ink-mid);font-weight:300;}
+
+        /* CTA */
+        .cta{background:var(--ink);border-radius:8px;padding:36px 32px;text-align:center;margin:52px 0;position:relative;overflow:hidden;}
+        .cta::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(29,78,216,0.2) 0%,transparent 70%);}
+        .cta h3{font-family:'Marcellus',serif;font-size:1.6rem;color:#fff;margin-bottom:10px;position:relative;}
+        .cta p{font-size:0.94rem;color:rgba(255,255,255,0.6);margin-bottom:22px;font-weight:300;position:relative;}
+        .cta-btn{display:inline-block;background:var(--cobalt);color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.04em;padding:13px 28px;border-radius:4px;text-decoration:none;transition:transform 0.15s,box-shadow 0.15s;position:relative;}
+        .cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(29,78,216,0.4);}
+
+        /* Sidebar */
+        .sidebar{position:sticky;top:64px;display:flex;flex-direction:column;gap:14px;}
+        .toc-card{background:var(--warm-white);border:1px solid var(--cream-mid);border-radius:6px;overflow:hidden;}
+        .toc-head{background:var(--ink);padding:13px 18px;}
+        .toc-head span{font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+        .toc-links{list-style:none;padding:6px 0;}
+        .toc-links a{display:block;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--ink-soft);text-decoration:none;border-left:2px solid transparent;transition:all 0.15s;}
+        .toc-links a:hover,.toc-links a.active{color:var(--cobalt);background:var(--cobalt-dim);border-left-color:var(--cobalt);}
+
+        .score-ref{background:var(--warm-white);border:1px solid var(--cream-mid);border-radius:6px;padding:16px;}
+        .score-ref-title{font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;}
+        .score-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--cream-mid);}
+        .score-item:last-child{border-bottom:none;}
+        .si-label{font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--ink-mid);}
+        .si-val{font-family:var(--mono);font-size:0.78rem;font-weight:500;}
+
+        .sb-cta{background:var(--cobalt);border-radius:6px;padding:18px;text-align:center;}
+        .sb-cta p{font-family:'DM Sans',sans-serif;font-size:0.83rem;color:rgba(255,255,255,0.9);font-weight:500;line-height:1.5;margin-bottom:12px;}
+        .sb-cta a{display:block;background:#fff;color:var(--cobalt);font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.8rem;padding:10px;border-radius:4px;text-decoration:none;}
+        .sb-cta a:hover{background:#eff6ff;}
+
+        .sb-related{background:var(--warm-white);border:1px solid var(--cream-mid);border-radius:6px;padding:16px;}
+        .sb-related-hd{font-family:'DM Sans',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;}
+        .sb-related ul{list-style:none;display:flex;flex-direction:column;gap:7px;}
+        .sb-related a{font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--cobalt);text-decoration:none;}
+        .sb-related a:hover{text-decoration:underline;}
+
+        /* Footer */
+        .footer{background:var(--ink);color:rgba(255,255,255,0.4);padding:40px 24px;text-align:center;}
+        .footer-logo{font-family:'Marcellus',serif;font-size:1.1rem;color:#fff;margin-bottom:6px;}
+        .footer p{font-size:0.84rem;margin-bottom:10px;}
+        .footer-links{list-style:none;display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-bottom:20px;}
+        .footer-links a{font-family:'DM Sans',sans-serif;font-size:0.78rem;color:rgba(255,255,255,0.5);text-decoration:none;}
+        .footer-links a:hover{color:#fff;}
+
+        @media(max-width:860px){
+            .page{grid-template-columns:1fr;padding-top:32px;}
+            .sidebar{position:static;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+            .group-cards{grid-template-columns:1fr;}
+            .scale-groups{grid-template-columns:1fr;}
+        }
+        @media(max-width:540px){.sidebar{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">NPS Guide</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Run your NPS &rarr;</a>
+</nav>
+
+<header class="hero">
+    <div class="hero-inner">
+        <p class="hero-label">Net Promoter Score &middot; Complete Guide</p>
+        <h1>NPS Survey: What It Is,<br>How to Calculate It, and<br><em>What Your Score Means</em></h1>
+        <p class="hero-sub">One question. One number. One of the most reliable predictors of business growth. Here is everything you need to run NPS surveys that actually inform decisions.</p>
+        <div class="hero-stats">
+            <div><div class="stat-n">-100</div><div class="stat-l">Worst possible score</div></div>
+            <div><div class="stat-n">+100</div><div class="stat-l">Best possible score</div></div>
+            <div><div class="stat-n">0</div><div class="stat-l">More promoters = above this</div></div>
+        </div>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Published <strong>18 April 2026</strong></span>
+            <span><strong>8 min</strong> read</span>
+        </div>
+    </div>
+</header>
+
+<div class="page">
+<main class="article" id="article">
+
+    <p class="lead">NPS is deceptively simple — one question on a 0–10 scale — but the insight it surfaces predicts loyalty, churn risk, and word-of-mouth growth better than most survey types. This guide explains how it works, what your score actually means, and what to do with the results.</p>
+
+    <h2 id="what-is">What Is NPS?</h2>
+    <p>Net Promoter Score measures customer loyalty by asking one question: how likely are customers to recommend you to someone they know. Unlike satisfaction surveys that capture a momentary feeling, NPS measures something deeper — whether a customer's experience was strong enough that they would put their personal reputation behind recommending you.</p>
+    <p>The metric was developed at Bain &amp; Company and published in 2003. It became an industry standard because it is easy to measure consistently over time, easy to benchmark against industry peers, and strongly correlated with revenue growth and retention rates.</p>
+
+    <h2 id="how-it-works">How the NPS Question Works</h2>
+    <h3>The core question</h3>
+    <p>Every NPS survey is built around one question, always worded the same way:</p>
+    <div class="formula-box" style="padding:20px 24px;">
+        <div class="formula" style="font-size:1rem;">"On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague?"</div>
+    </div>
+    <p>Respondents choose a number from 0 (not at all likely) to 10 (extremely likely). Based on their answer, every customer falls into one of three groups.</p>
+
+    <div class="nps-scale">
+        <div class="scale-bar">
+            <div class="scale-seg" style="flex:7;"><span>Detractors &nbsp; 0&ndash;6</span></div>
+            <div class="scale-seg" style="flex:2;"><span>Passives 7&ndash;8</span></div>
+            <div class="scale-seg" style="flex:2;"><span>Promoters 9&ndash;10</span></div>
+        </div>
+        <div class="scale-numbers">
+            <div class="scale-num">0</div><div class="scale-num">1</div><div class="scale-num">2</div>
+            <div class="scale-num">3</div><div class="scale-num">4</div><div class="scale-num">5</div>
+            <div class="scale-num">6</div><div class="scale-num">7</div><div class="scale-num">8</div>
+            <div class="scale-num">9</div><div class="scale-num">10</div>
+        </div>
+        <div class="scale-groups">
+            <div class="scale-group detract">
+                <span class="sg-range">0 &ndash; 6</span>
+                <span class="sg-name">Detractors</span>
+                <span class="sg-desc">At risk of churning and actively discouraging others</span>
+            </div>
+            <div class="scale-group passive">
+                <span class="sg-range">7 &ndash; 8</span>
+                <span class="sg-name">Passives</span>
+                <span class="sg-desc">Satisfied but not loyal. Vulnerable to competitors.</span>
+            </div>
+            <div class="scale-group promote">
+                <span class="sg-range">9 &ndash; 10</span>
+                <span class="sg-name">Promoters</span>
+                <span class="sg-desc">Loyal enthusiasts who actively refer new customers</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="group-cards">
+        <div class="g-card promote">
+            <div class="g-label">Promoters</div>
+            <div class="g-score">9 &ndash; 10</div>
+            <div class="g-desc">Enthusiastic, loyal customers who recommend you unprompted. Higher lifetime value, lower churn risk. Your growth engine — protect and delight this group.</div>
+        </div>
+        <div class="g-card passive">
+            <div class="g-label">Passives</div>
+            <div class="g-score">7 &ndash; 8</div>
+            <div class="g-desc">Satisfied but not passionate. They won't actively recommend or deter others. Vulnerable to switching if a competitor offers something better. The goal is moving them to 9+.</div>
+        </div>
+        <div class="g-card detract">
+            <div class="g-label">Detractors</div>
+            <div class="g-score">0 &ndash; 6</div>
+            <div class="g-desc">Unhappy customers who are likely to churn and may actively warn others away. Identify them quickly and either fix what's wrong or offboard them gracefully.</div>
+        </div>
+    </div>
+
+    <h2 id="calculating">Calculating Your NPS Score</h2>
+    <div class="formula-box">
+        <div class="formula-title">The Formula</div>
+        <div class="formula">NPS = % Promoters &minus; % Detractors</div>
+        <div class="formula-steps">
+            <div class="formula-step"><span class="step-n">01</span> Count responses of 9 or 10. Divide by total responses. This is your % Promoters.</div>
+            <div class="formula-step"><span class="step-n">02</span> Count responses of 0 through 6. Divide by total responses. This is your % Detractors.</div>
+            <div class="formula-step"><span class="step-n">03</span> Subtract % Detractors from % Promoters. Passives (7&ndash;8) are excluded from the calculation entirely.</div>
+            <div class="formula-step"><span class="step-n">04</span> The result is a number between &minus;100 and +100. This is your NPS.</div>
+        </div>
+    </div>
+
+    <h3>Worked example</h3>
+    <p>You survey 100 customers and receive the following distribution:</p>
+    <div class="example-box">
+        <div class="example-head"><span>100 responses &mdash; example calculation</span></div>
+        <div class="example-body">
+            <div class="example-row">
+                <span class="ex-label">Promoters (scored 9&ndash;10)</span>
+                <span class="ex-value ex-promote">30 &rarr; 30%</span>
+            </div>
+            <div class="example-row">
+                <span class="ex-label">Passives (scored 7&ndash;8) &mdash; excluded</span>
+                <span class="ex-value ex-passive">20 &rarr; 20%</span>
+            </div>
+            <div class="example-row">
+                <span class="ex-label">Detractors (scored 0&ndash;6)</span>
+                <span class="ex-value ex-detract">50 &rarr; 50%</span>
+            </div>
+            <div class="example-row" style="border-top:2px solid var(--cream-mid);margin-top:6px;padding-top:14px;">
+                <span class="ex-label" style="font-weight:600;color:var(--ink);">NPS = 30% &minus; 50%</span>
+                <span class="ex-result">&minus;20</span>
+            </div>
+            <p class="ex-note">An NPS of &minus;20 means more detractors than promoters. There are more customers actively discouraging others than there are customers actively recommending you. This signals a loyalty problem that needs attention.</p>
+        </div>
+    </div>
+
+    <h2 id="what-score-means">What Is a Good NPS Score?</h2>
+    <p>NPS ranges from &minus;100 (every customer is a detractor) to +100 (every customer is a promoter). Any positive score means more promoters than detractors, which is the baseline goal. Here is how the full range maps to real performance:</p>
+
+    <div class="bench">
+        <div class="bench-row b-wc">
+            <span class="bench-label">World-class</span>
+            <div class="bench-bar-wrap"><div class="bench-bar"></div></div>
+            <span class="bench-score">70 &ndash; 100</span>
+        </div>
+        <div class="bench-row b-ex">
+            <span class="bench-label">Excellent</span>
+            <div class="bench-bar-wrap"><div class="bench-bar"></div></div>
+            <span class="bench-score">50 &ndash; 69</span>
+        </div>
+        <div class="bench-row b-gd">
+            <span class="bench-label">Good</span>
+            <div class="bench-bar-wrap"><div class="bench-bar"></div></div>
+            <span class="bench-score">30 &ndash; 49</span>
+        </div>
+        <div class="bench-row b-ok">
+            <span class="bench-label">Acceptable</span>
+            <div class="bench-bar-wrap"><div class="bench-bar"></div></div>
+            <span class="bench-score">1 &ndash; 29</span>
+        </div>
+        <div class="bench-row b-neg">
+            <span class="bench-label">Problem</span>
+            <div class="bench-bar-wrap"><div class="bench-bar" style="width:8%;background:#dc2626;"></div></div>
+            <span class="bench-score">Below 0</span>
+        </div>
+    </div>
+
+    <p>Industry context matters significantly. A score of 45 is strong for a telecom company, where industry averages often sit in the 20&ndash;35 range. The same score of 45 is below average for a consumer software product, where top performers regularly reach 60&ndash;70+. Always benchmark against your industry peers, not absolute numbers.</p>
+
+    <div class="callout">
+        <p><strong>Track the trend, not the absolute.</strong> Do not obsess over whether your NPS is 42 or 45. What matters is direction: is your NPS rising or falling quarter over quarter? A rising NPS from a low base signals improving loyalty. A falling NPS from a high base is an early warning sign worth investigating immediately.</p>
+    </div>
+
+    <h2 id="when-to-send">When to Send an NPS Survey</h2>
+    <h3>Measurement frequency</h3>
+    <p>Quarterly is the standard cadence for most businesses. This is frequent enough to catch emerging trends but not so frequent that it causes survey fatigue among your customer base. Larger companies with significant customer volume sometimes measure monthly — using rotating samples so no single customer is surveyed repeatedly. Annual measurement is too slow: you will miss trends and have no early warning of loyalty problems.</p>
+
+    <h3>When within the quarter</h3>
+    <p>Send mid-quarter rather than at quarter-end when everyone is busy. Mid-morning on Tuesday through Thursday consistently gets the highest response rates. Avoid Monday mornings (inbox overload) and Friday afternoons (mentally checked out).</p>
+
+    <h3>Who to survey</h3>
+    <p>For companies with fewer than 500 customers, survey everyone. For larger populations, use a random sample — not just recent customers, which would create recency bias. Consider running separate NPS measurements for different product lines or customer segments. A company-wide NPS of 50 can hide a 70 in one product and a 25 in another, which are very different problems requiring very different responses.</p>
+
+    <h2 id="follow-up">The Follow-Up Question That Matters Most</h2>
+    <p>The NPS question gives you a number. What turns that number into an action is the follow-up. Always add one open-ended question immediately after the NPS scale:</p>
+
+    <div class="template" style="margin-bottom:14px;">
+        <div class="tpl-head">
+            <div class="tpl-title">For all respondents</div>
+        </div>
+        <div class="tpl-body">
+            <div class="tpl-q">
+                <span class="tpl-qn">Q2</span>
+                <div>
+                    <span class="tpl-qtext">What is the primary reason for your score?</span>
+                    <span class="tpl-qtype">Open-ended text &mdash; the most important question in any NPS survey</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p>For detractors, a second targeted follow-up is valuable: "What would make you more likely to recommend us?" This is action-oriented — it tells you specifically what change would shift their loyalty, rather than just confirming they are unhappy.</p>
+    <p>Stop at two follow-up questions maximum. The power of NPS is its brevity. A three-question NPS survey consistently outperforms longer alternatives on completion rate and response quality.</p>
+
+    <h2 id="best-practices">NPS Best Practices</h2>
+
+    <h3>Segment your results</h3>
+    <p>Break NPS down by customer segment immediately after collecting data. Meaningful segments to analyse: product line, customer size, tenure (new versus long-term), industry, geographic region, and support channel. Segmentation reveals where loyalty is strong and where it is weak — information a company-wide average actively conceals.</p>
+
+    <h3>Close the loop with detractors</h3>
+    <p>When a detractor submits feedback, reach out personally within 24 hours. Understand the specific problem. Take action where possible. Even when you cannot fix everything immediately, the fact that you responded and tried changes the relationship. This follow-through moves detractors toward passive or even promoter status more reliably than any product change.</p>
+
+    <h3>Share results with your team</h3>
+    <p>NPS improves when everyone in the organisation understands the score and why it matters. Share results across functions — not just customer success. Engineers who see NPS data often build differently. Support teams who see feedback themes respond differently. Make NPS a shared metric, not a leadership dashboard metric.</p>
+
+    <h3>Do not game the score</h3>
+    <p>Only send NPS surveys right after exceptional experiences. Only survey your happiest customers. These approaches inflate your score and destroy its predictive value. A dishonest NPS is not just useless — it is actively harmful, because it convinces leadership that loyalty is healthy when it is not.</p>
+
+    <h2 id="template">Free NPS Survey Templates</h2>
+    <p>Two ready-to-use templates. The minimal version gets the highest completion rates and covers the essentials for most use cases.</p>
+
+    <div class="template">
+        <div class="tpl-head">
+            <div>
+                <div class="tpl-title">Minimal NPS Template</div>
+                <div class="tpl-meta">1&ndash;2 minutes &middot; 2 questions &middot; Highest completion rate</div>
+            </div>
+            <button class="copy-tpl" id="copy-minimal">Copy</button>
+        </div>
+        <div class="tpl-body" id="minimal-tpl">
+            <div class="tpl-q">
+                <span class="tpl-qn">Q1</span>
+                <div>
+                    <span class="tpl-qtext">On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague?</span>
+                    <span class="tpl-qtype">Rating scale 0&ndash;10 (0 = Not at all likely, 10 = Extremely likely)</span>
+                </div>
+            </div>
+            <div class="tpl-q">
+                <span class="tpl-qn">Q2</span>
+                <div>
+                    <span class="tpl-qtext">What is the primary reason for your score?</span>
+                    <span class="tpl-qtype">Open-ended text</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="template" style="margin-top:16px;">
+        <div class="tpl-head">
+            <div>
+                <div class="tpl-title">Segmented NPS Template</div>
+                <div class="tpl-meta">2&ndash;3 minutes &middot; 3 questions &middot; Separate detractor and promoter follow-ups</div>
+            </div>
+            <button class="copy-tpl" id="copy-seg">Copy</button>
+        </div>
+        <div class="tpl-body" id="seg-tpl">
+            <div class="tpl-q">
+                <span class="tpl-qn">Q1</span>
+                <div>
+                    <span class="tpl-qtext">On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague?</span>
+                    <span class="tpl-qtype">Rating scale 0&ndash;10 (0 = Not at all likely, 10 = Extremely likely)</span>
+                </div>
+            </div>
+            <div class="tpl-q">
+                <span class="tpl-qn">Q2</span>
+                <div>
+                    <span class="tpl-qtext">What is the primary reason for your score?</span>
+                    <span class="tpl-qtype">Open-ended text &mdash; shown to all respondents</span>
+                </div>
+            </div>
+            <div class="tpl-q">
+                <span class="tpl-qn">Q3</span>
+                <div>
+                    <span class="tpl-qtext">For scores 0&ndash;6: What would make you more likely to recommend us? / For scores 9&ndash;10: Is there anything we could improve?</span>
+                    <span class="tpl-qtype">Open-ended text &mdash; tailor based on score band</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Ready to Measure Your NPS?</h3>
+        <p>Create a free NPS survey in under a minute. No signup required from you or your respondents.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create Your NPS Survey &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>What is the NPS formula?</summary>
+            <div class="faq-ans">NPS = % of Promoters (scores 9–10) minus % of Detractors (scores 0–6). Passives (7–8) are excluded from the calculation entirely. The result is a number between –100 and +100. You do not need a large sample to get useful data — 50–100 responses is enough for most small to mid-size businesses to see meaningful patterns.</div>
+        </details>
+        <details class="faq">
+            <summary>What is a good NPS score?</summary>
+            <div class="faq-ans">Any score above 0 means more promoters than detractors, which is the baseline. Above 50 is excellent. Above 70 is world-class. Industry matters significantly — a score of 45 is strong for telecom and weak for consumer software. Always compare against your own industry peers, and prioritise tracking your trend over quarters rather than fixating on the absolute number.</div>
+        </details>
+        <details class="faq">
+            <summary>How often should I measure NPS?</summary>
+            <div class="faq-ans">Quarterly is the standard cadence. Measuring more frequently than monthly risks survey fatigue, especially for smaller customer bases. Annual measurement is too slow to catch emerging problems early. If you measure quarterly using a rotating sample, no individual customer is surveyed more than once or twice per year.</div>
+        </details>
+        <details class="faq">
+            <summary>What follow-up question should I ask?</summary>
+            <div class="faq-ans">Ask everyone: "What is the primary reason for your score?" For detractors specifically, add: "What would make you more likely to recommend us?" These two questions convert a number into an action list. Do not add more than two follow-up questions — brevity is the reason NPS gets high completion rates.</div>
+        </details>
+        <details class="faq">
+            <summary>What if my NPS is negative?</summary>
+            <div class="faq-ans">Negative NPS signals more detractors than promoters, which typically correlates with elevated churn and low retention. Do not try to fix the NPS score directly — fix the underlying problems the detractor feedback identifies. Reach out personally to low scorers, understand their specific issues, and make visible changes. A rising NPS trend from a negative base is more valuable than a static positive score.</div>
+        </details>
+        <details class="faq">
+            <summary>Should I segment NPS results?</summary>
+            <div class="faq-ans">Yes. A company-wide NPS of 45 might hide a 65 in one product and 25 in another — these are entirely different situations. Break results down by product, customer size, tenure, region, or support channel. Segmentation shows where your loyalty is strong and where it needs attention, rather than letting a blended average conceal problems.</div>
+        </details>
+    </div>
+
+</main>
+
+<aside class="sidebar">
+    <div class="toc-card">
+        <div class="toc-head"><span>In This Guide</span></div>
+        <ul class="toc-links" id="toc-links">
+            <li><a href="#what-is">What Is NPS?</a></li>
+            <li><a href="#how-it-works">How the Question Works</a></li>
+            <li><a href="#calculating">Calculating Your Score</a></li>
+            <li><a href="#what-score-means">What Your Score Means</a></li>
+            <li><a href="#when-to-send">When to Send</a></li>
+            <li><a href="#follow-up">The Follow-Up Question</a></li>
+            <li><a href="#best-practices">Best Practices</a></li>
+            <li><a href="#template">Free Templates</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </div>
+
+    <div class="score-ref">
+        <div class="score-ref-title">NPS Score Reference</div>
+        <div class="score-item"><span class="si-label">World-class</span><span class="si-val" style="color:#16a34a;">70 to 100</span></div>
+        <div class="score-item"><span class="si-label">Excellent</span><span class="si-val" style="color:#22c55e;">50 to 69</span></div>
+        <div class="score-item"><span class="si-label">Good</span><span class="si-val" style="color:var(--passive-g);">30 to 49</span></div>
+        <div class="score-item"><span class="si-label">Acceptable</span><span class="si-val" style="color:#ea580c;">1 to 29</span></div>
+        <div class="score-item"><span class="si-label">Problem</span><span class="si-val" style="color:var(--detract-g);">Below 0</span></div>
+    </div>
+
+    <div class="sb-cta">
+        <p>Create a free NPS survey in under a minute</p>
+        <a href="https://votegenerator.com/create">Start Measuring NPS &rarr;</a>
+    </div>
+
+    <div class="sb-related">
+        <div class="sb-related-hd">Related Guides</div>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/customer-satisfaction-survey.html">25 CSAT Questions + Templates</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-survey-customers.html">How to Survey Customers</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-survey.html">How to Create a Survey</a></li>
+            <li><a href="https://votegenerator.com/blog/free-employee-survey-tools.html">Free Survey Tools Compared</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Create free polls and surveys in seconds. No signup required.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Survey</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p style="font-size:0.76rem;">&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const bar = document.getElementById('prog');
+window.addEventListener('scroll', () => {
+    const d = document.documentElement;
+    bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+});
+const links = document.querySelectorAll('#toc-links a');
+const targets = Array.from(links).map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            links.forEach(l => l.classList.remove('active'));
+            const a = document.querySelector(`#toc-links a[href="#${e.target.id}"]`);
+            if (a) a.classList.add('active');
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+targets.forEach(t => obs.observe(t));
+
+function copyText(text, btn, label) {
+    navigator.clipboard.writeText(text).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+    });
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = label; }, 2000);
+}
+document.getElementById('copy-minimal').addEventListener('click', function() {
+    copyText('Q1. On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague? (0 = Not at all likely, 10 = Extremely likely)\n\nQ2. What is the primary reason for your score? (Open-ended text)', this, 'Copy');
+});
+document.getElementById('copy-seg').addEventListener('click', function() {
+    copyText('Q1. On a scale of 0 to 10, how likely are you to recommend us to a friend or colleague? (0 = Not at all likely, 10 = Extremely likely)\n\nQ2. What is the primary reason for your score? (Open-ended text — shown to all respondents)\n\nQ3. For scores 0–6: What would make you more likely to recommend us? / For scores 9–10: Is there anything we could improve? (Open-ended text)', this, 'Copy');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoteGenerator vs SurveyMonkey (2026): When Free Actually Means Free</title>
+    <meta name="description" content="SurveyMonkey's free tier caps at 25 responses. VoteGenerator's free tier allows 100. See the full honest comparison: limits, poll types, pricing, and when to use each.">
+    <meta name="keywords" content="surveymonkey alternative free, free SurveyMonkey alternative, VoteGenerator vs SurveyMonkey, survey monkey free tier limits, surveymonkey 25 response limit">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/votegenerator-vs-surveymonkey.html">
+    <meta property="og:title" content="VoteGenerator vs SurveyMonkey: When Free Actually Means Free">
+    <meta property="og:description" content="SurveyMonkey caps free responses at 25. VoteGenerator allows 100, with 8 poll types and no signup needed. Full honest comparison.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/votegenerator-vs-surveymonkey">
+    <meta property="og:image" content="https://votegenerator.com/og-image.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "VoteGenerator vs SurveyMonkey (2026): When Free Actually Means Free",
+        "description": "Honest comparison of VoteGenerator and SurveyMonkey. Free tier limits, poll types, pricing, and which tool to use for your situation.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-18",
+        "dateModified": "2026-04-18",
+        "image": "https://votegenerator.com/og-image.png",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/votegenerator-vs-surveymonkey" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How many responses does SurveyMonkey allow for free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "SurveyMonkey's free tier allows 25 responses per survey and 10 questions per survey. Once you hit 25 responses, data collection stops unless you upgrade to a paid plan." }
+            },
+            {
+                "@type": "Question",
+                "name": "Is VoteGenerator actually free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator has a genuinely functional free tier: up to 100 responses per poll, 3 active polls simultaneously, 8 poll types, and no respondent signup required. CSV export and advanced analytics require a paid plan starting at $19/month." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the best free SurveyMonkey alternative?",
+                "acceptedAnswer": { "@type": "Answer", "text": "For simple polls and surveys under 100 responses: VoteGenerator (no signup, 8 poll types including ranked choice). For unlimited responses with basic multiple choice: Google Forms (free, unlimited). For structured surveys with branching logic free: Microsoft Forms if you have Microsoft 365." }
+            },
+            {
+                "@type": "Question",
+                "name": "Does VoteGenerator have branching logic like SurveyMonkey?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. VoteGenerator does not have conditional logic or branching. If you need to show different questions based on previous answers, SurveyMonkey or another dedicated survey tool is the better choice." }
+            },
+            {
+                "@type": "Question",
+                "name": "When should I use SurveyMonkey instead of VoteGenerator?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Use SurveyMonkey for professional market research, surveys needing conditional logic, HR surveys requiring compliance, large audiences on the paid tier, or when advanced analytics and cross-tabulation matter. VoteGenerator is better for simple polls and surveys under 100 responses where no signup is important." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,400;0,700;0,900;1,400&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --teal:      #0d5c6e;
+            --teal-lt:   #0891b2;
+            --teal-dim:  rgba(13,92,110,0.07);
+            --teal-pale: #f0f9ff;
+            --amber:     #d97706;
+            --amber-bg:  #fffbeb;
+            --ink:       #0c1117;
+            --ink-mid:   #1e2b35;
+            --ink-soft:  #4b6070;
+            --bg:        #f8f9fb;
+            --white:     #ffffff;
+            --border:    #dde3ec;
+            --green:     #15803d;
+            --green-bg:  #f0fdf4;
+            --red:       #dc2626;
+            --red-bg:    #fef2f2;
+            --vg:        #6C3CE1;
+            --sm-col:    #00bf6f;
+            --mono:      'DM Mono', monospace;
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Crimson Pro',Georgia,serif; background:var(--bg); color:var(--ink); overflow-x:hidden; }
+
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--teal),var(--teal-lt)); z-index:2000; transition:width 0.1s linear; }
+
+        /* Sticky bar */
+        .sticky { position:fixed; top:0; left:0; right:0; z-index:1000; background:var(--ink); height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; transform:translateY(-100%); transition:transform 0.25s ease; border-bottom:2px solid var(--teal); }
+        .sticky.on { transform:translateY(0); }
+        .sticky-vs { font-family:'Chivo',sans-serif; font-size:0.82rem; font-weight:700; color:#fff; display:flex; gap:8px; align-items:center; }
+        .sticky-vs .vg-c { color:#a78bfa; }
+        .sticky-vs .sep { color:rgba(255,255,255,0.3); font-size:0.7rem; letter-spacing:0.1em; }
+        .sticky-btn { background:var(--teal); color:#fff; font-family:'Chivo',sans-serif; font-weight:700; font-size:0.77rem; letter-spacing:0.06em; padding:7px 14px; border-radius:4px; text-decoration:none; }
+        .sticky-btn:hover { background:var(--teal-lt); }
+
+        /* Nav */
+        .nav { background:var(--ink); height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Chivo',sans-serif; font-weight:900; font-size:0.95rem; color:#fff; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'Chivo',sans-serif; font-size:0.7rem; font-weight:700; color:rgba(255,255,255,0.4); letter-spacing:0.1em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Chivo',sans-serif; font-size:0.8rem; font-weight:700; color:#7dd3fc; text-decoration:none; }
+        .nav-cta:hover { color:#fff; }
+
+        /* Hero */
+        .hero { background:var(--ink); color:#fff; padding:64px 24px 56px; position:relative; overflow:hidden; }
+        .hero::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:repeating-linear-gradient(-45deg,transparent,transparent 30px,rgba(13,92,110,0.04) 30px,rgba(13,92,110,0.04) 31px); pointer-events:none; }
+        .hero::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--teal-lt),transparent); opacity:0.5; }
+        .hero-inner { max-width:900px; margin:0 auto; position:relative; }
+        .hero-kicker { font-family:'Chivo',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#7dd3fc; margin-bottom:14px; }
+        .hero h1 { font-family:'Chivo',sans-serif; font-size:clamp(1.9rem,4.8vw,3rem); font-weight:900; line-height:1.1; letter-spacing:-0.02em; margin-bottom:16px; }
+        .hero h1 em { font-style:normal; color:#7dd3fc; }
+        .hero-sub { font-family:'Crimson Pro',serif; font-size:1.15rem; line-height:1.68; color:rgba(255,255,255,0.6); max-width:600px; margin-bottom:28px; }
+        .hero-meta { display:flex; gap:18px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'Chivo',sans-serif; font-size:0.76rem; color:rgba(255,255,255,0.35); font-weight:700; }
+        .hero-meta span strong { color:rgba(255,255,255,0.65); }
+
+        /* Quick answer */
+        .qa-wrap { max-width:900px; margin:0 auto; padding:32px 24px 0; }
+        .qa-box { background:var(--amber-bg); border:2px solid var(--amber); border-radius:8px; padding:22px 28px; }
+        .qa-label { font-family:'Chivo',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber); margin-bottom:8px; }
+        .qa-title { font-family:'Chivo',sans-serif; font-size:1.05rem; font-weight:700; color:var(--ink-mid); margin-bottom:10px; }
+        .qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .qa-cell { background:var(--white); border-radius:6px; padding:14px 18px; }
+        .qa-tool { font-family:'Chivo',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:5px; }
+        .qa-cell.vg .qa-tool { color:var(--vg); }
+        .qa-cell.sm .qa-tool { color:var(--sm-col); }
+        .qa-cell ul { list-style:none; display:flex; flex-direction:column; gap:4px; }
+        .qa-cell li { font-family:'Chivo',sans-serif; font-size:0.82rem; color:var(--ink-mid); padding-left:14px; position:relative; line-height:1.5; }
+        .qa-cell.vg li::before { content:'✓'; position:absolute; left:0; color:var(--vg); font-weight:900; }
+        .qa-cell.sm li::before { content:'✓'; position:absolute; left:0; color:var(--sm-col); font-weight:900; }
+
+        /* Page */
+        .page { max-width:900px; margin:0 auto; padding:48px 24px 80px; }
+
+        /* Section heads */
+        .sh { display:flex; align-items:center; gap:14px; margin:52px 0 18px; }
+        .sh h2 { font-family:'Chivo',sans-serif; font-size:1.5rem; font-weight:900; color:var(--ink); letter-spacing:-0.02em; line-height:1.2; }
+        .sh:first-child { margin-top:0; }
+        .win-badge { font-family:'Chivo',sans-serif; font-size:0.63rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; border-radius:20px; padding:3px 10px; white-space:nowrap; }
+        .wb-vg { background:var(--teal-dim); color:var(--teal); border:1px solid rgba(13,92,110,0.25); }
+        .wb-sm { background:#f0fff8; color:var(--sm-col); border:1px solid rgba(0,191,111,0.3); }
+        .wb-tie { background:#f8f9fb; color:var(--ink-soft); border:1px solid var(--border); }
+
+        /* Body text */
+        .article p { font-size:1.08rem; line-height:1.82; color:var(--ink-mid); margin-bottom:18px; }
+        .article p strong { color:var(--ink); }
+        .lead { font-size:1.18rem!important; line-height:1.76!important; font-weight:500!important; margin-bottom:28px!important; }
+        .accuracy { font-family:'Chivo',sans-serif; font-size:0.74rem; color:var(--ink-soft); background:var(--white); border:1px solid var(--border); border-radius:4px; padding:9px 14px; margin-bottom:28px; }
+
+        /* Comparison table */
+        .tw { overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:20px 0; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+        table.comp { width:100%; border-collapse:collapse; min-width:500px; }
+        table.comp thead tr { background:var(--ink); }
+        table.comp th { font-family:'Chivo',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:13px 16px; text-align:left; color:rgba(255,255,255,0.6); }
+        table.comp th.vg-h { color:#a78bfa; }
+        table.comp th.sm-h { color:#6ee7b7; }
+        table.comp .grp td { background:var(--teal-dim); padding:7px 16px; }
+        table.comp .grp .gl { font-family:'Chivo',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--teal); }
+        table.comp tbody tr:not(.grp) td { padding:11px 16px; border-bottom:1px solid var(--border); font-family:'Chivo',sans-serif; font-size:0.88rem; vertical-align:middle; }
+        table.comp tbody tr:not(.grp):last-child td { border-bottom:none; }
+        table.comp tbody tr:not(.grp):nth-child(even) { background:#fafbfc; }
+        table.comp td:first-child { color:var(--ink-mid); font-weight:700; font-size:0.85rem; }
+        table.comp .vg-c { background:rgba(108,60,225,0.03); }
+        .cw { color:var(--green); font-weight:700; }
+        .cl { color:#94a3b8; font-weight:600; }
+        .ct { color:var(--ink-soft); }
+        .cn { display:block; font-size:0.72rem; color:#94a3b8; margin-top:2px; font-weight:400; font-family:'Crimson Pro',serif; }
+        .dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--green); margin-right:5px; vertical-align:middle; }
+
+        /* Critical limit box */
+        .limit-spotlight { background:var(--ink); border-radius:10px; padding:28px 32px; margin:24px 0; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .ls-side {}
+        .ls-tool { font-family:'Chivo',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:8px; }
+        .ls-num { font-family:'Chivo',sans-serif; font-size:3rem; font-weight:900; line-height:1; margin-bottom:4px; }
+        .ls-num.vg-n { color:#a78bfa; }
+        .ls-num.sm-n { color:#dc2626; }
+        .ls-desc { font-family:'Crimson Pro',serif; font-size:0.95rem; color:rgba(255,255,255,0.55); line-height:1.55; }
+
+        /* Where each wins section */
+        .wins-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+        .wins-card { border-radius:8px; overflow:hidden; }
+        .wc-head { padding:14px 18px; }
+        .wins-card.vg .wc-head { background:var(--vg); }
+        .wins-card.sm .wc-head { background:#005f38; }
+        .wc-if { font-family:'Chivo',sans-serif; font-size:0.63rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.5); margin-bottom:3px; }
+        .wc-name { font-family:'Chivo',sans-serif; font-weight:900; font-size:1rem; color:#fff; }
+        .wc-body { background:var(--white); border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; padding:14px 18px; }
+        .wc-body ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .wc-body li { font-family:'Chivo',sans-serif; font-size:0.84rem; color:var(--ink-mid); padding-left:16px; position:relative; line-height:1.5; }
+        .wins-card.vg .wc-body li::before { content:'✓'; position:absolute; left:0; color:var(--vg); font-weight:900; }
+        .wins-card.sm .wc-body li::before { content:'✓'; position:absolute; left:0; color:var(--sm-col); font-weight:900; }
+
+        /* Callout */
+        .callout { background:var(--teal-dim); border-left:3px solid var(--teal); border-radius:4px; padding:16px 20px; margin:20px 0; }
+        .callout p { font-size:1rem!important; color:var(--ink-mid)!important; margin:0!important; }
+
+        /* Verdict */
+        .verdict { background:var(--teal); border-radius:10px; padding:28px 32px; margin:28px 0; }
+        .vd-label { font-family:'Chivo',sans-serif; font-size:0.63rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-bottom:6px; }
+        .vd-title { font-family:'Chivo',sans-serif; font-weight:900; font-size:1.15rem; color:#fff; margin-bottom:12px; }
+        .vd-body { font-family:'Crimson Pro',serif; font-size:1.05rem; line-height:1.72; color:rgba(255,255,255,0.75); }
+        .vd-body strong { color:#fff; }
+
+        /* CTA */
+        .cta { background:var(--ink); border-radius:10px; padding:36px 32px; text-align:center; margin:48px 0; position:relative; overflow:hidden; }
+        .cta::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(ellipse at center top, rgba(13,92,110,0.25) 0%, transparent 60%); pointer-events:none; }
+        .cta h3 { font-family:'Chivo',sans-serif; font-weight:900; font-size:1.5rem; color:#fff; margin-bottom:8px; position:relative; }
+        .cta p { font-family:'Crimson Pro',serif; font-size:1.05rem; color:rgba(255,255,255,0.6); margin-bottom:22px; position:relative; }
+        .cta-btn { display:inline-block; background:var(--teal-lt); color:#fff; font-family:'Chivo',sans-serif; font-weight:700; font-size:0.9rem; letter-spacing:0.04em; padding:13px 30px; border-radius:5px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(8,145,178,0.4); }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--white); border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--teal); }
+        details.faq summary { padding:15px 20px; font-family:'Chivo',sans-serif; font-weight:700; font-size:0.93rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--teal); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .fa { padding:4px 20px 18px; font-family:'Crimson Pro',serif; font-size:1.02rem; line-height:1.75; color:var(--ink-mid); }
+
+        /* Related */
+        .related { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:20px 24px; margin-top:36px; }
+        .related h3 { font-family:'Chivo',sans-serif; font-weight:700; font-size:0.95rem; color:var(--ink); margin-bottom:12px; }
+        .related ul { list-style:none; display:flex; flex-wrap:wrap; gap:10px; }
+        .related a { font-family:'Chivo',sans-serif; font-size:0.82rem; font-weight:700; color:var(--teal); text-decoration:none; background:var(--teal-dim); border:1px solid rgba(13,92,110,0.2); border-radius:4px; padding:5px 12px; }
+        .related a:hover { background:var(--teal-pale); }
+
+        /* Footer */
+        .footer { background:var(--ink); color:rgba(255,255,255,0.4); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Chivo',sans-serif; font-weight:900; font-size:1rem; color:#fff; margin-bottom:6px; }
+        .footer p { font-family:'Chivo',sans-serif; font-size:0.82rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:18px; }
+        .footer-links a { font-family:'Chivo',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.5); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+
+        @media(max-width:720px) {
+            .qa-grid,.wins-grid,.limit-spotlight { grid-template-columns:1fr; }
+            .limit-spotlight { gap:14px; }
+            .ls-num { font-size:2.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<div class="sticky" id="sticky">
+    <div class="sticky-vs">
+        <span class="vg-c">VoteGenerator</span>
+        <span class="sep">VS</span>
+        <span>SurveyMonkey</span>
+    </div>
+    <a href="https://votegenerator.com/create" class="sticky-btn">Try VoteGenerator Free &rarr;</a>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Comparison</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Try free &rarr;</a>
+</nav>
+
+<header class="hero" id="hero">
+    <div class="hero-inner">
+        <p class="hero-kicker">Tool Comparison &middot; April 2026</p>
+        <h1>VoteGenerator vs SurveyMonkey:<br><em>When Free Actually Means Free</em></h1>
+        <p class="hero-sub">SurveyMonkey's free tier stops collecting after 25 responses. VoteGenerator's stops at 100. Here is the full honest comparison — what each tool is actually built for and when to use which.</p>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Updated <strong>April 2026</strong></span>
+            <span>Verified from <strong>live product data</strong></span>
+        </div>
+    </div>
+</header>
+
+<div class="qa-wrap">
+    <div class="qa-box">
+        <div class="qa-label">Quick Answer</div>
+        <div class="qa-title">VoteGenerator vs SurveyMonkey — which should you use?</div>
+        <div class="qa-grid">
+            <div class="qa-cell vg">
+                <div class="qa-tool">Use VoteGenerator when:</div>
+                <ul>
+                    <li>Audience is under 100 people (free tier)</li>
+                    <li>No signup from respondents is critical</li>
+                    <li>You need ranked choice, RSVP, or meeting polls</li>
+                    <li>Quick setup matters more than analytics depth</li>
+                    <li>Privacy and anonymity are priorities</li>
+                </ul>
+            </div>
+            <div class="qa-cell sm">
+                <div class="qa-tool">Use SurveyMonkey when:</div>
+                <ul>
+                    <li>You need conditional logic or branching</li>
+                    <li>Advanced analytics or cross-tabulation matter</li>
+                    <li>Enterprise compliance is required (HIPAA etc.)</li>
+                    <li>Audience exceeds 100 (paid tier)</li>
+                    <li>Professional templates and team collaboration</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="page article">
+
+    <div class="accuracy"><strong>Data accuracy:</strong> VoteGenerator limits verified from the April 2026 codebase. SurveyMonkey free tier data based on publicly available information at time of publication — their limits have changed before; verify current pricing at surveymonkey.com before making decisions.</div>
+
+    <p class="lead">SurveyMonkey is enterprise survey software. VoteGenerator is a simple, fast polling tool. They overlap in basic use cases but serve fundamentally different audiences. The comparison that matters most is what the free tier actually lets you do before you hit a wall.</p>
+
+    <!-- The free tier problem -->
+    <div class="sh" id="free"><h2>The Free Tier Problem</h2></div>
+    <p>SurveyMonkey's free tier is widely misunderstood. It looks generous on the surface — no time limit, real-time results, multiple question types. But it hard-caps at 25 responses per survey. For anything larger than a very small team or group, you will hit that limit within hours of sharing.</p>
+    <p>VoteGenerator's free tier allows 100 responses per poll and 3 active polls simultaneously. It is not unlimited either, but 100 responses covers most classroom, team, and community use cases without paying. The limitation that hits most users first on VoteGenerator is the 100-response cap, not the question limit.</p>
+
+    <div class="limit-spotlight">
+        <div class="ls-side">
+            <div class="ls-tool">VoteGenerator — Free Tier</div>
+            <div class="ls-num vg-n">100</div>
+            <div class="ls-desc">responses per poll before the free tier stops collecting. Plus 3 active polls simultaneously and 30-day data retention.</div>
+        </div>
+        <div class="ls-side">
+            <div class="ls-tool">SurveyMonkey — Free Tier</div>
+            <div class="ls-num sm-n">25</div>
+            <div class="ls-desc">responses per survey before collection halts. Plus a 10-question limit per survey. Effectively a product demo, not a working free tool.</div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <p><strong>The honest reality:</strong> Neither tool is unlimited for free. VoteGenerator's 100-response free tier is more functional than SurveyMonkey's 25. For genuinely unlimited free responses with basic surveys, Google Forms remains the strongest option.</p>
+    </div>
+
+    <!-- Full comparison table -->
+    <div class="sh" id="comparison"><h2>Full Feature Comparison</h2></div>
+
+    <div class="tw">
+        <table class="comp">
+            <thead>
+                <tr>
+                    <th style="width:36%;">Feature</th>
+                    <th class="vg-h" style="width:26%;">VoteGenerator</th>
+                    <th class="sm-h" style="width:26%;">SurveyMonkey (Free)</th>
+                    <th style="width:12%;">Edge</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="grp"><td colspan="4"><span class="gl">Free Tier Limits</span></td></tr>
+                <tr>
+                    <td>Responses (free)</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>100 per poll</span></td>
+                    <td><span class="cl">25 per survey</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Questions per survey (free)</td>
+                    <td class="vg-c"><span class="ct">10 per survey<span class="cn">Survey type only — Pro: 25, Business: unlimited</span></span></td>
+                    <td><span class="ct">10 per survey</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Active surveys / polls</td>
+                    <td class="vg-c"><span class="ct">3 at once<span class="cn">Unlimited historical</span></span></td>
+                    <td><span class="ct">Unlimited surveys</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+                <tr>
+                    <td>Data retained</td>
+                    <td class="vg-c"><span class="cl">30 days</span></td>
+                    <td><span class="cw">Indefinitely</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="4"><span class="gl">Setup &amp; Access</span></td></tr>
+                <tr>
+                    <td>Creator signup required</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>No</span></td>
+                    <td><span class="cl">Yes</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Respondent signup required</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Never</span></td>
+                    <td><span class="cw">Never (usually)</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="4"><span class="gl">Poll &amp; Question Types</span></td></tr>
+                <tr>
+                    <td>Multiple choice</td>
+                    <td class="vg-c"><span class="ct">Yes</span></td>
+                    <td><span class="ct">Yes</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Rating scale / star rating</td>
+                    <td class="vg-c"><span class="ct">Yes — poll type</span></td>
+                    <td><span class="ct">Yes — question type</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Open-ended text</td>
+                    <td class="vg-c"><span class="ct">Yes — poll type</span></td>
+                    <td><span class="ct">Yes — question type</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Ranked choice / ranking</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Instant runoff — free</span></td>
+                    <td><span class="cl">Paid only</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Meeting / scheduling poll</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Yes — Doodle-style</span></td>
+                    <td><span class="cl">No</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Visual poll (image options)</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Yes</span></td>
+                    <td><span class="cl">No</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>Matrix / grid questions</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Yes — poll type</span></td>
+                    <td><span class="ct">Yes — question type</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>Conditional logic / branching</td>
+                    <td class="vg-c"><span class="cl">No</span></td>
+                    <td><span class="cw">Yes (paid only)</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+                <tr>
+                    <td>NPS (Net Promoter Score)</td>
+                    <td class="vg-c"><span class="ct">Via rating scale</span></td>
+                    <td><span class="cw">Dedicated NPS type</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+                <tr>
+                    <td>Total free poll/question types</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>8 poll types</span></td>
+                    <td><span class="ct">15+ question types<span class="cn">But many are locked to paid</span></span></td>
+                    <td><span class="win-badge wb-tie">&mdash;</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="4"><span class="gl">Analytics &amp; Export</span></td></tr>
+                <tr>
+                    <td>Real-time results</td>
+                    <td class="vg-c"><span class="ct">Yes</span></td>
+                    <td><span class="ct">Yes</span></td>
+                    <td><span class="win-badge wb-tie">Tie</span></td>
+                </tr>
+                <tr>
+                    <td>PNG chart export</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>Free — all plans</span></td>
+                    <td><span class="cl">Limited</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+                <tr>
+                    <td>CSV data export</td>
+                    <td class="vg-c"><span class="cl">Paid only<span class="cn">Pro at $19/mo</span></span></td>
+                    <td><span class="cl">Paid only</span></td>
+                    <td><span class="win-badge wb-tie">Both paid</span></td>
+                </tr>
+                <tr>
+                    <td>Cross-tabulation / filters</td>
+                    <td class="vg-c"><span class="cl">No</span></td>
+                    <td><span class="cw">Paid only</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+                <tr>
+                    <td>Geographic data</td>
+                    <td class="vg-c"><span class="cl">Pro plan only</span></td>
+                    <td><span class="cl">Paid only</span></td>
+                    <td><span class="win-badge wb-tie">Both paid</span></td>
+                </tr>
+                <tr>
+                    <td>Survey templates</td>
+                    <td class="vg-c"><span class="cl">Basic</span></td>
+                    <td><span class="cw">Extensive library</span></td>
+                    <td><span class="win-badge wb-sm">SurveyMonkey</span></td>
+                </tr>
+
+                <tr class="grp"><td colspan="4"><span class="gl">Pricing</span></td></tr>
+                <tr>
+                    <td>Free tier</td>
+                    <td class="vg-c"><span class="ct">Yes — 100 responses</span></td>
+                    <td><span class="ct">Yes — 25 responses</span></td>
+                    <td><span class="win-badge wb-vg">More generous</span></td>
+                </tr>
+                <tr>
+                    <td>Paid plans</td>
+                    <td class="vg-c"><span class="cw"><span class="dot"></span>From $19/mo</span></td>
+                    <td><span class="cl">From ~$30–35/mo</span></td>
+                    <td><span class="win-badge wb-vg">VoteGenerator</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Where each wins -->
+    <div class="sh" id="where-vg"><h2>Where Each Tool Wins</h2></div>
+
+    <div class="wins-grid">
+        <div class="wins-card vg">
+            <div class="wc-head">
+                <div class="wc-if">VoteGenerator is better for:</div>
+                <div class="wc-name">Speed, simplicity, and format variety</div>
+            </div>
+            <div class="wc-body">
+                <ul>
+                    <li>No signup required from creator or respondent</li>
+                    <li>More generous free tier — 100 vs 25 responses</li>
+                    <li>Ranked choice voting built in and free</li>
+                    <li>Meeting scheduling polls (no Doodle needed)</li>
+                    <li>Visual polls with image options</li>
+                    <li>RSVP, dot voting, This or That — 8 poll types total</li>
+                    <li>Lower paid plan pricing ($19/mo vs ~$30+)</li>
+                    <li>Privacy-first — anonymous by default</li>
+                </ul>
+            </div>
+        </div>
+        <div class="wins-card sm">
+            <div class="wc-head">
+                <div class="wc-if">SurveyMonkey is better for:</div>
+                <div class="wc-name">Professional research and enterprise use</div>
+            </div>
+            <div class="wc-body">
+                <ul>
+                    <li>Conditional logic and question branching</li>
+                    <li>Cross-tabulation and advanced analytics</li>
+                    <li>HIPAA and enterprise compliance certifications</li>
+                    <li>Hundreds of professionally-built survey templates</li>
+                    <li>Team collaboration on surveys</li>
+                    <li>Third-party integrations (Salesforce, HubSpot, etc.)</li>
+                    <li>Dedicated NPS question type with benchmarking</li>
+                    <li>Long-term data storage (indefinitely, even on free)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="sh" id="verdict"><h2>The Verdict</h2></div>
+    <div class="verdict">
+        <div class="vd-label">Bottom Line</div>
+        <div class="vd-title">Two different products for two different jobs</div>
+        <div class="vd-body">
+            <strong>SurveyMonkey's free tier is not a working free tool — it is a 25-response demo.</strong> If you need to collect more than 25 responses, you will be paying SurveyMonkey within an hour of sharing your survey. For organisations doing professional market research, customer satisfaction programmes, or HR surveys with branching logic, SurveyMonkey's paid tiers are genuinely powerful and worth the investment.
+            <br><br>
+            <strong>VoteGenerator's free tier is a functioning product for groups under 100 people.</strong> No signup, 8 poll types including ranked choice and meeting scheduling, 100 responses before you hit a limit, and paid plans starting at $19/month if you need more. It does not have branching logic, advanced analytics, or enterprise compliance — and if you need those, it is the wrong tool.
+            <br><br>
+            The honest comparison: most people searching "free SurveyMonkey alternative" are not doing enterprise market research. They want to quickly survey a team, a class, or a community. For that use case, VoteGenerator's free tier is meaningfully more functional than SurveyMonkey's.
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Try VoteGenerator Free</h3>
+        <p>8 poll types, 100 free responses, no signup required from anyone.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create Your Poll or Survey &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <div class="sh" id="faq"><h2>Frequently Asked Questions</h2></div>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>How many responses does SurveyMonkey allow for free?</summary>
+            <div class="fa">SurveyMonkey's free tier allows 25 responses per survey and 10 questions per survey. Once you hit 25 responses, data collection stops unless you upgrade to a paid plan. This limit makes the free tier effectively a demo rather than a working tool for most real use cases.</div>
+        </details>
+        <details class="faq">
+            <summary>Is VoteGenerator actually free?</summary>
+            <div class="fa">VoteGenerator has a genuinely functional free tier: up to 100 responses per poll, 3 active polls simultaneously, 8 poll types, and no signup required from respondents or creators. CSV data export and advanced analytics (geographic stats, device breakdown) require a paid plan starting at $19/month.</div>
+        </details>
+        <details class="faq">
+            <summary>What is the best free SurveyMonkey alternative?</summary>
+            <div class="fa">It depends on your use case. For polls under 100 responses with ranked choice or meeting scheduling: VoteGenerator. For completely unlimited free responses with basic multiple-choice surveys: Google Forms. For structured surveys with conditional logic free: Microsoft Forms (requires a Microsoft 365 account). SurveyMonkey's free tier is too restricted to recommend for most real use cases.</div>
+        </details>
+        <details class="faq">
+            <summary>Does VoteGenerator have branching or conditional logic?</summary>
+            <div class="fa">No. VoteGenerator does not have conditional logic or skip logic. Every respondent sees the same questions. If you need to show different questions based on previous answers, SurveyMonkey (paid), Google Forms (with some limits), or another dedicated survey tool is the better fit.</div>
+        </details>
+        <details class="faq">
+            <summary>Can VoteGenerator replace SurveyMonkey for employee surveys?</summary>
+            <div class="fa">For simple employee feedback polls under 100 people, yes. For comprehensive HR surveys with conditional logic, compliance requirements, anonymous reporting with segmentation, or large employee bases: SurveyMonkey's paid tiers are significantly more capable. VoteGenerator is strong for pulse surveys and quick team votes — less so for structured HR research programmes.</div>
+        </details>
+    </div>
+
+    <div class="related">
+        <h3>Related Comparisons</h3>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/votegenerator-vs-strawpoll.html">VoteGenerator vs StrawPoll</a></li>
+            <li><a href="https://votegenerator.com/blog/mentimeter-alternatives-free.html">Free Mentimeter Alternatives</a></li>
+            <li><a href="https://votegenerator.com/blog/free-poll-maker-comparison.html">Free Poll Maker Comparison</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-poll.html">How to Create a Poll</a></li>
+        </ul>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>8 poll types. 100 free responses. No signup required.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Poll</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const bar = document.getElementById('prog');
+const sticky = document.getElementById('sticky');
+const hero = document.getElementById('hero');
+window.addEventListener('scroll', () => {
+    const d = document.documentElement;
+    bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+    sticky.classList.toggle('on', hero.getBoundingClientRect().bottom < 0);
+});
+</script>
+</body>
+</html>

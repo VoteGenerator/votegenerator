@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Survey Your Customers (Without Annoying Them) | VoteGenerator</title>
+    <meta name="description" content="Practical guide to customer surveys that actually get responses. Timing, length, channels, question types, and how to close the feedback loop.">
+    <meta name="keywords" content="how to survey customers, customer survey best practices, customer survey tips, how to do a customer survey, customer feedback survey">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/how-to-survey-customers.html">
+    <meta property="og:title" content="How to Survey Your Customers (Without Annoying Them)">
+    <meta property="og:description" content="Practical guide to customer surveys that get responses. Timing, length, channels, and how to close the loop.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/how-to-survey-customers">
+    <meta property="og:image" content="https://votegenerator.com/og-image-survey-customers.jpg">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "How to Survey Your Customers (Without Annoying Them)",
+        "description": "Practical guide to customer surveys that get responses. Timing, length, channels, question types, and how to close the feedback loop.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-04-11",
+        "dateModified": "2026-04-11",
+        "image": "https://votegenerator.com/og-image-survey-customers.jpg",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/how-to-survey-customers" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How long should a customer survey be?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Keep surveys to 3 to 5 minutes maximum. Response rates drop significantly for surveys longer than 5 minutes. If you need more information, send multiple short surveys spaced over time rather than one long one." }
+            },
+            {
+                "@type": "Question",
+                "name": "When is the best time to send a customer survey?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Send within 24 to 48 hours of the experience you are asking about. Mid-week mornings on Tuesday through Thursday tend to get the best response rates. Avoid Mondays, Fridays, and holiday periods." }
+            },
+            {
+                "@type": "Question",
+                "name": "Should I offer incentives for completing a customer survey?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Incentives can boost response rates by 10 to 30%, but a well-timed short survey sent right after a positive interaction often gets strong responses without any incentive. Use incentives strategically for longer surveys or harder-to-reach customer segments." }
+            },
+            {
+                "@type": "Question",
+                "name": "What response rate should I expect from a customer survey?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Email surveys typically get 5 to 20% response rates. Post-purchase or in-app surveys get 20 to 40%. Do not focus on hitting a specific response rate — focus on acting on the feedback you do receive." }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I improve my customer survey response rate?",
+                "acceptedAnswer": { "@type": "Answer", "text": "The three biggest improvements: send within 24 hours of the interaction, reduce length to under 3 questions, and use a specific subject line that explains why you are asking. Trigger-based sending (automated immediately after a transaction) consistently outperforms batch sending." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,500;0,700;0,900;1,700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --coral: #d94f2b;
+            --coral-lt: #f0683e;
+            --coral-dim: rgba(217,79,43,0.1);
+            --ink: #0f1117;
+            --ink-mid: #1e2535;
+            --ink-soft: #4a556a;
+            --warm: #fffcf8;
+            --warm-mid: #f2ede5;
+            --warm-border: #e4ddd3;
+            --amber: #e8930a;
+            --amber-dim: rgba(232,147,10,0.1);
+            --green: #1a7a52;
+            --red: #c02020;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Lora',Georgia,serif; background:var(--warm); color:var(--ink); overflow-x:hidden; }
+
+        /* Progress */
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--coral),var(--amber)); z-index:1000; transition:width 0.1s linear; }
+
+        /* Nav */
+        .nav { position:sticky; top:0; background:var(--ink); z-index:100; height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.95rem; color:#fff; letter-spacing:0.01em; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'Red Hat Display',sans-serif; font-size:0.72rem; font-weight:500; color:rgba(255,255,255,0.4); letter-spacing:0.08em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Red Hat Display',sans-serif; font-size:0.8rem; font-weight:700; color:var(--coral-lt); text-decoration:none; }
+        .nav-cta:hover { color:#fff; }
+
+        /* Hero */
+        .hero { background:var(--ink); color:#fff; padding:72px 24px 60px; position:relative; overflow:hidden; }
+        .hero-accent { position:absolute; bottom:0; left:0; width:100%; height:4px; background:linear-gradient(90deg,var(--coral),var(--amber),var(--coral)); }
+        .hero-blob { position:absolute; top:-100px; right:-80px; width:500px; height:500px; background:radial-gradient(ellipse,rgba(217,79,43,0.14) 0%,transparent 65%); pointer-events:none; }
+        .hero-inner { max-width:820px; margin:0 auto; position:relative; }
+        .hero-eyebrow { font-family:'Red Hat Display',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--coral-lt); margin-bottom:20px; }
+        .hero h1 { font-family:'Red Hat Display',sans-serif; font-size:clamp(2rem,5.5vw,3.4rem); font-weight:900; line-height:1.08; letter-spacing:-0.02em; margin-bottom:22px; }
+        .hero h1 em { font-style:italic; color:var(--coral-lt); font-weight:700; }
+        .hero-sub { font-family:'Lora',serif; font-size:1.08rem; line-height:1.7; color:rgba(255,255,255,0.62); max-width:580px; margin-bottom:28px; }
+        .hero-stat-row { display:flex; gap:32px; flex-wrap:wrap; }
+        .hero-stat { }
+        .hero-stat-n { font-family:'Red Hat Display',sans-serif; font-size:1.5rem; font-weight:900; color:var(--coral-lt); line-height:1; }
+        .hero-stat-l { font-family:'Red Hat Display',sans-serif; font-size:0.72rem; font-weight:500; color:rgba(255,255,255,0.4); margin-top:3px; letter-spacing:0.04em; }
+        .hero-meta { margin-top:28px; display:flex; gap:20px; flex-wrap:wrap; }
+        .hero-meta span { font-family:'Red Hat Display',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.35); }
+        .hero-meta span strong { color:rgba(255,255,255,0.65); }
+
+        /* Layout */
+        .page { max-width:1100px; margin:0 auto; padding:52px 24px 80px; display:grid; grid-template-columns:1fr 252px; gap:52px; align-items:start; }
+
+        /* Article */
+        .article p { font-size:1.04rem; line-height:1.84; color:var(--ink-mid); margin-bottom:20px; }
+        .article ul, .article ol { margin-left:22px; margin-bottom:18px; }
+        .article li { font-size:1rem; line-height:1.78; color:var(--ink-mid); margin-bottom:8px; }
+        .article strong { font-style:normal; font-weight:700; color:var(--ink); }
+        .article h2 { font-family:'Red Hat Display',sans-serif; font-size:1.6rem; font-weight:900; letter-spacing:-0.02em; color:var(--ink); margin:52px 0 18px; line-height:1.15; }
+        .article h2:first-child { margin-top:0; }
+        .article h3 { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:1.05rem; color:var(--coral); margin:28px 0 12px; letter-spacing:-0.01em; }
+
+        /* Lead */
+        .lead { font-size:1.15rem !important; line-height:1.76 !important; color:var(--ink-mid) !important; margin-bottom:32px !important; }
+
+        /* Do/don't */
+        .panels { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:22px 0; }
+        .panel { border-radius:6px; padding:20px; }
+        .panel-bad { background:#fef4f1; border-left:3px solid #e85840; }
+        .panel-good { background:#f0f9f4; border-left:3px solid #2a9d5c; }
+        .p-lbl { font-family:'Red Hat Display',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:10px; }
+        .panel-bad .p-lbl { color:#c02020; }
+        .panel-good .p-lbl { color:var(--green); }
+        .panel p { font-size:0.93rem !important; line-height:1.62 !important; margin:0 !important; color:var(--ink-mid) !important; }
+        .panel-ex { font-style:italic; background:rgba(0,0,0,0.04); border-radius:4px; padding:9px 13px; margin-top:10px; font-size:0.88rem !important; }
+
+        /* Callout highlight */
+        .callout { background:var(--coral-dim); border-left:3px solid var(--coral); border-radius:4px; padding:18px 22px; margin:22px 0; }
+        .callout p { font-size:0.97rem !important; color:var(--ink-mid) !important; margin:0 !important; }
+
+        /* Channel table */
+        .channel-table { width:100%; border-collapse:collapse; margin:20px 0; border:1px solid var(--warm-border); border-radius:8px; overflow:hidden; }
+        .channel-table th { background:var(--ink); color:rgba(255,255,255,0.7); font-family:'Red Hat Display',sans-serif; font-size:0.74rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:12px 14px; text-align:left; }
+        .channel-table td { padding:12px 14px; border-bottom:1px solid var(--warm-border); font-size:0.91rem; line-height:1.55; vertical-align:top; color:var(--ink-mid); }
+        .channel-table tbody tr:last-child td { border-bottom:none; }
+        .channel-table tbody tr:nth-child(even) { background:#fdf9f5; }
+        .channel-table td:first-child { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.88rem; color:var(--ink); white-space:nowrap; }
+        .rate-ok { color:var(--green); font-weight:700; font-family:'Red Hat Display',sans-serif; font-size:0.85rem; }
+        .rate-mid { color:var(--amber); font-weight:700; font-family:'Red Hat Display',sans-serif; font-size:0.85rem; }
+
+        /* Timing grid */
+        .timing { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0; }
+        .t-card { background:var(--warm); border:1px solid var(--warm-border); border-radius:6px; padding:18px 20px; }
+        .t-lbl { font-family:'Red Hat Display',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:10px; }
+        .t-avoid .t-lbl { color:var(--red); }
+        .t-best .t-lbl { color:var(--green); }
+        .t-list { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .t-list li { font-size:0.89rem; color:var(--ink-mid); padding-left:16px; position:relative; line-height:1.5; }
+        .t-avoid .t-list li::before { content:'×'; position:absolute; left:0; color:var(--red); font-weight:700; }
+        .t-best .t-list li::before { content:'✓'; position:absolute; left:0; color:var(--green); font-weight:700; }
+
+        /* Question hierarchy */
+        .q-hierarchy { margin:20px 0; display:flex; flex-direction:column; gap:10px; }
+        .q-tier { background:var(--warm); border:1px solid var(--warm-border); border-radius:6px; padding:16px 20px; display:flex; align-items:flex-start; gap:16px; }
+        .q-tier-badge { font-family:'Red Hat Display',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; border-radius:3px; padding:3px 8px; white-space:nowrap; flex-shrink:0; margin-top:2px; }
+        .q-must { background:#f0f9f4; color:var(--green); border:1px solid #bbf7d0; }
+        .q-should { background:var(--amber-dim); color:var(--amber); border:1px solid rgba(232,147,10,0.3); }
+        .q-nice { background:var(--warm-mid); color:var(--ink-soft); border:1px solid var(--warm-border); }
+        .q-tier-content {}
+        .q-tier-title { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.9rem; color:var(--ink); margin-bottom:4px; }
+        .q-tier-desc { font-size:0.88rem; color:var(--ink-soft); line-height:1.55; }
+
+        /* Loop diagram */
+        .loop { margin:22px 0; display:flex; flex-direction:column; }
+        .loop-item { display:flex; align-items:flex-start; gap:16px; position:relative; }
+        .loop-item:not(:last-child)::after { content:''; position:absolute; left:19px; top:40px; width:2px; height:24px; background:linear-gradient(to bottom,var(--coral),transparent); }
+        .loop-icon { width:40px; height:40px; background:var(--coral-dim); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.05rem; flex-shrink:0; border:1px solid rgba(217,79,43,0.2); }
+        .loop-body { padding:8px 0 22px; }
+        .loop-title { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.94rem; color:var(--ink); margin-bottom:2px; }
+        .loop-desc { font-size:0.85rem; color:var(--ink-soft); }
+
+        /* Avoid question patterns */
+        .avoid-list { background:var(--warm); border:1px solid var(--warm-border); border-radius:6px; overflow:hidden; margin:20px 0; }
+        .avoid-item { padding:14px 18px; border-bottom:1px solid var(--warm-border); display:flex; align-items:flex-start; gap:12px; }
+        .avoid-item:last-child { border-bottom:none; }
+        .avoid-icon { color:var(--red); font-weight:900; font-family:'Red Hat Display',sans-serif; font-size:0.9rem; flex-shrink:0; margin-top:2px; }
+        .avoid-content {}
+        .avoid-type { font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.82rem; color:var(--ink); margin-bottom:2px; }
+        .avoid-bad { font-size:0.85rem; color:var(--red); font-style:italic; margin-bottom:2px; }
+        .avoid-good { font-size:0.85rem; color:var(--green); font-style:italic; }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:#fff; border:1px solid var(--warm-border); border-radius:6px; overflow:hidden; }
+        details.faq[open] { border-color:var(--coral); }
+        details.faq summary { padding:16px 20px; font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.95rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--coral); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .faq-ans { padding:4px 20px 18px; font-size:0.94rem; line-height:1.78; color:var(--ink-mid); }
+
+        /* CTA */
+        .cta { background:var(--ink); border-radius:8px; padding:36px 32px; text-align:center; margin:52px 0; position:relative; overflow:hidden; }
+        .cta::before { content:''; position:absolute; top:-80px; left:-40px; width:300px; height:300px; background:radial-gradient(circle,rgba(217,79,43,0.18) 0%,transparent 70%); }
+        .cta::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--coral),var(--amber),var(--coral)); }
+        .cta h3 { font-family:'Red Hat Display',sans-serif; font-weight:900; font-size:1.5rem; color:#fff; margin-bottom:10px; position:relative; letter-spacing:-0.01em; }
+        .cta p { font-size:0.94rem; color:rgba(255,255,255,0.6); margin-bottom:22px; position:relative; }
+        .cta-btn { display:inline-block; background:var(--coral); color:#fff; font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.88rem; letter-spacing:0.04em; padding:13px 28px; border-radius:4px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(217,79,43,0.4); background:var(--coral-lt); }
+
+        /* Sidebar */
+        .sidebar { position:sticky; top:64px; display:flex; flex-direction:column; gap:14px; }
+        .toc-card { background:#fff; border:1px solid var(--warm-border); border-radius:6px; overflow:hidden; }
+        .toc-head { background:var(--ink); padding:13px 18px; }
+        .toc-head span { font-family:'Red Hat Display',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
+        .toc-links { list-style:none; padding:6px 0; }
+        .toc-links a { display:block; padding:8px 18px; font-family:'Red Hat Display',sans-serif; font-size:0.82rem; font-weight:500; color:var(--ink-soft); text-decoration:none; border-left:2px solid transparent; transition:all 0.15s; }
+        .toc-links a:hover, .toc-links a.active { color:var(--coral); background:var(--coral-dim); border-left-color:var(--coral); }
+
+        .rates-card { background:#fff; border:1px solid var(--warm-border); border-radius:6px; padding:18px; }
+        .rates-title { font-family:'Red Hat Display',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; }
+        .rate-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding:6px 0; border-bottom:1px solid var(--warm-border); }
+        .rate-row:last-child { border-bottom:none; }
+        .rate-channel { font-size:0.8rem; color:var(--ink-mid); font-family:'Red Hat Display',sans-serif; font-weight:500; }
+        .rate-pct { font-family:'Red Hat Display',sans-serif; font-size:0.82rem; font-weight:700; color:var(--coral); }
+
+        .sb-cta { background:var(--coral); border-radius:6px; padding:18px; text-align:center; }
+        .sb-cta p { font-family:'Red Hat Display',sans-serif; font-size:0.83rem; color:rgba(255,255,255,0.85); font-weight:600; line-height:1.5; margin-bottom:12px; }
+        .sb-cta a { display:block; background:#fff; color:var(--coral); font-family:'Red Hat Display',sans-serif; font-weight:700; font-size:0.8rem; padding:10px; border-radius:4px; text-decoration:none; transition:box-shadow 0.15s; }
+        .sb-cta a:hover { box-shadow:0 4px 14px rgba(0,0,0,0.2); }
+
+        .sb-related { background:#fff; border:1px solid var(--warm-border); border-radius:6px; padding:16px; }
+        .sb-related-hd { font-family:'Red Hat Display',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:10px; }
+        .sb-related ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+        .sb-related a { font-family:'Red Hat Display',sans-serif; font-size:0.82rem; font-weight:500; color:var(--coral); text-decoration:none; }
+        .sb-related a:hover { text-decoration:underline; }
+
+        /* Footer */
+        .footer { background:var(--ink); color:rgba(255,255,255,0.4); padding:40px 24px; text-align:center; }
+        .footer-logo { font-family:'Red Hat Display',sans-serif; font-weight:900; font-size:1rem; color:#fff; margin-bottom:6px; letter-spacing:-0.01em; }
+        .footer p { font-size:0.84rem; margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:20px; }
+        .footer-links a { font-family:'Red Hat Display',sans-serif; font-size:0.78rem; font-weight:500; color:rgba(255,255,255,0.5); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+        .footer-copy { font-size:0.76rem !important; }
+
+        /* Mobile */
+        @media (max-width:860px) {
+            .page { grid-template-columns:1fr; padding-top:32px; }
+            .sidebar { position:static; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+            .panels, .timing { grid-template-columns:1fr; }
+            .channel-table { font-size:0.85rem; }
+        }
+        @media (max-width:540px) { .sidebar { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Guide</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Create a survey &rarr;</a>
+</nav>
+
+<header class="hero">
+    <div class="hero-blob"></div>
+    <div class="hero-accent"></div>
+    <div class="hero-inner">
+        <p class="hero-eyebrow">Customer Surveys &middot; Best Practices</p>
+        <h1>How to Survey Customers<br><em>Without Annoying Them</em></h1>
+        <p class="hero-sub">Most customer surveys get ignored not because customers are busy — but because the surveys deserve to be ignored. This guide fixes that.</p>
+        <div class="hero-stat-row">
+            <div class="hero-stat">
+                <div class="hero-stat-n">48h</div>
+                <div class="hero-stat-l">Maximum delay to send</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-n">5 min</div>
+                <div class="hero-stat-l">Survey length limit</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-n">3–5</div>
+                <div class="hero-stat-l">Ideal question count</div>
+            </div>
+        </div>
+        <div class="hero-meta">
+            <span>By <strong>VoteGenerator</strong></span>
+            <span>Published <strong>11 April 2026</strong></span>
+            <span><strong>7 min</strong> read</span>
+        </div>
+    </div>
+</header>
+
+<div class="page">
+<main class="article" id="article">
+
+    <p class="lead">Customers do not ignore surveys because they do not want to share feedback. They ignore them because surveys have trained them that feedback goes nowhere. Here is how to build surveys worth completing — and a feedback loop worth trusting.</p>
+
+    <!-- Why surveys fail -->
+    <h2 id="why-ignored">Why Most Customer Surveys Get Ignored</h2>
+    <p>A survey that arrives two weeks after a purchase. A survey with 20 questions when you need five. A survey asking about things you have already decided. A survey whose results are never communicated back. Customers learn the pattern quickly: surveys are theater, not genuine listening.</p>
+    <p>The antidote is simple in principle and hard to execute consistently: send surveys at the right moment, keep them short enough to complete in two minutes, ask only what you will genuinely act on, and then close the loop by showing customers their feedback changed something.</p>
+
+    <!-- Timing -->
+    <h2 id="timing">Timing: When to Ask</h2>
+
+    <h3>The 48-hour rule</h3>
+    <p>Send surveys within 24–48 hours of the experience you are measuring. Purchase? Send within 24 hours. Support ticket closed? Send within an hour. Event ended? Send the next morning. The experience needs to be vivid and emotions still engaged. Response rates fall 20–30% for every day of delay past 48 hours.</p>
+
+    <div class="callout">
+        <p><strong>Best practice — trigger-based sending:</strong> Do not send surveys on a schedule. Send them triggered by customer actions. When a support ticket closes, queue a survey automatically. When a purchase completes, send the next morning. Triggered surveys consistently get 2–3x better response rates than batch sends.</p>
+    </div>
+
+    <div class="timing">
+        <div class="t-card t-avoid">
+            <div class="t-lbl">Avoid</div>
+            <ul class="t-list">
+                <li>Monday mornings — inbox overload</li>
+                <li>Friday afternoons — mentally checked out</li>
+                <li>Holidays and quiet periods</li>
+                <li>During known product issues</li>
+                <li>Right after complaints or escalations</li>
+                <li>Right after a price increase</li>
+            </ul>
+        </div>
+        <div class="t-card t-best">
+            <div class="t-lbl">Best Times</div>
+            <ul class="t-list">
+                <li>Tuesday through Thursday</li>
+                <li>Mid-morning (9–11am) or mid-afternoon</li>
+                <li>Immediately after a positive interaction</li>
+                <li>Same day as or morning after purchase</li>
+                <li>One hour after a support ticket closes</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Length -->
+    <h2 id="length">Length: How Much Is Too Much</h2>
+
+    <h3>The 5-minute ceiling</h3>
+    <p>Response rates fall sharply beyond 5 minutes. A 3-question survey might see 40% completion. A 10-question survey drops to 15%. A 20-question survey to 5%. Length kills participation more reliably than any other factor — more than topic, incentives, or channel.</p>
+    <p>This does not mean avoiding depth. It means being ruthless about what makes the cut. If a question will not change a decision or inform an action, it should not be in the survey.</p>
+
+    <div class="q-hierarchy">
+        <div class="q-tier">
+            <span class="q-tier-badge q-must">Must have</span>
+            <div class="q-tier-content">
+                <div class="q-tier-title">One core question</div>
+                <div class="q-tier-desc">"How satisfied were you?" or "How likely to recommend us?" — one question that directly measures what matters. This is the only non-negotiable.</div>
+            </div>
+        </div>
+        <div class="q-tier">
+            <span class="q-tier-badge q-should">Should have</span>
+            <div class="q-tier-content">
+                <div class="q-tier-title">One contextual follow-up</div>
+                <div class="q-tier-desc">"What is the main reason for your rating?" or "What could we improve?" — adds diagnostic value without adding significant time.</div>
+            </div>
+        </div>
+        <div class="q-tier">
+            <span class="q-tier-badge q-nice">Nice to have</span>
+            <div class="q-tier-content">
+                <div class="q-tier-title">Additional questions if engagement is high</div>
+                <div class="q-tier-desc">Product-specific questions, segment identifiers, or deeper open-ended prompts. Add only if your audience has demonstrated willingness to engage.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panels">
+        <div class="panel panel-bad">
+            <div class="p-lbl">What to avoid</div>
+            <p>Creating a survey because you have 30 questions you are curious about, then adding a progress bar to make it feel shorter. Customers feel the length regardless.</p>
+        </div>
+        <div class="panel panel-good">
+            <div class="p-lbl">What works</div>
+            <p>Starting with the two questions you cannot live without. If you later discover you need more depth, send a second, separate survey to customers who indicated willingness to help.</p>
+        </div>
+    </div>
+
+    <!-- Channel -->
+    <h2 id="channel">Channel: Where to Reach Customers</h2>
+    <p>Different channels suit different moments in the customer journey. Use the one that matches context — not the one that is easiest to set up.</p>
+
+    <table class="channel-table">
+        <thead>
+            <tr>
+                <th>Channel</th>
+                <th>Response Rate</th>
+                <th>Best For</th>
+                <th>Key Tip</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Email</td>
+                <td><span class="rate-mid">5–20%</span></td>
+                <td>Most businesses, post-purchase</td>
+                <td>Subject line matters. Be specific: "3 quick questions about your order" beats "We value your feedback."</td>
+            </tr>
+            <tr>
+                <td>In-app / website</td>
+                <td><span class="rate-ok">20–40%</span></td>
+                <td>SaaS, apps, any digital product</td>
+                <td>Survey after the user completes an action, not during. Maximum 2–3 questions. Always dismissable.</td>
+            </tr>
+            <tr>
+                <td>SMS</td>
+                <td><span class="rate-ok">30–60%</span></td>
+                <td>Opt-in SMS audiences, high-value customers</td>
+                <td>Only for opt-in lists. Keep to 1–2 questions maximum. Use a shortened survey link.</td>
+            </tr>
+            <tr>
+                <td>Post-purchase QR</td>
+                <td><span class="rate-mid">5–15%</span></td>
+                <td>Physical products, packaging inserts</td>
+                <td>QR code plus a very short URL. Maximum 2 questions. Small incentive helps (10% off next order).</td>
+            </tr>
+            <tr>
+                <td>Social media poll</td>
+                <td>Varies widely</td>
+                <td>Quick pulse checks, brand engagement</td>
+                <td>Treat as engagement tool, not primary research. One question only. Data skews toward active followers.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <p><strong>Do not pick one channel.</strong> Email works for broad coverage. In-app catches customers in the moment. SMS reaches high-value customers immediately. Layer them based on context — each has different strengths and optimal use cases.</p>
+    </div>
+
+    <!-- Questions -->
+    <h2 id="questions">Questions: What to Actually Ask</h2>
+
+    <h3>The one-question survey</h3>
+    <p>If you ask only one question, ask: "How likely are you to recommend us to a friend or colleague?" on a 0–10 scale. This single question correlates with retention, churn risk, and revenue growth more reliably than longer surveys. Customers who score 9–10 are promoters. Those who score 0–6 are at risk of churning or recommending against you.</p>
+
+    <h3>The three-question survey</h3>
+    <p>For most customer survey use cases, three questions are optimal. One core metric — satisfaction or likelihood to recommend. One follow-up for context — "What is the main reason for your rating?" One action prompt — "What could we improve?" This structure takes 3–4 minutes and gives you quantitative data plus qualitative direction.</p>
+
+    <h3>Question patterns to avoid</h3>
+    <div class="avoid-list">
+        <div class="avoid-item">
+            <div class="avoid-icon">✕</div>
+            <div class="avoid-content">
+                <div class="avoid-type">Leading questions</div>
+                <div class="avoid-bad">"Was our support team helpful and friendly?"</div>
+                <div class="avoid-good">"How would you describe your experience with our support team?"</div>
+            </div>
+        </div>
+        <div class="avoid-item">
+            <div class="avoid-icon">✕</div>
+            <div class="avoid-content">
+                <div class="avoid-type">Double-barrelled questions</div>
+                <div class="avoid-bad">"How satisfied were you with price and quality?"</div>
+                <div class="avoid-good">Split into two separate questions if both genuinely matter.</div>
+            </div>
+        </div>
+        <div class="avoid-item">
+            <div class="avoid-icon">✕</div>
+            <div class="avoid-content">
+                <div class="avoid-type">Questions you cannot act on</div>
+                <div class="avoid-bad">"How much do you love our brand?"</div>
+                <div class="avoid-good">Only ask what will change a decision or inform an action.</div>
+            </div>
+        </div>
+        <div class="avoid-item">
+            <div class="avoid-icon">✕</div>
+            <div class="avoid-content">
+                <div class="avoid-type">Corporate jargon</div>
+                <div class="avoid-bad">"How do you assess our omnichannel value proposition?"</div>
+                <div class="avoid-good">Use the same language your customers use when talking to you.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incentives -->
+    <h2 id="incentives">Incentives: Should You Offer Them?</h2>
+
+    <p>Incentives — discounts, prize draws, gift cards — boost completion rates by 10–30%. A $5 credit can push response from 15% to 25%. Whether that is worth it depends on your margins and survey value.</p>
+
+    <div class="panels">
+        <div class="panel panel-good">
+            <div class="p-lbl">Use incentives when</div>
+            <p>The survey is longer than 5 minutes, you are surveying B2B customers whose time is expensive, the topic is sensitive or involves complaints, or response rate is genuinely critical to the survey's validity.</p>
+        </div>
+        <div class="panel panel-bad">
+            <div class="p-lbl">Skip incentives when</div>
+            <p>The survey is sent immediately after a positive interaction, it is under 3 minutes, you are surveying loyal customers, or it is an in-app survey where the customer is already engaged.</p>
+        </div>
+    </div>
+
+    <p>The most reliable response rate booster is not an incentive — it is timing. A well-timed 2-minute survey sent within an hour of a positive interaction will outperform an incentivised survey sent a week later.</p>
+
+    <!-- Follow-up -->
+    <h2 id="follow-up">Closing the Loop</h2>
+
+    <p>This is where most businesses fail. They collect feedback, review it internally, and move on. Customers notice when nothing changes. They stop completing future surveys.</p>
+
+    <div class="loop">
+        <div class="loop-item">
+            <div class="loop-icon">📋</div>
+            <div class="loop-body">
+                <div class="loop-title">Ask</div>
+                <div class="loop-desc">Send a focused, timely survey with a clear purpose stated in the invitation</div>
+            </div>
+        </div>
+        <div class="loop-item">
+            <div class="loop-icon">👂</div>
+            <div class="loop-body">
+                <div class="loop-title">Listen</div>
+                <div class="loop-desc">Analyse results within a week — group themes from open-ended responses</div>
+            </div>
+        </div>
+        <div class="loop-item">
+            <div class="loop-icon">📢</div>
+            <div class="loop-body">
+                <div class="loop-title">Share Results</div>
+                <div class="loop-desc">Tell customers what they said — "78% of you told us shipping was too slow"</div>
+            </div>
+        </div>
+        <div class="loop-item">
+            <div class="loop-icon">🔧</div>
+            <div class="loop-body">
+                <div class="loop-title">Take Action</div>
+                <div class="loop-desc">Make changes based on the feedback — even small visible ones build trust</div>
+            </div>
+        </div>
+        <div class="loop-item" style="margin-bottom:0;">
+            <div class="loop-icon">📣</div>
+            <div class="loop-body" style="padding-bottom:0;">
+                <div class="loop-title">Communicate the Change</div>
+                <div class="loop-desc">"You told us X, so we did Y" — in a newsletter, in-app message, or email</div>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top:22px;">This cycle builds trust and response rates improve with each iteration. Customers who saw their previous feedback result in a change complete the next survey with genuine engagement rather than resignation.</p>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Ready to Survey Your Customers?</h3>
+        <p>Create a free customer survey in under a minute. No signup required from anyone.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create Your Survey Free &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>How long should a customer survey be?</summary>
+            <div class="faq-ans">Keep surveys to 3 to 5 minutes maximum. A 3-question survey might see 40% completion; a 10-question survey drops to 15%. If you genuinely need more information, send multiple short surveys over time — spaced across different interactions — rather than one long one that customers abandon.</div>
+        </details>
+        <details class="faq">
+            <summary>When is the best time to send a customer survey?</summary>
+            <div class="faq-ans">Within 24 to 48 hours of the experience you are measuring. For support interactions, send within an hour of resolution. Mid-week (Tuesday through Thursday) mornings tend to get the best response rates. The most important factor is recency — the experience needs to be fresh for the feedback to be accurate and for the customer to feel motivated to respond.</div>
+        </details>
+        <details class="faq">
+            <summary>Should I offer incentives for completing a customer survey?</summary>
+            <div class="faq-ans">Incentives help with longer surveys or harder-to-reach audiences, but they are not necessary for short, well-timed surveys sent right after positive interactions. The most reliable response rate improvement comes from timing — a survey sent immediately after a positive purchase will consistently outperform a longer, incentivised survey sent a week later.</div>
+        </details>
+        <details class="faq">
+            <summary>What response rate should I expect?</summary>
+            <div class="faq-ans">Email surveys typically get 5 to 20% response rates. Post-purchase or in-app surveys get 20 to 40%. SMS surveys to opt-in audiences can reach 30 to 60%. Do not obsess over hitting a specific response rate — focus on the quality of the feedback you receive and whether you are actually acting on it. A 15% response rate from the right customers is more valuable than 50% from disengaged ones.</div>
+        </details>
+        <details class="faq">
+            <summary>How do I improve my survey response rate?</summary>
+            <div class="faq-ans">The three most impactful improvements: send within 24 hours of the interaction, reduce length to under 3 questions, and use a subject line that states specifically what you are asking about. Trigger-based sending — where surveys fire automatically after transactions — consistently outperforms scheduled batch sends by 2 to 3 times.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I survey customers too frequently?</summary>
+            <div class="faq-ans">Yes. Survey fatigue is real. If customers are receiving surveys after every minor interaction, response rates will fall and they may mention the surveys themselves as a negative in their feedback. Survey after meaningful interactions — purchase, support resolution, onboarding completion. For frequent interactions, use quarterly pulse surveys rather than surveying every time.</div>
+        </details>
+    </div>
+
+</main>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="toc-card">
+        <div class="toc-head"><span>In This Guide</span></div>
+        <ul class="toc-links" id="toc-links">
+            <li><a href="#why-ignored">Why Surveys Get Ignored</a></li>
+            <li><a href="#timing">Timing</a></li>
+            <li><a href="#length">Length</a></li>
+            <li><a href="#channel">Channel</a></li>
+            <li><a href="#questions">Questions</a></li>
+            <li><a href="#incentives">Incentives</a></li>
+            <li><a href="#follow-up">Closing the Loop</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </div>
+
+    <div class="rates-card">
+        <div class="rates-title">Typical Response Rates</div>
+        <div class="rate-row"><span class="rate-channel">SMS (opt-in)</span><span class="rate-pct">30–60%</span></div>
+        <div class="rate-row"><span class="rate-channel">In-app / website</span><span class="rate-pct">20–40%</span></div>
+        <div class="rate-row"><span class="rate-channel">Email</span><span class="rate-pct">5–20%</span></div>
+        <div class="rate-row"><span class="rate-channel">Post-purchase QR</span><span class="rate-pct">5–15%</span></div>
+    </div>
+
+    <div class="sb-cta">
+        <p>Create a free survey in under a minute — no signup needed</p>
+        <a href="https://votegenerator.com/create">Create Your Survey &rarr;</a>
+    </div>
+
+    <div class="sb-related">
+        <div class="sb-related-hd">Related Guides</div>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/customer-satisfaction-survey.html">25 CSAT Questions + Templates</a></li>
+            <li><a href="https://votegenerator.com/blog/nps-survey-guide.html">NPS Survey Guide</a></li>
+            <li><a href="https://votegenerator.com/blog/how-to-create-a-survey.html">How to Create a Survey</a></li>
+            <li><a href="https://votegenerator.com/blog/quick-survey-guide.html">Quick Survey Guide</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Create free polls and surveys in seconds. No signup required.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Survey</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p class="footer-copy">&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+    const bar = document.getElementById('prog');
+    window.addEventListener('scroll', () => {
+        const d = document.documentElement;
+        bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+    });
+
+    const links = document.querySelectorAll('#toc-links a');
+    const targets = Array.from(links).map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                links.forEach(l => l.classList.remove('active'));
+                const a = document.querySelector(`#toc-links a[href="#${e.target.id}"]`);
+                if (a) a.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    targets.forEach(t => obs.observe(t));
+</script>
+</body>
+</html>

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Survey: How to Get Instant Feedback in 3 Steps</title>
+    <meta name="description" content="Create a quick survey and start collecting responses in under 30 seconds. Free templates, instant sharing via link or QR code. No signup needed.">
+    <meta name="keywords" content="quick survey, quick survey maker, instant survey, fast survey tool, quick poll, quick feedback">
+    <link rel="canonical" href="https://votegenerator.com/blog/quick-survey-guide">
+    <meta property="og:title" content="Quick Survey: How to Get Instant Feedback in 3 Steps">
+    <meta property="og:description" content="Create a quick survey and start collecting responses in under 30 seconds. Free templates, instant sharing via link or QR code.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/quick-survey-guide">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Quick Survey: How to Get Instant Feedback in 3 Steps","description":"Create a quick survey and start collecting responses in under 30 seconds. Free templates, instant sharing via link or QR code.","author":{"@type":"Organization","name":"VoteGenerator"},"publisher":{"@type":"Organization","name":"VoteGenerator"},"datePublished":"2026-03-10"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How fast can I create a quick survey?","acceptedAnswer":{"@type":"Answer","text":"With VoteGenerator, you can create and share a survey in under 30 seconds. No signup, no account, no setup. Type your question, pick your answer options, and get a shareable link immediately."}},{"@type":"Question","name":"Can I share a quick survey via QR code?","acceptedAnswer":{"@type":"Answer","text":"Yes. VoteGenerator generates a QR code for every survey automatically. Scan it with any phone camera and participants can respond instantly without typing in a URL."}},{"@type":"Question","name":"Do respondents need to create an account?","acceptedAnswer":{"@type":"Answer","text":"No. Respondents click your link or scan your QR code and answer immediately. No email, password, signup, or account creation required."}},{"@type":"Question","name":"Can I see results while the survey is live?","acceptedAnswer":{"@type":"Answer","text":"Yes. VoteGenerator shows real-time results as responses come in. Watch the live dashboard to see feedback accumulate in real-time during an event or meeting."}},{"@type":"Question","name":"What types of quick surveys can I create?","acceptedAnswer":{"@type":"Answer","text":"Common quick surveys include event feedback, product feedback, yes/no decisions, rating questions, multiple choice polls, preference surveys, and NPS questions."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --sky: #0369a1;
+            --sky-mid: #0284c7;
+            --sky-pale: #f0f9ff;
+            --sky-border: #bae6fd;
+            --amber: #b45309;
+            --amber-pale: #fffbeb;
+            --amber-border: #fde68a;
+            --red: #dc2626;
+            --green: #059669;
+            --green-pale: #ecfdf5;
+            --ink: #0f172a;
+            --body: #334155;
+            --muted: #64748b;
+            --light: #94a3b8;
+            --rule: #e2e8f0;
+            --bg: #f8fafc;
+            --paper: #ffffff;
+            --nav-bg: #0f172a;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--body); line-height: 1.75; font-size: 17px; }
+
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--sky), #38bdf8); transform-origin: left; transform: scaleX(0); z-index: 300; transition: transform 0.08s linear; }
+
+        /* ====== NAV ====== */
+        .nav { position: sticky; top: 0; z-index: 200; background: var(--nav-bg); }
+        .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-brand img { height: 28px; width: auto; }
+        .nav-brand-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: white; letter-spacing: -0.01em; }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-link { color: rgba(255,255,255,0.45); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+        .nav-link:hover { color: white; }
+        .nav-cta { background: var(--sky-mid); color: white; padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
+        .nav-cta:hover { background: var(--sky); }
+
+        /* ====== HERO ====== */
+        .hero { background: var(--nav-bg); padding: 80px 32px 72px; position: relative; overflow: hidden; }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -120px; right: -120px;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(3,105,161,0.25) 0%, transparent 70%);
+        }
+        .hero-inner { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
+        .hero-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        .hero-pill { background: rgba(3,105,161,0.25); border: 1px solid rgba(14,165,233,0.4); color: #7dd3fc; padding: 4px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+        .hero-date { font-size: 13px; color: rgba(255,255,255,0.35); }
+        .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: white; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; }
+        .hero h1 em { font-style: italic; color: #7dd3fc; }
+        .hero-deck { font-size: 18px; color: rgba(255,255,255,0.55); line-height: 1.65; margin-bottom: 36px; }
+        .hero-cta { display: inline-flex; align-items: center; gap: 8px; background: var(--sky-mid); color: white; padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 16px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-cta:hover { background: var(--sky); transform: translateY(-2px); }
+        .hero-meta { margin-top: 18px; font-size: 13px; color: rgba(255,255,255,0.3); }
+
+        /* ====== PAGE BODY ====== */
+        .page-wrap { max-width: 1280px; margin: 0 auto; padding: 64px 32px; display: grid; grid-template-columns: 1fr 268px; gap: 80px; align-items: start; }
+
+        /* ====== ARTICLE ====== */
+        .article { min-width: 0; }
+
+        /* Intro */
+        .intro-block { font-size: 18px; line-height: 1.85; color: var(--body); border-left: 4px solid var(--sky); padding: 0 0 0 24px; margin-bottom: 52px; }
+        .intro-block p { margin-bottom: 16px; }
+        .intro-block p:last-child { margin-bottom: 0; }
+
+        /* Section */
+        .section { margin-bottom: 60px; }
+        .section-header { margin-bottom: 24px; }
+        .section h2 { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 4px; scroll-margin-top: 76px; }
+        .section-desc { font-size: 16px; color: var(--muted); }
+        .section p { font-size: 17px; color: var(--body); line-height: 1.8; margin-bottom: 18px; }
+        .section p:last-child { margin-bottom: 0; }
+        strong { color: var(--ink); font-weight: 600; }
+        .section a { color: var(--sky); }
+
+        /* ====== WHEN GRID ====== */
+        .when-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+        .when-item { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 18px 16px; }
+        .when-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+        .when-item h4 { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+        .when-item p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.55; }
+
+        /* ====== STEPS ====== */
+        .steps-section { margin-bottom: 60px; }
+        .steps-section h2 { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 8px; scroll-margin-top: 76px; }
+        .steps-section > p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
+
+        .step { display: grid; grid-template-columns: 56px 1fr; gap: 28px; margin-bottom: 12px; position: relative; }
+        .step + .step::before {
+            content: '';
+            position: absolute;
+            left: 27px; top: -12px;
+            width: 2px; height: 12px;
+            background: var(--rule);
+        }
+        .step-num-col { display: flex; flex-direction: column; align-items: center; }
+        .step-num { width: 56px; height: 56px; border-radius: 16px; background: var(--sky); display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0; }
+        .step-body { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; padding: 28px 28px 24px; }
+        .step-title { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 700; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.01em; }
+        .step-body p { font-size: 16px; color: var(--body); margin-bottom: 14px; line-height: 1.75; }
+        .step-body p:last-child { margin-bottom: 0; }
+        .step-body h4 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sky); margin: 20px 0 10px; }
+
+        /* Step inner pill grid */
+        .qtype-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .qtype-pill { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; font-size: 14px; background: var(--bg); }
+        .qtype-pill span { font-weight: 700; color: var(--sky); margin-right: 4px; }
+
+        /* Good/bad table */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+        .ex { border-radius: 10px; padding: 14px 16px; }
+        .ex.good { background: var(--green-pale); border: 1px solid #a7f3d0; }
+        .ex.bad { background: #fef2f2; border: 1px solid #fecaca; }
+        .ex-hd { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+        .ex.good .ex-hd { color: var(--green); }
+        .ex.bad .ex-hd { color: var(--red); }
+        .ex ul { list-style: none; }
+        .ex ul li { font-size: 13px; color: var(--body); padding: 5px 0 5px 18px; position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); line-height: 1.5; }
+        .ex ul li:last-child { border-bottom: none; }
+        .ex.good ul li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+        .ex.bad ul li::before { content: '✗'; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+
+        /* Share options */
+        .share-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+        .share-opt { border-radius: 12px; padding: 18px 16px; }
+        .share-opt.link { background: var(--sky-pale); border: 1px solid var(--sky-border); }
+        .share-opt.qr { background: var(--amber-pale); border: 1px solid var(--amber-border); }
+        .share-opt-hd { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+        .share-opt.link .share-opt-hd { color: var(--sky); }
+        .share-opt.qr .share-opt-hd { color: var(--amber); }
+        .share-opt ul { list-style: none; }
+        .share-opt ul li { font-size: 13px; color: var(--body); padding: 4px 0 4px 16px; position: relative; }
+        .share-opt ul li::before { content: '·'; position: absolute; left: 2px; color: var(--sky); font-size: 18px; line-height: 1; top: 1px; }
+        .share-opt.qr ul li::before { color: var(--amber); }
+
+        /* ====== TEMPLATES SECTION ====== */
+        .templates-section { margin-bottom: 60px; }
+        .templates-section h2 { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 8px; scroll-margin-top: 76px; }
+        .templates-section > p { font-size: 17px; color: var(--muted); margin-bottom: 28px; }
+
+        .template-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-bottom: 12px; transition: box-shadow 0.15s; }
+        .template-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        .tc-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--rule); }
+        .tc-left { display: flex; align-items: center; gap: 12px; }
+        .tc-n { width: 28px; height: 28px; border-radius: 7px; background: var(--sky-pale); border: 1px solid var(--sky-border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--sky); flex-shrink: 0; }
+        .tc-title { font-weight: 700; font-size: 15px; color: var(--ink); }
+        .tc-use-tag { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--bg); border: 1px solid var(--rule); padding: 3px 10px; border-radius: 100px; white-space: nowrap; }
+        .copy-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--sky-pale); border: 1px solid var(--sky-border); color: var(--sky); padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; font-family: 'Jost', sans-serif; white-space: nowrap; }
+        .copy-btn:hover { background: var(--sky); color: white; border-color: var(--sky); }
+        .copy-btn.copied { background: var(--green-pale); border-color: #a7f3d0; color: var(--green); }
+        .copy-btn svg { flex-shrink: 0; }
+        .tc-content { padding: 18px 20px; }
+        .tc-question { font-family: 'Fraunces', serif; font-size: 16px; font-style: italic; color: var(--ink); margin-bottom: 12px; line-height: 1.5; }
+        .tc-options { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .tc-opt { background: var(--bg); border: 1px solid var(--rule); border-radius: 6px; padding: 4px 12px; font-size: 13px; color: var(--body); }
+        .tc-note { font-size: 13px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--rule); padding-top: 10px; margin-top: 2px; }
+
+        /* ====== TIPS ====== */
+        .tips-section { margin-bottom: 60px; }
+        .tips-section h2 { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 8px; scroll-margin-top: 76px; }
+        .tips-section > p { font-size: 17px; color: var(--muted); margin-bottom: 28px; }
+
+        .tips-list { display: flex; flex-direction: column; gap: 8px; }
+        .tip { display: flex; gap: 18px; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 20px 20px; }
+        .tip-icon { font-size: 24px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+        .tip-text h4 { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+        .tip-text p { font-size: 15px; color: var(--muted); margin: 0; line-height: 1.65; }
+
+        /* ====== CTA BLOCKS ====== */
+        .cta-strip { background: var(--sky-pale); border: 1px solid var(--sky-border); border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 40px 0; flex-wrap: wrap; }
+        .cta-strip p { font-size: 16px; font-weight: 600; color: var(--sky); margin: 0; font-family: 'Fraunces', serif; }
+        .cta-strip a { display: inline-flex; align-items: center; gap: 6px; background: var(--sky); color: white; padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; white-space: nowrap; transition: background 0.2s; }
+        .cta-strip a:hover { background: var(--sky-mid); }
+
+        .cta-block { background: var(--ink); border-radius: 20px; padding: 48px 36px; text-align: center; margin: 52px 0; }
+        .cta-block h3 { font-family: 'Fraunces', serif; font-size: 2.1rem; font-weight: 700; color: white; letter-spacing: -0.02em; margin-bottom: 10px; }
+        .cta-block p { color: rgba(255,255,255,0.45); font-size: 16px; margin-bottom: 26px; }
+        .cta-block a { display: inline-flex; align-items: center; gap: 8px; background: var(--sky-mid); color: white; padding: 14px 32px; border-radius: 10px; font-weight: 600; font-size: 16px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .cta-block a:hover { background: var(--sky); transform: translateY(-2px); }
+
+        /* ====== FAQ ====== */
+        .faq-section { margin-bottom: 60px; }
+        .faq-section h2 { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 24px; scroll-margin-top: 76px; }
+        .faq { display: flex; flex-direction: column; gap: 6px; }
+        details.faq-item { background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--sky-border); box-shadow: 0 0 0 3px rgba(3,105,161,0.06); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; font-weight: 600; font-size: 16px; color: var(--ink); cursor: pointer; list-style: none; user-select: none; line-height: 1.4; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 26px; height: 26px; border-radius: 8px; background: var(--bg); border: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--sky); border-color: var(--sky); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 4px 22px 18px; font-size: 15px; color: var(--body); line-height: 1.75; }
+
+        /* ====== RELATED ====== */
+        .related { margin-top: 56px; padding-top: 40px; border-top: 2px solid var(--rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--light); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 15px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--sky-border); transform: translateX(4px); color: var(--sky); }
+        .related-arrow { color: var(--sky); font-size: 18px; }
+
+        /* ====== SIDEBAR ====== */
+        .sidebar { position: sticky; top: 76px; }
+        .toc-card { background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+        .toc-head { background: var(--ink); padding: 14px 18px; display: flex; align-items: center; gap: 8px; }
+        .toc-pulse { width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,0.2); }
+        .toc-head-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+        .toc-links { padding: 10px; }
+        .toc-link { display: block; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 13.5px; font-weight: 500; color: var(--muted); transition: background 0.15s, color 0.15s; line-height: 1.4; }
+        .toc-link:hover, .toc-link.active { background: var(--sky-pale); color: var(--sky); }
+        .toc-link + .toc-link { margin-top: 1px; }
+
+        .sidebar-cta { background: var(--ink); border-radius: 16px; padding: 24px; }
+        .sidebar-cta-pre { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+        .sidebar-cta-title { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 600; color: white; margin-bottom: 6px; letter-spacing: -0.01em; }
+        .sidebar-cta-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 18px; line-height: 1.5; }
+        .sidebar-cta-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--sky-mid); color: white; padding: 11px; border-radius: 9px; font-weight: 600; font-size: 14px; text-decoration: none; transition: background 0.2s; }
+        .sidebar-cta-btn:hover { background: var(--sky); }
+
+        /* ====== FOOTER ====== */
+        .foot { background: var(--ink); color: rgba(255,255,255,0.35); text-align: center; padding: 36px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 14px; transition: color 0.15s; }
+        .foot-links a:hover { color: white; }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 1040px) {
+            .page-wrap { grid-template-columns: 1fr; gap: 48px; }
+            .sidebar { position: static; }
+            .toc-card { display: none; }
+            .when-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .hero { padding: 56px 20px 52px; }
+            .page-wrap { padding: 40px 20px; }
+            .step { grid-template-columns: 1fr; }
+            .step-num-col { display: none; }
+            .two-col, .share-pair { grid-template-columns: 1fr; }
+            .when-grid { grid-template-columns: 1fr; }
+            .nav-link { display: none; }
+            .tc-bar { flex-wrap: wrap; gap: 10px; }
+            .cta-strip { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="prog"></div>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-brand">
+            <img src="/logo.svg" alt="VoteGenerator">
+            <span class="nav-brand-name">VoteGenerator</span>
+        </a>
+        <div class="nav-links">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="nav-link">Survey Guide</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create a Survey Free</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-eyebrow">
+            <span class="hero-pill">Quick Guide</span>
+            <span class="hero-date">March 10, 2026 &nbsp;·&nbsp; 7 min read</span>
+        </div>
+        <h1>Quick Survey:<br>Instant Feedback<br>in <em>3 Steps</em></h1>
+        <p class="hero-deck">Create, share, and collect real responses in under 30 seconds. No signup. No complexity. 10 ready-to-copy templates included.</p>
+        <a href="https://votegenerator.com/create" class="hero-cta">Create Your First Quick Survey &rarr;</a>
+        <p class="hero-meta">Free &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; No account needed</p>
+    </div>
+</section>
+
+<!-- PAGE BODY -->
+<div class="page-wrap">
+
+    <!-- ARTICLE -->
+    <article class="article">
+
+        <!-- INTRO -->
+        <div class="intro-block">
+            <p>You need feedback right now. Maybe you're running an event, launching a product feature, or just trying to understand what your audience actually thinks.</p>
+            <p>The problem: most survey tools require signup, email verification, and take minutes of setup before you can share anything. By then, the moment has passed.</p>
+            <p>This guide shows you how to create a quick survey in under 30 seconds and start collecting honest feedback immediately.</p>
+        </div>
+
+        <!-- WHEN TO USE -->
+        <div class="section">
+            <div class="section-header">
+                <h2 id="when-to-use">When to Use a Quick Survey</h2>
+                <p class="section-desc">Quick surveys solve a specific problem: you need a signal, not a study. Here is when they work best.</p>
+            </div>
+            <div class="when-grid">
+                <div class="when-item"><span class="when-icon">🎤</span><h4>During or after events</h4><p>Rate the session in real-time. Results inform your next move while the room is still engaged.</p></div>
+                <div class="when-item"><span class="when-icon">📞</span><h4>Right after a meeting</h4><p>Was this call valuable? Send a link before people close the tab. You get honesty, not hindsight.</p></div>
+                <div class="when-item"><span class="when-icon">🚀</span><h4>Product launches</h4><p>First impressions from beta users within hours, not days. Catch issues before they compound.</p></div>
+                <div class="when-item"><span class="when-icon">🎓</span><h4>Teaching and training</h4><p>Gauge comprehension before people leave the room. Adjust your approach based on live answers.</p></div>
+                <div class="when-item"><span class="when-icon">📝</span><h4>Content and articles</h4><p>"Did this answer your question?" at the bottom of every piece of content builds feedback loops.</p></div>
+                <div class="when-item"><span class="when-icon">🎧</span><h4>Customer support</h4><p>One question after resolving a ticket reveals whether your solution actually landed.</p></div>
+            </div>
+        </div>
+
+        <div class="cta-strip">
+            <p>Ready to try it in 30 seconds?</p>
+            <a href="https://votegenerator.com/create">Create a Free Quick Survey &rarr;</a>
+        </div>
+
+        <!-- STEPS -->
+        <div class="steps-section">
+            <h2 id="three-steps">The 3-Step Process</h2>
+            <p>Every quick survey follows the same path: one clear question, the right answer options, and instant sharing. Here is how to do each step well.</p>
+
+            <div class="step">
+                <div class="step-num-col"><div class="step-num">1</div></div>
+                <div class="step-body">
+                    <div class="step-title">Pick the right question type</div>
+                    <p>The most important decision in any quick survey is choosing the right format for what you are asking. Different situations call for different answer structures. Here are your options and when each one works best:</p>
+
+                    <div class="qtype-pills">
+                        <div class="qtype-pill"><span>Yes / No</span> Binary decisions. Fastest to complete, easiest to act on.</div>
+                        <div class="qtype-pill"><span>Rating (1&ndash;5)</span> Satisfaction and quality. Gives you a number to track over time.</div>
+                        <div class="qtype-pill"><span>Multiple choice</span> Preference or selection. Works when options are known in advance.</div>
+                        <div class="qtype-pill"><span>Scale (1&ndash;10)</span> NPS-style loyalty questions. Industry standard for benchmarking.</div>
+                        <div class="qtype-pill"><span>Open text</span> One open field for suggestions. Use sparingly &mdash; responses take time to read.</div>
+                    </div>
+
+                    <h4>Stick to one question type per quick survey</h4>
+                    <p>If you are asking three different things in three different formats, you have a survey, not a quick survey. For a quick pulse check, one focused question with the right answer structure gets far more responses and more honest ones.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num-col"><div class="step-num">2</div></div>
+                <div class="step-body">
+                    <div class="step-title">Write a clear, neutral question</div>
+                    <p>Clarity matters more than cleverness. A confusing question produces useless data. A leading question produces flattering but unreliable data. Neither is worth collecting.</p>
+
+                    <div class="two-col">
+                        <div class="ex good">
+                            <div class="ex-hd">Write questions like these</div>
+                            <ul>
+                                <li>"Did this article answer your question?"</li>
+                                <li>"Rate this session from 1 to 5."</li>
+                                <li>"Which feature interests you most?"</li>
+                                <li>"How likely are you to recommend us?"</li>
+                            </ul>
+                        </div>
+                        <div class="ex bad">
+                            <div class="ex-hd">Avoid these patterns</div>
+                            <ul>
+                                <li>"How do you feel about content strategy?" (too broad)</li>
+                                <li>"Don't you love our new design?" (loaded)</li>
+                                <li>"Would you use this if X and Y and Z?" (compound)</li>
+                                <li>"Rate our overall value proposition." (jargon)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h4>Keep answer options mutually exclusive</h4>
+                    <p>For a yes/no question, do not add "Maybe." Force a choice. Three to five options is the sweet spot for quick surveys. More than that and people hesitate; fewer and you lose useful nuance. Use specific labels like "Very satisfied" rather than "Good" so every respondent interprets the scale the same way.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-num-col"><div class="step-num">3</div></div>
+                <div class="step-body">
+                    <div class="step-title">Share the link or QR code</div>
+                    <p>Once your survey is live, VoteGenerator gives you two ways to share it. Choose based on your setting.</p>
+
+                    <div class="share-pair">
+                        <div class="share-opt link">
+                            <div class="share-opt-hd">🔗 &nbsp;Share a link</div>
+                            <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Best for remote, async, or online audiences.</p>
+                            <ul>
+                                <li>Paste into Slack, email, or Teams</li>
+                                <li>Add to a presentation slide</li>
+                                <li>Post on social media</li>
+                                <li>Embed in a knowledge base article</li>
+                            </ul>
+                        </div>
+                        <div class="share-opt qr">
+                            <div class="share-opt-hd">📱 &nbsp;Display a QR code</div>
+                            <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6;">Best for in-person events and real-time sessions.</p>
+                            <ul>
+                                <li>Project on screen during your talk</li>
+                                <li>Print on event posters or handouts</li>
+                                <li>Display on a kiosk or tablet</li>
+                                <li>Text it as an image for instant scanning</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h4>Results update in real-time</h4>
+                    <p>As soon as responses come in, your dashboard updates live. During a presentation or workshop, you can display results on screen and discuss them with the room. The immediacy is the point: quick surveys are meant to be used right now, not analysed next week.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEMPLATES -->
+        <div class="templates-section">
+            <h2 id="templates">10 Quick Survey Templates</h2>
+            <p>Each template below is a complete, ready-to-use quick survey. Click "Copy template" to copy the question, answer options, and use case to your clipboard, then paste it into VoteGenerator or any survey tool.</p>
+
+            <!-- Template 1 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">1</div>
+                        <span class="tc-title">Event Feedback</span>
+                        <span class="tc-use-tag">Conferences &amp; workshops</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: How would you rate this session?&#10;&#10;OPTIONS:&#10;• Excellent&#10;• Good&#10;• Fair&#10;• Needs improvement&#10;&#10;USE: After presentations, workshops, or conference sessions.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"How would you rate this session?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Excellent</span><span class="tc-opt">Good</span><span class="tc-opt">Fair</span><span class="tc-opt">Needs improvement</span>
+                    </div>
+                    <div class="tc-note">Send this while people are still in the room or immediately after the event ends. Response rates drop sharply once attendees leave the venue or close the video call.</div>
+                </div>
+            </div>
+
+            <!-- Template 2 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">2</div>
+                        <span class="tc-title">Content Effectiveness</span>
+                        <span class="tc-use-tag">Blog posts &amp; help docs</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Did this article answer your question?&#10;&#10;OPTIONS:&#10;• Yes, completely&#10;• Partially&#10;• No&#10;&#10;USE: At the bottom of blog posts, knowledge base articles, and help documentation.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Did this article answer your question?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Yes, completely</span><span class="tc-opt">Partially</span><span class="tc-opt">No</span>
+                    </div>
+                    <div class="tc-note">Place this at the end of every piece of content you publish. Even a 30% response rate gives you statistically meaningful signal about which articles need improvement.</div>
+                </div>
+            </div>
+
+            <!-- Template 3 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">3</div>
+                        <span class="tc-title">Net Promoter Score (NPS)</span>
+                        <span class="tc-use-tag">Customer loyalty</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: How likely are you to recommend us to a friend or colleague?&#10;&#10;OPTIONS:&#10;• 0 (Not at all likely)&#10;• 1 through 8 (scale)&#10;• 9&#10;• 10 (Extremely likely)&#10;&#10;USE: Monthly or quarterly with existing customers to track loyalty and satisfaction trends.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"How likely are you to recommend us to a friend or colleague?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">0 &ndash; Not at all</span><span class="tc-opt">1&ndash;6</span><span class="tc-opt">7&ndash;8</span><span class="tc-opt">9</span><span class="tc-opt">10 &ndash; Extremely</span>
+                    </div>
+                    <div class="tc-note">NPS is an industry standard. Scores of 9&ndash;10 are promoters, 7&ndash;8 are passive, 0&ndash;6 are detractors. Track month over month to see if your product improvements are moving the number.</div>
+                </div>
+            </div>
+
+            <!-- Template 4 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">4</div>
+                        <span class="tc-title">Support Resolution</span>
+                        <span class="tc-use-tag">Customer support</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Did we resolve your issue?&#10;&#10;OPTIONS:&#10;• Yes, completely&#10;• Mostly&#10;• Not really&#10;• Not at all&#10;&#10;USE: Automatically after closing a support ticket or help desk conversation.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Did we resolve your issue?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Yes, completely</span><span class="tc-opt">Mostly</span><span class="tc-opt">Not really</span><span class="tc-opt">Not at all</span>
+                    </div>
+                    <div class="tc-note">Send this automatically after closing a support ticket. Low scores flag cases that need follow-up before the customer becomes a detractor. Timing is critical: send within minutes, not hours.</div>
+                </div>
+            </div>
+
+            <!-- Template 5 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">5</div>
+                        <span class="tc-title">Feature Priority</span>
+                        <span class="tc-use-tag">Product teams</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Which feature would be most valuable to you?&#10;&#10;OPTIONS: (customise with your actual feature names)&#10;• Feature A&#10;• Feature B&#10;• Feature C&#10;• Feature D&#10;&#10;USE: Before sprint planning or roadmap reviews to validate priorities with real users.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Which feature would be most valuable to you right now?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Feature A</span><span class="tc-opt">Feature B</span><span class="tc-opt">Feature C</span><span class="tc-opt">Feature D</span>
+                    </div>
+                    <div class="tc-note">Replace the placeholders with your real feature ideas. Keep options to 4&ndash;5 maximum. More choices split votes and make the result harder to act on. Run this before every roadmap review.</div>
+                </div>
+            </div>
+
+            <!-- Template 6 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">6</div>
+                        <span class="tc-title">Meeting Quality</span>
+                        <span class="tc-use-tag">Teams &amp; standups</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Was this meeting worth your time?&#10;&#10;OPTIONS:&#10;• Definitely yes&#10;• Somewhat&#10;• Not really&#10;• No, could have been an email&#10;&#10;USE: After recurring team meetings to reduce unnecessary meetings over time.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Was this meeting worth your time?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Definitely yes</span><span class="tc-opt">Somewhat</span><span class="tc-opt">Not really</span><span class="tc-opt">Could have been an email</span>
+                    </div>
+                    <div class="tc-note">Run this monthly on your most expensive recurring meetings. If the "not worth it" scores consistently exceed 30%, that meeting either needs restructuring or cancellation.</div>
+                </div>
+            </div>
+
+            <!-- Template 7 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">7</div>
+                        <span class="tc-title">Training Check-In</span>
+                        <span class="tc-use-tag">Education &amp; onboarding</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Do you understand this concept well enough to apply it?&#10;&#10;OPTIONS:&#10;• Yes, confident&#10;• Mostly, just need practice&#10;• Somewhat, need more examples&#10;• Not yet, need to revisit&#10;&#10;USE: After explaining a new concept in a training session or onboarding call.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Do you understand this concept well enough to apply it?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Yes, confident</span><span class="tc-opt">Mostly, need practice</span><span class="tc-opt">Somewhat, need examples</span><span class="tc-opt">Not yet</span>
+                    </div>
+                    <div class="tc-note">Ask this immediately after covering a concept, not at the end of the session. Real-time comprehension checks let you slow down and re-explain before you build on a shaky foundation.</div>
+                </div>
+            </div>
+
+            <!-- Template 8 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">8</div>
+                        <span class="tc-title">Feature Adoption Interest</span>
+                        <span class="tc-use-tag">Pre-launch validation</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Would you use [feature name] if it were available today?&#10;&#10;OPTIONS:&#10;• Definitely&#10;• Probably&#10;• Maybe&#10;• Probably not&#10;&#10;USE: Before building a new feature to validate demand with existing users.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Would you use [feature name] if it were available today?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Definitely</span><span class="tc-opt">Probably</span><span class="tc-opt">Maybe</span><span class="tc-opt">Probably not</span>
+                    </div>
+                    <div class="tc-note">Replace [feature name] with something specific. "Would you use an AI assistant?" is too vague. "Would you use an AI that drafts survey questions from a one-line brief?" gives you usable signal.</div>
+                </div>
+            </div>
+
+            <!-- Template 9 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">9</div>
+                        <span class="tc-title">Decision Voting</span>
+                        <span class="tc-use-tag">Team decisions</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Which option should we go with?&#10;&#10;OPTIONS: (replace with your actual options)&#10;• Option A&#10;• Option B&#10;• Option C&#10;• I need more information&#10;&#10;USE: When a team needs to make a quick decision without a lengthy meeting.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Which option should we go with?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Option A</span><span class="tc-opt">Option B</span><span class="tc-opt">Option C</span><span class="tc-opt">Need more info</span>
+                    </div>
+                    <div class="tc-note">Include "I need more information" as an option so people who are not ready to vote can flag that without skewing the results. A high "need more info" response is itself useful data.</div>
+                </div>
+            </div>
+
+            <!-- Template 10 -->
+            <div class="template-card">
+                <div class="tc-bar">
+                    <div class="tc-left">
+                        <div class="tc-n">10</div>
+                        <span class="tc-title">Pricing Reaction</span>
+                        <span class="tc-use-tag">Pricing research</span>
+                    </div>
+                    <button class="copy-btn" data-copy="QUESTION: Does this price feel fair for the value you'd get?&#10;&#10;OPTIONS:&#10;• Too cheap (I'd wonder about quality)&#10;• Fair&#10;• Slightly expensive&#10;• Too expensive&#10;&#10;USE: When testing a price point before a product launch or pricing page update.">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy template
+                    </button>
+                </div>
+                <div class="tc-content">
+                    <div class="tc-question">"Does this price feel fair for the value you'd get?"</div>
+                    <div class="tc-options">
+                        <span class="tc-opt">Too cheap (worrying)</span><span class="tc-opt">Fair</span><span class="tc-opt">Slightly expensive</span><span class="tc-opt">Too expensive</span>
+                    </div>
+                    <div class="tc-note">Always show the actual price before asking this question. Asking about pricing in the abstract yields opinions, not decisions. Show the full price, then ask for a gut reaction.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-block">
+            <h3>Use a Template Right Now</h3>
+            <p>Copy any template above, then paste it into VoteGenerator. Live in under 30 seconds.</p>
+            <a href="https://votegenerator.com/create">Create a Free Survey at VoteGenerator &rarr;</a>
+        </div>
+
+        <!-- TIPS -->
+        <div class="tips-section">
+            <h2 id="response-tips">How to Get More Responses</h2>
+            <p>Sending a quick survey is not enough. How you frame it, when you send it, and how easy you make it to respond determines whether you get 10 responses or 100.</p>
+
+            <div class="tips-list">
+                <div class="tip">
+                    <div class="tip-icon">⚡</div>
+                    <div class="tip-text">
+                        <h4>Keep it to one question</h4>
+                        <p>Shorter surveys get meaningfully higher completion rates. If you have three things to ask, send three separate one-question surveys over three weeks rather than a three-question survey once. You will get better data and higher response rates on each.</p>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">⏱</div>
+                    <div class="tip-text">
+                        <h4>Ask immediately after the moment</h4>
+                        <p>The half-life of feedback is short. Someone who just attended your talk will give you an honest rating in 30 seconds right now. Ask them tomorrow and you will get a vague memory, not a real reaction. Build the habit of sending the survey link before the session ends.</p>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">🚫</div>
+                    <div class="tip-text">
+                        <h4>Remove every barrier</h4>
+                        <p>No email required. No account creation. No redirect to a signup page. If respondents encounter any friction before they can answer, most of them will not answer. VoteGenerator is designed around this: click the link, answer the question, done.</p>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">💬</div>
+                    <div class="tip-text">
+                        <h4>Tell people how fast it is</h4>
+                        <p>Add "takes 10 seconds" to your message. People are far more likely to click when they know the time commitment is trivial. "Please complete our survey" competes with everything else in their inbox. "10-second feedback question" does not.</p>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">📊</div>
+                    <div class="tip-text">
+                        <h4>Show results to your audience</h4>
+                        <p>If you are running a live event or presentation, project the results as they come in. Seeing other people vote makes the undecided more likely to vote too. It also creates a shared data point for discussion and makes the exercise feel purposeful rather than performative.</p>
+                    </div>
+                </div>
+                <div class="tip">
+                    <div class="tip-icon">📱</div>
+                    <div class="tip-text">
+                        <h4>Test on your own phone first</h4>
+                        <p>Most of your respondents will answer on a phone. Open the survey on your own device before sharing it. Can you read the text without zooming? Can you tap the answer buttons comfortably? A five-second check prevents a frustrating experience for everyone who responds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2 id="faq">Frequently Asked Questions</h2>
+            <div class="faq">
+                <details class="faq-item"><summary>How fast can I create a quick survey? <span class="faq-ico">+</span></summary><div class="faq-ans">With VoteGenerator, you can create and share a survey in under 30 seconds. No signup, no account, no setup required. Type your question, choose your answer options, and get a shareable link immediately.</div></details>
+                <details class="faq-item"><summary>Can I share a quick survey via QR code? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. VoteGenerator generates a QR code for every survey automatically. Anyone can scan it with their phone camera and respond instantly without typing a URL. This is the fastest method for in-person events and presentations.</div></details>
+                <details class="faq-item"><summary>Do respondents need to create an account to answer? <span class="faq-ico">+</span></summary><div class="faq-ans">No. Respondents click your link or scan your QR code and answer immediately. No email, password, signup, or account creation required on their end. This is the most important factor in getting high response rates from quick surveys.</div></details>
+                <details class="faq-item"><summary>Can I see results while the survey is live? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. VoteGenerator shows real-time results as responses come in. You can watch the dashboard update live during an event, meeting, or presentation and discuss the numbers with your audience as they arrive.</div></details>
+                <details class="faq-item"><summary>How many responses can I collect on the free plan? <span class="faq-ico">+</span></summary><div class="faq-ans">The free tier allows up to 100 responses per poll, with up to 3 active polls at a time. For most quick surveys and event feedback scenarios, 100 responses is more than sufficient to identify clear patterns and make confident decisions.</div></details>
+                <details class="faq-item"><summary>Can I export the results to a spreadsheet? <span class="faq-ico">+</span></summary><div class="faq-ans">Visual results and charts are available on the free tier. CSV and Excel export of raw response data requires a paid VoteGenerator plan. For most quick survey use cases, the visual dashboard shows you everything you need at a glance.</div></details>
+                <details class="faq-item"><summary>How many questions should a quick survey have? <span class="faq-ico">+</span></summary><div class="faq-ans">One to three questions at most. A single focused question consistently gets the highest response rates. Once you go beyond three questions, you are building a full survey rather than a quick pulse check, and you should frame and position it differently.</div></details>
+                <details class="faq-item"><summary>Can I change the question after the survey is live? <span class="faq-ico">+</span></summary><div class="faq-ans">You can edit a live survey, but be careful. Changing the question or options after responses have already come in makes those earlier responses incomparable to later ones. If you need to make a significant change, it is better to close the current survey and start a fresh one.</div></details>
+                <details class="faq-item"><summary>How long does a survey stay live? <span class="faq-ico">+</span></summary><div class="faq-ans">Your survey stays live until you close it. You can leave it open for hours, days, weeks, or months. Close it manually when you have enough responses to act on, or leave it running as a permanent feedback collection point.</div></details>
+            </div>
+        </div>
+
+        <!-- RELATED -->
+        <div class="related">
+            <p class="related-label">Continue Reading</p>
+            <div class="related-links">
+                <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="related-link">How to Create a Survey: Step-by-Step Guide <span class="related-arrow">&rarr;</span></a>
+                <a href="https://votegenerator.com/blog/free-survey-maker-tools.html" class="related-link">Free Survey Maker Tools: 10 Tested <span class="related-arrow">&rarr;</span></a>
+                <a href="https://votegenerator.com/blog/how-to-create-a-poll.html" class="related-link">How to Create a Poll Online <span class="related-arrow">&rarr;</span></a>
+            </div>
+        </div>
+
+    </article>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="toc-card">
+            <div class="toc-head"><div class="toc-pulse"></div><span class="toc-head-label">In This Guide</span></div>
+            <div class="toc-links">
+                <a href="#when-to-use" class="toc-link">When to use a quick survey</a>
+                <a href="#three-steps" class="toc-link">The 3-step process</a>
+                <a href="#templates" class="toc-link">10 ready-to-copy templates</a>
+                <a href="#response-tips" class="toc-link">Get more responses</a>
+                <a href="#faq" class="toc-link">FAQ</a>
+            </div>
+        </div>
+        <div class="sidebar-cta">
+            <div class="sidebar-cta-pre">Free &nbsp;&middot;&nbsp; No signup</div>
+            <div class="sidebar-cta-title">Create a Quick Survey</div>
+            <div class="sidebar-cta-sub">Live in 30 seconds. Share via link or QR code.</div>
+            <a href="https://votegenerator.com/create" class="sidebar-cta-btn">Get Started at VoteGenerator &rarr;</a>
+        </div>
+    </aside>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Survey</a>
+        <a href="https://votegenerator.com">VoteGenerator</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>&copy; 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    // Progress bar
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => {
+        const d = document.documentElement;
+        prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')';
+    }, { passive: true });
+
+    // Active TOC
+    const sections = document.querySelectorAll('[id]');
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                tocLinks.forEach(l => l.classList.remove('active'));
+                const match = document.querySelector('.toc-link[href="#' + e.target.id + '"]');
+                if (match) match.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    sections.forEach(s => io.observe(s));
+
+    // Copy buttons
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const text = btn.getAttribute('data-copy');
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;opacity:0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            const original = btn.innerHTML;
+            btn.classList.add('copied');
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = original;
+            }, 2000);
+        });
+    });
+</script>
+
+</body>
+</html>

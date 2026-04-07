@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranked Choice Voting: How It Works and How to Run One Online</title>
+    <meta name="description" content="Learn how ranked choice voting works with a clear example. Run your own RCV poll online for free in minutes. No signup required.">
+    <link rel="canonical" href="https://votegenerator.com/blog/ranked-choice-voting">
+    <meta property="og:title" content="Ranked Choice Voting: How It Works and How to Run One Online">
+    <meta property="og:description" content="Learn how ranked choice voting works with a clear example. Run your own RCV poll online for free in minutes. No signup required.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/ranked-choice-voting">
+    <meta name="keywords" content="ranked choice voting, RCV poll, ranked voting online, instant runoff voting, ranked choice poll maker">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Ranked Choice Voting: How It Works and How to Run One Online","description":"Learn how ranked choice voting works with a clear example. Run your own RCV poll online for free in minutes. No signup required.","url":"https://votegenerator.com/blog/ranked-choice-voting","datePublished":"2026-04-04","author":{"@type":"Organization","name":"VoteGenerator"}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is ranked choice voting?","acceptedAnswer":{"@type":"Answer","text":"Ranked choice voting (RCV), also called instant runoff voting, allows voters to rank candidates in order of preference. Instead of voting for just one option, voters list their first, second, and third choices. If no candidate wins a majority on the first count, the lowest vote-getter is eliminated and their votes are redistributed based on voters' next choices."}},{"@type":"Question","name":"Where is ranked choice voting currently used?","acceptedAnswer":{"@type":"Answer","text":"Ranked choice voting is used in several U.S. jurisdictions. Alaska uses RCV for all state and federal elections. Maine uses it for congressional and presidential elections. New York City implemented RCV for municipal elections starting in 2021."}},{"@type":"Question","name":"Why use ranked choice voting instead of simple majority voting?","acceptedAnswer":{"@type":"Answer","text":"RCV eliminates the 'spoiler effect' where a third candidate splits votes. It encourages more respectful campaigns because candidates benefit from being voters' second or third choice. It reflects the true preference of the majority, not just a plurality."}},{"@type":"Question","name":"Is ranked choice voting complicated?","acceptedAnswer":{"@type":"Answer","text":"For voters, it's simple: list your preferences in order. For vote counting, the process takes more steps than traditional voting, but computers make RCV counting fast and accurate."}},{"@type":"Question","name":"Can I run a ranked choice voting poll online for free?","acceptedAnswer":{"@type":"Answer","text":"Yes. VoteGenerator lets you create ranked choice voting polls with no signup required. Results are instant and clearly show the winner."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --forest: #14532d;
+            --forest-mid: #166534;
+            --forest-light: #22c55e;
+            --forest-pale: #f0fdf4;
+            --forest-border: #bbf7d0;
+            --gold: #d97706;
+            --gold-pale: #fffbeb;
+            --gold-border: #fde68a;
+            --red: #dc2626;
+            --red-pale: #fef2f2;
+            --ink: #0c1a10;
+            --body: #2d3a30;
+            --muted: #6b7c6f;
+            --rule: #d1fae5;
+            --bg: #fafffe;
+            --surface: #ffffff;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Work Sans', sans-serif; background: var(--bg); color: var(--body); line-height: 1.75; }
+
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--forest-mid), var(--gold)); transform-origin: left; transform: scaleX(0); z-index: 200; transition: transform 0.08s linear; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 100; background: var(--ink); }
+        .nav-inner { max-width: 1240px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo img { height: 28px; width: auto; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+        .nav-link:hover { color: white; }
+        .nav-cta { display: inline-flex; align-items: center; gap: 6px; background: var(--forest-mid); color: white; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
+        .nav-cta:hover { background: var(--forest); }
+
+        /* HERO */
+        .hero { background: var(--forest); position: relative; overflow: hidden; padding: 0 28px; }
+        .hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 24px 24px; }
+        .hero::after { content: 'RCV'; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); font-family: 'Libre Baskerville', Georgia, serif; font-size: 220px; font-weight: 700; color: rgba(255,255,255,0.04); line-height: 1; pointer-events: none; user-select: none; }
+        .hero-inner { max-width: 1240px; margin: 0 auto; padding: 76px 0 68px; position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 300px; gap: 56px; align-items: center; }
+        .hero-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .eyebrow-badge { background: var(--gold); color: #1c1100; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .eyebrow-date { font-size: 12px; color: rgba(255,255,255,0.4); }
+        .hero h1 { font-family: 'Libre Baskerville', Georgia, serif; font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 700; color: white; line-height: 1.2; margin-bottom: 20px; letter-spacing: -0.01em; }
+        .hero h1 em { font-style: italic; color: #86efac; }
+        .hero-deck { font-size: 17px; color: rgba(255,255,255,0.6); margin-bottom: 32px; line-height: 1.65; }
+        .hero-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: #1c1100; padding: 12px 26px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-btn:hover { background: #f59e0b; transform: translateY(-2px); }
+        .hero-facts { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; }
+        .hero-facts-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+        .fact-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .fact-item:last-child { border-bottom: none; }
+        .fact-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+        .fact-text { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+        .hero-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(34,197,94,0.3) 30%, rgba(217,119,6,0.3) 70%, transparent); }
+
+        /* LAYOUT */
+        .page-body { max-width: 1240px; margin: 0 auto; padding: 60px 28px; display: grid; grid-template-columns: 1fr 280px; gap: 72px; align-items: start; }
+        .article { min-width: 0; }
+
+        /* TYPOGRAPHY */
+        .article h2 { font-family: 'Libre Baskerville', Georgia, serif; font-size: 1.75rem; font-weight: 700; color: var(--ink); margin: 56px 0 18px; letter-spacing: -0.01em; scroll-margin-top: 74px; border-left: 4px solid var(--forest-mid); padding-left: 16px; }
+        .article h2:first-child { margin-top: 0; }
+        .article h3 { font-family: 'Libre Baskerville', Georgia, serif; font-size: 1.15rem; font-weight: 700; color: var(--forest); margin: 28px 0 12px; font-style: italic; }
+        .article p { font-size: 16px; color: var(--body); margin-bottom: 18px; line-height: 1.8; }
+        .article ul, .article ol { margin: 0 0 18px 0; list-style: none; }
+        .article ul li, .article ol li { padding: 8px 0 8px 22px; position: relative; border-bottom: 1px solid var(--rule); font-size: 15px; color: var(--body); }
+        .article ul li:last-child, .article ol li:last-child { border-bottom: none; }
+        .article ul li::before { content: '▸'; position: absolute; left: 0; color: var(--forest-mid); font-size: 12px; top: 11px; }
+        .article ol { counter-reset: ol-counter; }
+        .article ol li::before { counter-increment: ol-counter; content: counter(ol-counter) '.'; position: absolute; left: 0; color: var(--forest-mid); font-weight: 700; font-size: 13px; top: 9px; }
+        strong { color: var(--ink); font-weight: 600; }
+        .article a { color: var(--forest-mid); font-weight: 500; }
+
+        /* EXAMPLE BOX */
+        .example-box { background: var(--forest-pale); border: 1px solid var(--forest-border); border-radius: 14px; padding: 24px 28px; margin: 24px 0; }
+        .example-box-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest-mid); margin-bottom: 12px; }
+        .example-box p { margin-bottom: 8px; font-size: 15px; }
+        .example-box p:last-child { margin-bottom: 0; }
+
+        /* ROUND CARDS */
+        .rounds { display: flex; flex-direction: column; gap: 4px; margin: 24px 0; }
+        .round-card { border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; background: white; }
+        .round-card-head { display: flex; align-items: center; gap: 14px; padding: 14px 20px; background: var(--forest); }
+        .round-badge { background: var(--gold); color: #1c1100; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.06em; text-transform: uppercase; }
+        .round-card-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); }
+        .round-card-body { padding: 20px 24px; }
+        .vote-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .vote-bar-row { display: grid; grid-template-columns: 100px 1fr 60px; gap: 12px; align-items: center; }
+        .vote-bar-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+        .vote-bar-track { background: #f0fdf4; border-radius: 100px; height: 12px; overflow: hidden; position: relative; }
+        .vote-bar-fill { height: 100%; border-radius: 100px; background: var(--forest-mid); transition: width 0.3s; }
+        .vote-bar-fill.eliminated { background: #d1fae5; }
+        .vote-bar-fill.winner { background: var(--gold); }
+        .vote-bar-count { font-size: 13px; font-weight: 700; color: var(--body); text-align: right; }
+        .vote-bar-row.elim .vote-bar-label { color: #9ca3af; text-decoration: line-through; }
+        .round-note { background: var(--gold-pale); border: 1px solid var(--gold-border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #78350f; }
+        .round-note strong { color: #78350f; }
+        .redistribution { background: #f0fdf4; border: 1px solid var(--forest-border); border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+        .redistribution-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--forest-mid); margin-bottom: 10px; }
+        .redistribution ul { margin: 0; }
+        .redistribution ul li { border-bottom: none; padding: 4px 0 4px 18px; font-size: 13px; }
+
+        /* PROS CONS */
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+        .pros-box, .cons-box { border-radius: 14px; padding: 22px 20px; }
+        .pros-box { background: var(--forest-pale); border: 1px solid var(--forest-border); }
+        .cons-box { background: var(--red-pale); border: 1px solid #fecaca; }
+        .box-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+        .pros-box .box-label { color: var(--forest-mid); }
+        .cons-box .box-label { color: var(--red); }
+        .pros-box ul, .cons-box ul { margin: 0; }
+        .pros-box ul li, .cons-box ul li { border-bottom-color: rgba(0,0,0,0.06); font-size: 14px; padding: 8px 0 8px 18px; }
+        .pros-box ul li::before { content: '✓'; color: var(--forest-mid); font-weight: 700; top: 10px; font-size: 12px; }
+        .cons-box ul li::before { content: '✗'; color: var(--red); font-weight: 700; top: 10px; font-size: 12px; }
+
+        /* COMPARISON TABLE */
+        .table-wrap { overflow-x: auto; margin: 24px 0; border-radius: 14px; border: 1px solid var(--rule); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+        thead tr { background: var(--forest); }
+        thead th { padding: 13px 16px; text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.04em; color: rgba(255,255,255,0.7); }
+        thead th:first-child { color: white; }
+        tbody tr { border-bottom: 1px solid var(--rule); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:nth-child(even) { background: #fafffe; }
+        td { padding: 12px 16px; color: var(--body); vertical-align: top; line-height: 1.5; }
+        td:first-child { font-weight: 600; color: var(--ink); font-size: 13px; white-space: nowrap; }
+
+        /* CTA BLOCK */
+        .cta-block { background: var(--forest); border-radius: 20px; padding: 40px 32px; text-align: center; margin: 48px 0; position: relative; overflow: hidden; }
+        .cta-block::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 20px 20px; }
+        .cta-block h3 { font-family: 'Libre Baskerville', serif; font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 10px; position: relative; }
+        .cta-block p { color: rgba(255,255,255,0.55); margin-bottom: 24px; font-size: 16px; position: relative; }
+        .cta-block-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: #1c1100; padding: 13px 30px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; position: relative; }
+        .cta-block-btn:hover { background: #f59e0b; transform: translateY(-2px); }
+
+        /* HOW TO STEPS */
+        .how-steps { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+        .how-step { display: flex; gap: 16px; background: white; border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; }
+        .how-step-num { width: 32px; height: 32px; border-radius: 8px; background: var(--forest); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .how-step-body h4 { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+        .how-step-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+        .how-step-body a { color: var(--forest-mid); font-weight: 500; }
+
+        /* FAQ */
+        .faq { display: flex; flex-direction: column; gap: 6px; }
+        details.faq-item { background: white; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--forest-mid); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; font-weight: 600; font-size: 15px; color: var(--ink); cursor: pointer; list-style: none; user-select: none; font-family: 'Libre Baskerville', serif; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 24px; height: 24px; border-radius: 6px; background: var(--forest-pale); border: 1px solid var(--forest-border); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--forest-mid); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--forest-mid); border-color: var(--forest-mid); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 0 20px 16px; font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+        /* RELATED */
+        .related { margin-top: 52px; padding-top: 36px; border-top: 2px solid var(--rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: white; border: 1px solid var(--rule); border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 14px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--forest-mid); transform: translateX(4px); color: var(--forest-mid); }
+        .related-arrow { color: var(--forest-mid); }
+
+        /* SIDEBAR */
+        .sidebar { position: sticky; top: 74px; }
+        .toc-box { background: white; border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+        .toc-head { background: var(--forest); padding: 14px 18px; display: flex; align-items: center; gap: 8px; }
+        .toc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+        .toc-head-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+        .toc-links { padding: 10px; }
+        .toc-link { display: block; padding: 7px 10px; border-radius: 7px; text-decoration: none; font-size: 13px; font-weight: 500; color: var(--muted); transition: background 0.15s, color 0.15s; }
+        .toc-link:hover, .toc-link.active { background: var(--forest-pale); color: var(--forest-mid); }
+        .sidebar-cta { background: var(--forest); border-radius: 14px; padding: 22px; }
+        .sidebar-cta-title { font-family: 'Libre Baskerville', serif; font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 6px; }
+        .sidebar-cta-sub { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 16px; }
+        .sidebar-cta-btn { display: flex; align-items: center; justify-content: center; background: var(--gold); color: #1c1100; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; transition: background 0.2s; }
+        .sidebar-cta-btn:hover { background: #f59e0b; }
+
+        /* FOOTER */
+        .foot { background: var(--ink); color: rgba(255,255,255,0.35); text-align: center; padding: 32px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+        .foot-links a:hover { color: white; }
+
+        @media (max-width: 1000px) { .hero-inner { grid-template-columns: 1fr; } .hero-facts { display: none; } }
+        @media (max-width: 860px) { .page-body { grid-template-columns: 1fr; gap: 40px; padding: 40px 20px; } .sidebar { position: static; } .toc-box { display: none; } .pros-cons { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { .hero { padding: 0 20px; } .hero-inner { padding: 52px 0 44px; } .nav-link { display: none; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-logo"><img src="/logo.svg" alt="VoteGenerator"></a>
+        <div class="nav-right">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/how-to-create-poll" class="nav-link">How It Works</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create an RCV Poll →</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div>
+            <div class="hero-eyebrow">
+                <span class="eyebrow-badge">Explainer</span>
+                <span class="eyebrow-date">April 4, 2026</span>
+            </div>
+            <h1>Ranked Choice Voting:<br><em>How It Works</em></h1>
+            <p class="hero-deck">Understand RCV with a clear, concrete example — then run your own ranked choice poll online for free in minutes.</p>
+            <a href="https://votegenerator.com/create" class="hero-btn">Create an RCV Poll Free →</a>
+        </div>
+        <div class="hero-facts">
+            <div class="hero-facts-label">Key Facts</div>
+            <div class="fact-item"><span class="fact-icon">🗳️</span><span class="fact-text">Voters rank options 1st, 2nd, 3rd instead of picking one</span></div>
+            <div class="fact-item"><span class="fact-icon">🔄</span><span class="fact-text">Lowest-ranked option eliminated each round, votes redistributed</span></div>
+            <div class="fact-item"><span class="fact-icon">✅</span><span class="fact-text">Winner must have majority support, not just plurality</span></div>
+            <div class="fact-item"><span class="fact-icon">🏛️</span><span class="fact-text">Used in Alaska, Maine, New York City, and more</span></div>
+        </div>
+    </div>
+</section>
+<div class="hero-rule"></div>
+
+<div class="page-body">
+    <article class="article">
+
+        <h2 id="what-is">What Is Ranked Choice Voting?</h2>
+        <p>Ranked choice voting (RCV), also known as instant runoff voting, is a voting method that lets voters rank candidates in order of preference. Instead of casting a single vote for one option, you list your first choice, second choice, third choice, and so on. This creates a complete picture of what voters actually want.</p>
+        <p>The magic happens in the counting. If no candidate wins a majority on the first count, the candidate with the fewest votes is eliminated. Their votes are then redistributed to voters' next choices. This process repeats until someone wins a majority. It's called "instant runoff" because instead of holding a second election, the runoff happens instantly with the ranked preferences already submitted.</p>
+        <p>RCV works for any scenario where you need to choose one winner from multiple options: team leadership elections, organisational decisions, community preferences, or even choosing which restaurant your group should visit.</p>
+
+        <div class="cta-block">
+            <h3>Try Ranked Choice Voting</h3>
+            <p>Create your own RCV poll for free. No signup required.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Create an RCV Poll →</a>
+        </div>
+
+        <h2 id="how-it-works">How RCV Works: A Step-by-Step Example</h2>
+        <p>Let's walk through a concrete example: a team choosing a restaurant for their holiday party. 100 people are voting on four options. This shows exactly how ranked choice voting eliminates options and redistributes votes round by round.</p>
+
+        <div class="example-box">
+            <div class="example-box-label">The Scenario</div>
+            <p><strong>Options:</strong> Italian · Mexican · Thai · BBQ</p>
+            <p><strong>Voters:</strong> 100 team members, each ranking all four options in order of preference.</p>
+        </div>
+
+        <div class="rounds">
+            <div class="round-card">
+                <div class="round-card-head">
+                    <span class="round-badge">Round 1</span>
+                    <span class="round-card-title">Count first-choice votes</span>
+                </div>
+                <div class="round-card-body">
+                    <div class="vote-bars">
+                        <div class="vote-bar-row"><span class="vote-bar-label">Italian</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:35%"></div></div><span class="vote-bar-count">35</span></div>
+                        <div class="vote-bar-row"><span class="vote-bar-label">Mexican</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:28%"></div></div><span class="vote-bar-count">28</span></div>
+                        <div class="vote-bar-row"><span class="vote-bar-label">Thai</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:22%"></div></div><span class="vote-bar-count">22</span></div>
+                        <div class="vote-bar-row elim"><span class="vote-bar-label">BBQ</span><div class="vote-bar-track"><div class="vote-bar-fill eliminated" style="width:15%"></div></div><span class="vote-bar-count">15</span></div>
+                    </div>
+                    <div class="round-note"><strong>No majority yet.</strong> Italian leads with 35% but needs 51 to win. BBQ has the fewest votes and is eliminated. Its 15 votes are redistributed to each voter's next choice.</div>
+                </div>
+            </div>
+
+            <div class="round-card">
+                <div class="round-card-head">
+                    <span class="round-badge">Round 2</span>
+                    <span class="round-card-title">Redistribute BBQ's 15 votes</span>
+                </div>
+                <div class="round-card-body">
+                    <div class="redistribution">
+                        <div class="redistribution-label">BBQ voters' second choices</div>
+                        <ul>
+                            <li>6 voters → Mexican &nbsp; 5 voters → Italian &nbsp; 4 voters → Thai</li>
+                        </ul>
+                    </div>
+                    <div class="vote-bars">
+                        <div class="vote-bar-row"><span class="vote-bar-label">Italian</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:40%"></div></div><span class="vote-bar-count">40</span></div>
+                        <div class="vote-bar-row"><span class="vote-bar-label">Mexican</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:34%"></div></div><span class="vote-bar-count">34</span></div>
+                        <div class="vote-bar-row elim"><span class="vote-bar-label">Thai</span><div class="vote-bar-track"><div class="vote-bar-fill eliminated" style="width:26%"></div></div><span class="vote-bar-count">26</span></div>
+                    </div>
+                    <div class="round-note"><strong>Still no majority.</strong> Thai now has the fewest votes (26) and is eliminated. Its votes are redistributed to the next valid choice for each voter.</div>
+                </div>
+            </div>
+
+            <div class="round-card">
+                <div class="round-card-head">
+                    <span class="round-badge">Round 3</span>
+                    <span class="round-card-title">Redistribute Thai's 26 votes → Winner!</span>
+                </div>
+                <div class="round-card-body">
+                    <div class="redistribution">
+                        <div class="redistribution-label">Thai voters' next valid choices</div>
+                        <ul>
+                            <li>10 voters → Italian &nbsp; 12 voters → Mexican &nbsp; 4 voters → (BBQ eliminated, go to next valid)</li>
+                        </ul>
+                    </div>
+                    <div class="vote-bars">
+                        <div class="vote-bar-row"><span class="vote-bar-label">Italian</span><div class="vote-bar-track"><div class="vote-bar-fill winner" style="width:50%"></div></div><span class="vote-bar-count">50 🏆</span></div>
+                        <div class="vote-bar-row"><span class="vote-bar-label">Mexican</span><div class="vote-bar-track"><div class="vote-bar-fill" style="width:46%"></div></div><span class="vote-bar-count">46</span></div>
+                    </div>
+                    <div class="round-note"><strong>Italian wins with exactly 50 votes</strong> — a true majority. In simple plurality voting, Italian would have won in Round 1 with just 35%. RCV ensures the winner has genuine majority support.</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Why This Matters</h3>
+        <p>In a simple plurality vote, Italian would have won with just 35% of first-choice votes. That means 65% of people preferred something else. With ranked choice voting, Italian won because it gained the most support once all voters' full preferences were considered — a far more representative outcome.</p>
+
+        <div class="cta-block">
+            <h3>Try it yourself</h3>
+            <p>Create a ranked choice voting poll for your team or community.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Create a Ranked Choice Poll →</a>
+        </div>
+
+        <h2 id="where-used">Where Ranked Choice Voting Is Used</h2>
+        <p>Ranked choice voting is no longer theoretical. Several U.S. jurisdictions now use RCV for real elections.</p>
+        <h3>Alaska</h3>
+        <p>Alaska was the first state to adopt ranked choice voting statewide. As of 2022, Alaska uses RCV for all state and federal elections, including U.S. Senate, U.S. House, and state office races. The system has handled hundreds of thousands of votes and proven that RCV can work at scale.</p>
+        <h3>Maine</h3>
+        <p>Maine uses ranked choice voting for U.S. House and U.S. Senate elections, as well as presidential elections. Maine voters adopted RCV through referendum — a clear endorsement by the public itself.</p>
+        <h3>New York City</h3>
+        <p>NYC implemented ranked choice voting for municipal elections starting in 2021. Hundreds of thousands of New York voters have now used RCV, making it one of the largest RCV implementations in U.S. history.</p>
+        <h3>Other Adoptions</h3>
+        <p>Several other cities and states have adopted or are exploring RCV, including Minneapolis, St. Paul, and Oakland. The system is gaining momentum as communities recognise its benefits for fairer elections.</p>
+
+        <h2 id="pros-cons">Pros and Cons of Ranked Choice Voting</h2>
+        <div class="pros-cons">
+            <div class="pros-box">
+                <div class="box-label">Advantages</div>
+                <ul>
+                    <li>Eliminates the spoiler effect — third candidates can't accidentally split votes</li>
+                    <li>Reflects true majority preference, not just a plurality</li>
+                    <li>Encourages more respectful campaigns — candidates compete for second choices</li>
+                    <li>Increases voter satisfaction — full preferences are expressed</li>
+                    <li>Handles multiple candidates in a single election</li>
+                </ul>
+            </div>
+            <div class="cons-box">
+                <div class="box-label">Challenges</div>
+                <ul>
+                    <li>Requires voter education to understand the ranking system</li>
+                    <li>More complex to count than simple plurality voting</li>
+                    <li>Longer ballots with multiple rankings to fill in</li>
+                    <li>Feels different to voters used to single-choice voting</li>
+                    <li>Some voters may rank only their top choice, reducing data quality</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="run-online">How to Run an RCV Poll Online</h2>
+        <p>Setting up a ranked choice voting poll online is faster than you might think. Here's how to do it with <a href="https://votegenerator.com/create">VoteGenerator</a>.</p>
+        <div class="how-steps">
+            <div class="how-step"><div class="how-step-num">1</div><div class="how-step-body"><h4>Define Your Options</h4><p>Decide what people are voting on. For an online RCV poll, 3–6 options work best. More options work but ranking becomes tedious.</p></div></div>
+            <div class="how-step"><div class="how-step-num">2</div><div class="how-step-body"><h4>Create Your Poll</h4><p>Go to VoteGenerator, select ranked choice voting as your poll type, add your options, and write a clear question. Example: "Rank these candidates for team lead in order of preference."</p></div></div>
+            <div class="how-step"><div class="how-step-num">3</div><div class="how-step-body"><h4>Share the Ballot Link</h4><p>VoteGenerator generates a unique link. Share it via email, Slack, or any channel. No signup required — voters just click the link and rank their choices.</p></div></div>
+            <div class="how-step"><div class="how-step-num">4</div><div class="how-step-body"><h4>Collect Votes</h4><p>Watch results come in real-time. Set a deadline for when voting closes.</p></div></div>
+            <div class="how-step"><div class="how-step-num">5</div><div class="how-step-body"><h4>Review Results</h4><p>Once voting closes, VoteGenerator instantly calculates the RCV winner and shows each elimination round. Share results with your group.</p></div></div>
+        </div>
+
+        <h2 id="vs-traditional">RCV vs Traditional Voting</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Aspect</th><th>Traditional Voting</th><th>Ranked Choice Voting</th></tr></thead>
+                <tbody>
+                    <tr><td>Voter Action</td><td>Vote for one option only</td><td>Rank options in order of preference</td></tr>
+                    <tr><td>Spoiler Effect</td><td>Third candidate can split votes</td><td>Eliminated — second choices prevent vote splitting</td></tr>
+                    <tr><td>Result Reflects</td><td>Plurality (most votes, not necessarily majority)</td><td>True majority preference</td></tr>
+                    <tr><td>Number of Rounds</td><td>One (or a separate runoff election)</td><td>Multiple rounds, all in one vote</td></tr>
+                    <tr><td>Voter Satisfaction</td><td>May feel forced to choose "lesser evil"</td><td>Can express full preference order</td></tr>
+                    <tr><td>Counting</td><td>Simple — count first choices only</td><td>Multiple rounds with redistribution</td></tr>
+                    <tr><td>Campaign Style</td><td>Often negative and divisive</td><td>More respectful — candidates compete for 2nd choices</td></tr>
+                    <tr><td>Best For</td><td>Two clear options (binary choice)</td><td>Multiple strong options — finding true consensus</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cta-block">
+            <h3>Ready to Run an RCV Poll?</h3>
+            <p>Free, no signup, results calculated instantly.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Start Your RCV Poll →</a>
+        </div>
+
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <div class="faq">
+            <details class="faq-item"><summary>What is ranked choice voting? <span class="faq-ico">+</span></summary><div class="faq-ans">Ranked choice voting (RCV), also called instant runoff voting, allows voters to rank candidates in order of preference (1st, 2nd, 3rd choice, etc.). If no candidate wins a majority on the first count, the lowest vote-getter is eliminated and their votes are redistributed based on voters' next choices. This continues until someone wins a majority.</div></details>
+            <details class="faq-item"><summary>Where is ranked choice voting currently used? <span class="faq-ico">+</span></summary><div class="faq-ans">Several U.S. jurisdictions now use RCV. Alaska adopted it statewide for all federal and state elections. Maine uses it for U.S. House, U.S. Senate, and presidential elections. New York City implemented RCV for municipal elections starting in 2021. Several other cities, including Minneapolis and Oakland, also use RCV.</div></details>
+            <details class="faq-item"><summary>Why use ranked choice voting instead of simple majority voting? <span class="faq-ico">+</span></summary><div class="faq-ans">RCV solves key problems with traditional plurality voting. It eliminates the "spoiler effect" where a third candidate accidentally causes a less-preferred option to win by splitting votes. It ensures the winner has actual majority support. It encourages more respectful campaigns because candidates can't afford to alienate voters who might choose them second.</div></details>
+            <details class="faq-item"><summary>Is ranked choice voting complicated? <span class="faq-ico">+</span></summary><div class="faq-ans">For voters, it's simple: list your preferences in order from most to least preferred. You can rank all options or just your top few — both work. For counting, the process has multiple rounds of elimination and redistribution, but computers handle this instantly and accurately.</div></details>
+            <details class="faq-item"><summary>Can I run a ranked choice voting poll online for free? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. VoteGenerator lets you create ranked choice voting polls with no signup required. You can gather ranked preferences from your team, organisation, or community in minutes. Results calculate instantly, showing the winner and the elimination rounds that led to the result.</div></details>
+        </div>
+
+        <div class="related">
+            <p class="related-label">Continue Reading</p>
+            <div class="related-links">
+                <a href="https://votegenerator.com/blog/how-to-create-a-poll.html" class="related-link">How to Create a Poll Online <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/free-poll-maker-comparison.html" class="related-link">Best Free Poll Makers Compared <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="related-link">How to Create a Survey <span class="related-arrow">→</span></a>
+            </div>
+        </div>
+
+    </article>
+
+    <aside class="sidebar">
+        <div class="toc-box">
+            <div class="toc-head"><div class="toc-dot"></div><span class="toc-head-label">Contents</span></div>
+            <div class="toc-links">
+                <a href="#what-is" class="toc-link">What Is Ranked Choice Voting?</a>
+                <a href="#how-it-works" class="toc-link">Step-by-Step Example</a>
+                <a href="#where-used" class="toc-link">Where It's Used</a>
+                <a href="#pros-cons" class="toc-link">Pros and Cons</a>
+                <a href="#run-online" class="toc-link">How to Run One Online</a>
+                <a href="#vs-traditional" class="toc-link">RCV vs Traditional Voting</a>
+                <a href="#faq" class="toc-link">FAQ</a>
+            </div>
+        </div>
+        <div class="sidebar-cta">
+            <div class="sidebar-cta-title">Create an RCV Poll</div>
+            <div class="sidebar-cta-sub">No signup. Results are instant.</div>
+            <a href="https://votegenerator.com/create" class="sidebar-cta-btn">Get Started →</a>
+        </div>
+    </aside>
+</div>
+
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Poll</a>
+        <a href="https://votegenerator.com">Home</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>© 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => { const d = document.documentElement; prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')'; }, { passive: true });
+    const sections = document.querySelectorAll('h2[id]');
+    const links = document.querySelectorAll('.toc-link');
+    const io = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector('.toc-link[href="#' + e.target.id + '"]'); if (a) a.classList.add('active'); } }); }, { rootMargin: '-15% 0px -75% 0px' });
+    sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

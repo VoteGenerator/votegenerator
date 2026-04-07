@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5 Free Employee Survey Tools Compared (2026) | VoteGenerator</title>
+    <meta name="description" content="Honest comparison of 5 free employee survey tools. Verified free tier limits, anonymity, export, and best-fit advice. No fluff, just facts.">
+    <meta name="keywords" content="free employee survey tools, free anonymous employee survey, employee survey free, free pulse survey tool, best free survey tool">
+    <meta name="author" content="VoteGenerator">
+    <link rel="canonical" href="https://votegenerator.com/blog/free-employee-survey-tools.html">
+    <meta property="og:title" content="5 Free Employee Survey Tools Compared (2026)">
+    <meta property="og:description" content="Honest comparison of 5 free employee survey tools. Verified free tier limits, anonymity, export, and best-fit advice.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/free-employee-survey-tools">
+    <meta property="og:image" content="https://votegenerator.com/og-image-survey-tools.jpg">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "5 Free Employee Survey Tools Compared (2026)",
+        "description": "Honest comparison of 5 free employee survey tools with verified free tier limits.",
+        "author": { "@type": "Organization", "name": "VoteGenerator" },
+        "datePublished": "2026-03-22",
+        "dateModified": "2026-03-22",
+        "image": "https://votegenerator.com/og-image-survey-tools.jpg",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://votegenerator.com/blog/free-employee-survey-tools" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What features matter most in a free employee survey tool?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Anonymity, ease of use, response limits, and data export. You should be able to create a survey in minutes, protect employee privacy, and export results without hitting a paywall." }
+            },
+            {
+                "@type": "Question",
+                "name": "Can free survey tools really protect anonymity?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, but verify the tool's privacy policy. Look for tools that do not log IP addresses in responses, do not require respondents to sign in, and do not tie responses to identities. VoteGenerator and Tally support genuine anonymity by default. Google Forms and Microsoft Forms require configuration." }
+            },
+            {
+                "@type": "Question",
+                "name": "What is the main limitation of free survey tools?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Usually response limits or locked data export. Most free tools cap responses per survey or restrict CSV export to paid plans. For small teams, free tiers are usually sufficient. Only upgrade when your actual needs exceed the limits." }
+            },
+            {
+                "@type": "Question",
+                "name": "Which free tool is best for quick pulse surveys?",
+                "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator for speed and anonymity with no respondent signup. Google Forms for teams on Google Workspace who want unlimited responses and free data export to Sheets." }
+            },
+            {
+                "@type": "Question",
+                "name": "Does VoteGenerator have unlimited free responses?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. The VoteGenerator free plan allows up to 100 responses per poll. Paid plans start at $19/month for up to 10,000 responses per poll." }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700;800&family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,600;1,6..12,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --navy: #0a1628;
+            --navy-mid: #122040;
+            --navy-soft: #1e3060;
+            --amber: #f59e0b;
+            --amber-lt: #fbbf24;
+            --amber-dim: rgba(245,158,11,0.12);
+            --body-bg: #f6f7f9;
+            --white: #ffffff;
+            --card-bg: #ffffff;
+            --border: #e2e6ec;
+            --text: #1a2035;
+            --text-mid: #3d4a60;
+            --text-soft: #6b7a94;
+            --mono: 'JetBrains Mono', monospace;
+            --ok: #16a34a;
+            --ok-bg: #f0fdf4;
+            --warn: #d97706;
+            --warn-bg: #fffbeb;
+            --bad: #dc2626;
+            --bad-bg: #fef2f2;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Nunito Sans',sans-serif; background:var(--body-bg); color:var(--text); overflow-x:hidden; }
+
+        /* Progress */
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--amber),var(--amber-lt)); z-index:1000; transition:width 0.1s linear; }
+
+        /* Nav */
+        .nav { position:sticky; top:0; background:var(--navy); z-index:100; height:52px; display:flex; align-items:center; padding:0 24px; gap:10px; }
+        .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
+        .nav-logo img { width:26px; height:26px; }
+        .nav-logo-text { font-family:'Oxanium',sans-serif; font-weight:700; font-size:0.95rem; color:#fff; letter-spacing:0.04em; }
+        .nav-div { width:1px; height:20px; background:rgba(255,255,255,0.18); margin:0 6px; }
+        .nav-tag { font-family:'Oxanium',sans-serif; font-size:0.7rem; color:rgba(255,255,255,0.4); letter-spacing:0.12em; text-transform:uppercase; }
+        .nav-cta { margin-left:auto; font-family:'Oxanium',sans-serif; font-size:0.78rem; font-weight:600; color:var(--amber); text-decoration:none; letter-spacing:0.06em; }
+        .nav-cta:hover { color:var(--amber-lt); }
+
+        /* Hero */
+        .hero { background:var(--navy); padding:64px 24px 56px; position:relative; overflow:hidden; }
+        .hero-grid { position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.04;
+            background-image: linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);
+            background-size: 40px 40px; }
+        .hero-glow { position:absolute; bottom:-100px; right:-100px; width:500px; height:500px; background:radial-gradient(circle,rgba(245,158,11,0.12) 0%,transparent 65%); pointer-events:none; }
+        .hero-inner { max-width:860px; margin:0 auto; position:relative; }
+        .hero-kicker { display:inline-flex; align-items:center; gap:8px; background:var(--amber-dim); border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:5px 12px; margin-bottom:22px; }
+        .hero-kicker span { font-family:'Oxanium',sans-serif; font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); }
+        .hero h1 { font-family:'Oxanium',sans-serif; font-size:clamp(1.9rem,4.5vw,3rem); font-weight:800; line-height:1.1; letter-spacing:-0.01em; color:#fff; margin-bottom:18px; }
+        .hero h1 em { font-style:normal; color:var(--amber); }
+        .hero-sub { font-size:1.05rem; line-height:1.68; color:rgba(255,255,255,0.6); max-width:580px; font-weight:300; margin-bottom:28px; }
+        .hero-pills { display:flex; gap:10px; flex-wrap:wrap; }
+        .hero-pill { font-family:'Oxanium',sans-serif; font-size:0.72rem; font-weight:600; letter-spacing:0.08em; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:3px; padding:5px 10px; }
+        .hero::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--amber),transparent); opacity:0.4; }
+
+        /* Layout */
+        .page { max-width:1100px; margin:0 auto; padding:48px 24px 80px; display:grid; grid-template-columns:1fr 248px; gap:48px; align-items:start; }
+
+        /* Article */
+        .article h2 { font-family:'Oxanium',sans-serif; font-weight:700; font-size:1.45rem; letter-spacing:-0.01em; color:var(--text); margin:52px 0 18px; }
+        .article h2:first-child { margin-top:0; }
+        .article h3 { font-family:'Oxanium',sans-serif; font-weight:600; font-size:1.05rem; color:var(--text-mid); margin:28px 0 12px; }
+        .article p { font-size:1.03rem; line-height:1.8; color:var(--text-mid); margin-bottom:18px; font-weight:300; }
+        .article ul { margin-left:20px; margin-bottom:18px; }
+        .article li { font-size:1rem; line-height:1.75; color:var(--text-mid); margin-bottom:7px; font-weight:300; }
+
+        /* Tool card */
+        .tool-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:28px 0; }
+        .tool-card-head { background:var(--navy); padding:20px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .tool-name { font-family:'Oxanium',sans-serif; font-weight:700; font-size:1.15rem; color:#fff; letter-spacing:0.02em; }
+        .verdict { font-family:'Oxanium',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; border-radius:3px; padding:4px 10px; }
+        .v-speed { background:rgba(245,158,11,0.2); color:var(--amber); border:1px solid rgba(245,158,11,0.4); }
+        .v-ecosystem { background:rgba(74,144,226,0.2); color:#60a5fa; border:1px solid rgba(74,144,226,0.4); }
+        .v-power { background:rgba(167,139,250,0.2); color:#a78bfa; border:1px solid rgba(167,139,250,0.4); }
+        .v-microsoft { background:rgba(52,211,153,0.2); color:#34d399; border:1px solid rgba(52,211,153,0.4); }
+        .v-design { background:rgba(248,113,113,0.2); color:#f87171; border:1px solid rgba(248,113,113,0.4); }
+        .tool-card-body { padding:24px; }
+        .tool-best { font-family:'Oxanium',sans-serif; font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-soft); margin-bottom:4px; }
+        .tool-tagline { font-family:'Oxanium',sans-serif; font-size:0.98rem; font-weight:600; color:var(--text); margin-bottom:16px; }
+        .tool-card-body p { font-size:0.97rem; line-height:1.75; color:var(--text-mid); margin-bottom:16px; font-weight:300; }
+
+        /* Limits bar */
+        .limits-bar { background:var(--navy); border-radius:6px; padding:18px 20px; margin:18px 0; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; }
+        .limit-item {}
+        .limit-key { font-family:'Oxanium',sans-serif; font-size:0.64rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:4px; }
+        .limit-val { font-family:var(--mono); font-size:0.88rem; font-weight:500; }
+        .lv-ok { color:#4ade80; }
+        .lv-warn { color:var(--amber); }
+        .lv-bad { color:#f87171; }
+
+        /* Pros cons */
+        .pc-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+        .pc-box { border-radius:5px; padding:14px 16px; }
+        .pc-pros { background:var(--ok-bg); border:1px solid #bbf7d0; }
+        .pc-cons { background:var(--bad-bg); border:1px solid #fecaca; }
+        .pc-lbl { font-family:'Oxanium',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:8px; }
+        .pc-pros .pc-lbl { color:var(--ok); }
+        .pc-cons .pc-lbl { color:var(--bad); }
+        .pc-box ul { margin-left:14px; margin-bottom:0; }
+        .pc-box li { font-size:0.87rem; line-height:1.55; color:var(--text-mid); margin-bottom:5px; font-weight:400; }
+
+        /* Comparison table */
+        .table-wrap { overflow-x:auto; margin:24px 0; border:1px solid var(--border); border-radius:8px; }
+        table.comp { width:100%; border-collapse:collapse; min-width:600px; }
+        table.comp thead tr { background:var(--navy); }
+        table.comp th { font-family:'Oxanium',sans-serif; font-size:0.74rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.7); padding:13px 16px; text-align:left; white-space:nowrap; }
+        table.comp th:first-child { color:var(--amber); }
+        table.comp td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:0.92rem; vertical-align:middle; color:var(--text-mid); font-weight:300; }
+        table.comp tbody tr:last-child td { border-bottom:none; }
+        table.comp tbody tr:nth-child(even) { background:#f9fafb; }
+        table.comp td:first-child { font-family:'Oxanium',sans-serif; font-weight:600; font-size:0.85rem; color:var(--text); letter-spacing:0.02em; }
+        .t-ok { font-family:var(--mono); font-size:0.82rem; color:var(--ok); font-weight:500; }
+        .t-warn { font-family:var(--mono); font-size:0.82rem; color:var(--warn); font-weight:500; }
+        .t-bad { font-family:var(--mono); font-size:0.82rem; color:var(--bad); font-weight:500; }
+        .t-note { font-size:0.78rem; color:var(--text-soft); display:block; margin-top:2px; font-weight:400; }
+
+        /* Pick cards */
+        .picks { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:24px 0; }
+        .pick { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:18px; }
+        .pick-if { font-family:'Oxanium',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-soft); margin-bottom:6px; }
+        .pick-tool { font-family:'Oxanium',sans-serif; font-weight:700; font-size:0.95rem; color:var(--navy); margin-bottom:8px; }
+        .pick ul { margin-left:16px; margin-bottom:0; }
+        .pick li { font-size:0.86rem; line-height:1.55; color:var(--text-mid); margin-bottom:5px; font-weight:300; }
+
+        /* CTA */
+        .cta { background:var(--navy); border-radius:8px; padding:36px 32px; text-align:center; margin:52px 0; position:relative; overflow:hidden; }
+        .cta::before { content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px; background:radial-gradient(circle,rgba(245,158,11,0.12) 0%,transparent 70%); }
+        .cta h3 { font-family:'Oxanium',sans-serif; font-weight:700; font-size:1.3rem; color:#fff; margin-bottom:10px; position:relative; }
+        .cta p { font-size:0.93rem; color:rgba(255,255,255,0.6); margin-bottom:22px; font-weight:300; position:relative; }
+        .cta-btn { display:inline-block; background:var(--amber); color:var(--navy); font-family:'Oxanium',sans-serif; font-weight:700; font-size:0.86rem; letter-spacing:0.06em; padding:13px 28px; border-radius:4px; text-decoration:none; transition:transform 0.15s,box-shadow 0.15s; position:relative; }
+        .cta-btn:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(245,158,11,0.4); }
+
+        /* FAQ */
+        .faq-list { margin:14px 0; display:flex; flex-direction:column; gap:8px; }
+        details.faq { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        details.faq[open] { border-color:var(--amber); }
+        details.faq summary { padding:16px 20px; font-family:'Oxanium',sans-serif; font-weight:600; font-size:0.94rem; color:var(--text); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--amber); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .faq-ans { padding:4px 20px 18px; font-size:0.94rem; line-height:1.75; color:var(--text-mid); font-weight:300; }
+
+        /* Sidebar */
+        .sidebar { position:sticky; top:64px; display:flex; flex-direction:column; gap:14px; }
+        .toc-card { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        .toc-head { background:var(--navy); padding:12px 18px; }
+        .toc-head span { font-family:'Oxanium',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+        .toc-links { list-style:none; padding:6px 0; }
+        .toc-links a { display:block; padding:7px 16px; font-family:'Oxanium',sans-serif; font-size:0.8rem; color:var(--text-soft); text-decoration:none; border-left:2px solid transparent; transition:color 0.15s,background 0.15s; font-weight:500; }
+        .toc-links a:hover, .toc-links a.active { color:var(--amber); background:var(--amber-dim); border-left-color:var(--amber); }
+        .toc-divider { border:none; border-top:1px solid var(--border); margin:4px 0; }
+
+        .data-card { background:var(--navy); border-radius:6px; padding:18px; }
+        .data-card-title { font-family:'Oxanium',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:12px; }
+        .data-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+        .data-row:last-child { border-bottom:none; }
+        .data-row-key { font-family:'Oxanium',sans-serif; font-size:0.75rem; color:rgba(255,255,255,0.5); }
+        .data-row-val { font-family:var(--mono); font-size:0.78rem; font-weight:500; }
+
+        .sb-cta { background:var(--amber); border-radius:6px; padding:18px; text-align:center; }
+        .sb-cta p { font-family:'Oxanium',sans-serif; font-size:0.82rem; color:var(--navy); font-weight:600; line-height:1.5; margin-bottom:12px; }
+        .sb-cta a { display:block; background:var(--navy); color:#fff; font-family:'Oxanium',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.06em; padding:10px; border-radius:4px; text-decoration:none; }
+        .sb-cta a:hover { background:#0f1f3a; }
+
+        .sb-related { background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:16px; }
+        .sb-related-hd { font-family:'Oxanium',sans-serif; font-size:0.65rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); margin-bottom:10px; }
+        .sb-related ul { list-style:none; display:flex; flex-direction:column; gap:6px; }
+        .sb-related a { font-family:'Oxanium',sans-serif; font-size:0.8rem; color:var(--amber); text-decoration:none; font-weight:500; }
+        .sb-related a:hover { text-decoration:underline; }
+
+        /* Disclaimer */
+        .disclaimer { font-family:'Oxanium',sans-serif; font-size:0.7rem; color:var(--text-soft); background:var(--card-bg); border:1px solid var(--border); border-radius:4px; padding:12px 16px; margin-bottom:28px; }
+        .disclaimer strong { color:var(--text-mid); }
+
+        /* Footer */
+        .footer { background:var(--navy); color:rgba(255,255,255,0.4); padding:36px 24px; text-align:center; }
+        .footer-logo { font-family:'Oxanium',sans-serif; font-weight:700; font-size:1rem; color:#fff; letter-spacing:0.06em; margin-bottom:6px; }
+        .footer p { font-family:'Nunito Sans',sans-serif; font-size:0.84rem; margin-bottom:10px; font-weight:300; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:20px; }
+        .footer-links a { font-family:'Oxanium',sans-serif; font-size:0.75rem; letter-spacing:0.06em; color:rgba(255,255,255,0.5); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+        .footer-copy { font-size:0.77rem !important; }
+
+        /* Mobile */
+        @media (max-width:860px) {
+            .page { grid-template-columns:1fr; padding-top:32px; }
+            .sidebar { position:static; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+            .pc-grid, .picks { grid-template-columns:1fr; }
+        }
+        @media (max-width:540px) { .sidebar { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <div class="nav-div"></div>
+    <span class="nav-tag">Comparison</span>
+    <a href="https://votegenerator.com/create" class="nav-cta">Try it free &rarr;</a>
+</nav>
+
+<header class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+        <div class="hero-kicker"><span>Verified Free Tier Data &middot; March 2026</span></div>
+        <h1>5 Free Employee Survey Tools<br><em>Compared Honestly</em></h1>
+        <p class="hero-sub">Free tier limits, anonymity, export capabilities, and real use cases — checked against each tool's current pricing page. No inflated claims.</p>
+        <div class="hero-pills">
+            <span class="hero-pill">5 Tools</span>
+            <span class="hero-pill">Verified Limits</span>
+            <span class="hero-pill">Anonymity Tested</span>
+            <span class="hero-pill">Export Details</span>
+        </div>
+    </div>
+</header>
+
+<div class="page">
+<main class="article" id="article">
+
+    <p class="disclaimer"><strong>Accuracy note:</strong> Free tier limits change. All data verified against each tool's pricing page at time of publication (March 2026). Check the tool's current pricing before committing.</p>
+
+    <h2 id="what-to-look">What Matters in a Free Employee Survey Tool</h2>
+    <p>Not all survey tools are built for the same job. Before comparing platforms, understand which features actually matter for employee feedback — and which are nice-to-have extras that rarely get used.</p>
+
+    <p><strong>Genuinely essential:</strong> anonymity (does the tool expose who responded?), response limits (when does the free tier run out?), data export (can you download results without upgrading?), and setup speed (can you launch in under five minutes?).</p>
+
+    <p><strong>Nice-to-have but rarely critical:</strong> skip logic, advanced analytics dashboards, custom branding, and integrations with Slack or email. These matter more as your survey practice matures. Start with the essentials.</p>
+
+    <!-- Tool 1: VoteGenerator -->
+    <h2 id="votegenerator">1. VoteGenerator</h2>
+    <div class="tool-card">
+        <div class="tool-card-head">
+            <div class="tool-name">VoteGenerator</div>
+            <div class="verdict v-speed">Best for Speed &amp; Privacy</div>
+        </div>
+        <div class="tool-card-body">
+            <div class="tool-best">Best for</div>
+            <div class="tool-tagline">Anonymous pulse surveys with zero setup friction — no account required from anyone</div>
+            <p>VoteGenerator is built for speed. Create a survey in under a minute, share a link, and collect responses immediately. No signup required from respondents — which is the single biggest driver of response rates and genuine anonymity. Employees click a link, answer, done.</p>
+            <p>The free plan allows up to 100 responses per poll, which covers most team-level surveys comfortably. Three active polls can run simultaneously on the free tier. Data export to CSV requires a paid plan.</p>
+
+            <div class="limits-bar">
+                <div class="limit-item">
+                    <div class="limit-key">Responses / poll</div>
+                    <div class="limit-val lv-warn">100</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Active polls</div>
+                    <div class="limit-val lv-warn">3 simultaneous</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Respondent signup</div>
+                    <div class="limit-val lv-ok">Not required</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">CSV export</div>
+                    <div class="limit-val lv-bad">Paid only</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Anonymous by default</div>
+                    <div class="limit-val lv-ok">Yes</div>
+                </div>
+            </div>
+
+            <div class="pc-grid">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Fastest setup of any tool reviewed</li>
+                        <li>No respondent signup — removes the main drop-off point</li>
+                        <li>Genuinely anonymous by default</li>
+                        <li>Multiple question types (rating, multiple choice, open-ended)</li>
+                        <li>Real-time results visible to the creator</li>
+                        <li>Mobile-responsive for employees on their phones</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>100 response cap per poll on free plan</li>
+                        <li>3 active polls at once on free plan</li>
+                        <li>CSV export requires paid plan ($19/month)</li>
+                        <li>No skip logic or branching</li>
+                        <li>Basic analytics — no filtering or cross-tabs</li>
+                        <li>No integrations with Slack or email platforms</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 2: Google Forms -->
+    <h2 id="google-forms">2. Google Forms</h2>
+    <div class="tool-card">
+        <div class="tool-card-head">
+            <div class="tool-name">Google Forms</div>
+            <div class="verdict v-ecosystem">Best for Google Workspace Teams</div>
+        </div>
+        <div class="tool-card-body">
+            <div class="tool-best">Best for</div>
+            <div class="tool-tagline">Teams on Google Workspace who want unlimited responses and direct data export to Sheets</div>
+            <p>Google Forms is the most genuinely unlimited free survey tool available. No response caps, no question limits, no survey limits. Responses automatically populate a Google Sheet, which means analysis happens in a tool most people already know.</p>
+            <p>The main anonymity caveat: Google Forms can be configured to not collect email addresses, but it does not prevent Google's servers from receiving IP data as part of standard web traffic. For most employee surveys this is not a practical concern, but it is worth noting for highly sensitive topics. Employees also do not need to sign in if you configure the form to allow external responses.</p>
+
+            <div class="limits-bar">
+                <div class="limit-item">
+                    <div class="limit-key">Responses / survey</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Active surveys</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Respondent signup</div>
+                    <div class="limit-val lv-ok">Configurable</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Data export</div>
+                    <div class="limit-val lv-ok">Google Sheets / CSV</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Anonymous by default</div>
+                    <div class="limit-val lv-warn">Needs config</div>
+                </div>
+            </div>
+
+            <div class="pc-grid">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Truly unlimited — responses, questions, surveys</li>
+                        <li>Free CSV export via Google Sheets</li>
+                        <li>Familiar to almost every employee</li>
+                        <li>Customisable themes and branding</li>
+                        <li>Built-in charts for quick visualisation</li>
+                        <li>Works in Google Drive like any other file</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Requires Google account to create (not to respond)</li>
+                        <li>Anonymity requires manual configuration</li>
+                        <li>Limited branching logic compared to paid tools</li>
+                        <li>Analysis requires Google Sheets comfort</li>
+                        <li>Tied to Google ecosystem — not standalone</li>
+                        <li>Less polished UI than purpose-built survey tools</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 3: SurveyMonkey -->
+    <h2 id="surveymonkey">3. SurveyMonkey (Free Tier)</h2>
+    <div class="tool-card">
+        <div class="tool-card-head">
+            <div class="tool-name">SurveyMonkey</div>
+            <div class="verdict v-power">Best Analytics on Free Tier</div>
+        </div>
+        <div class="tool-card-body">
+            <div class="tool-best">Best for</div>
+            <div class="tool-tagline">Small teams wanting professional templates and analytics — under 100 respondents per survey</div>
+            <p>SurveyMonkey is the most recognised name in survey software, and its free tier reflects that brand investment: professional templates, more question types than most free tools, and better built-in analytics. The tradeoff is a hard cap of 100 responses per survey and 10 questions per survey.</p>
+            <p>For teams under 100 people, those limits are workable. For larger organisations, the 100-response cap hits fast. Data export is locked behind a paid subscription starting at $384/year — which is a significant barrier if you need to analyse results in a spreadsheet.</p>
+
+            <div class="limits-bar">
+                <div class="limit-item">
+                    <div class="limit-key">Responses / survey</div>
+                    <div class="limit-val lv-bad">100 max</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Questions / survey</div>
+                    <div class="limit-val lv-bad">10 max</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Respondent signup</div>
+                    <div class="limit-val lv-ok">Not required</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">CSV export</div>
+                    <div class="limit-val lv-bad">Paid only</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Anonymous by default</div>
+                    <div class="limit-val lv-warn">Needs config</div>
+                </div>
+            </div>
+
+            <div class="pc-grid">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Professional survey templates for HR use cases</li>
+                        <li>More question types including matrix and NPS</li>
+                        <li>Better built-in analytics than Google Forms</li>
+                        <li>Email distribution and scheduling built in</li>
+                        <li>Mobile app for monitoring on the go</li>
+                        <li>Upgrade path if you outgrow the free tier</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>100-response cap per survey on free plan</li>
+                        <li>10-question cap per survey on free plan</li>
+                        <li>CSV export requires paid plan ($384/yr+)</li>
+                        <li>Paywall prompts visible throughout the interface</li>
+                        <li>Slower to set up than VoteGenerator</li>
+                        <li>UI feels cluttered compared to alternatives</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 4: Microsoft Forms -->
+    <h2 id="microsoft-forms">4. Microsoft Forms</h2>
+    <div class="tool-card">
+        <div class="tool-card-head">
+            <div class="tool-name">Microsoft Forms</div>
+            <div class="verdict v-microsoft">Best for Microsoft 365 Organisations</div>
+        </div>
+        <div class="tool-card-body">
+            <div class="tool-best">Best for</div>
+            <div class="tool-tagline">Organisations running Microsoft 365 — surveys that flow directly into Excel</div>
+            <p>Microsoft Forms is Google Forms' functional equivalent for Microsoft 365 shops. Unlimited responses, unlimited surveys, built-in branching logic, and responses that export directly to Excel. If your organisation lives in Outlook, Teams, and SharePoint, this is the natural default.</p>
+            <p>The catch: it requires a Microsoft 365 subscription to create forms — though respondents do not need an account. For organisations already paying for M365, this is effectively free. For everyone else, it is not.</p>
+
+            <div class="limits-bar">
+                <div class="limit-item">
+                    <div class="limit-key">Responses / survey</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Active surveys</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Respondent signup</div>
+                    <div class="limit-val lv-ok">Not required</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Data export</div>
+                    <div class="limit-val lv-ok">Excel (free)</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Requires M365</div>
+                    <div class="limit-val lv-warn">To create forms</div>
+                </div>
+            </div>
+
+            <div class="pc-grid">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Unlimited responses and surveys</li>
+                        <li>Free Excel export via Microsoft 365</li>
+                        <li>Built-in branching logic — better than Google Forms</li>
+                        <li>Teams integration — share directly in channels</li>
+                        <li>Real-time response charts</li>
+                        <li>Familiar if your organisation uses Office</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>Requires Microsoft 365 subscription to create</li>
+                        <li>Anonymity needs manual configuration</li>
+                        <li>Less intuitive than Google Forms or VoteGenerator</li>
+                        <li>Fewer customisation options overall</li>
+                        <li>Smaller template library than SurveyMonkey</li>
+                        <li>Locked into the Microsoft ecosystem</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool 5: Tally -->
+    <h2 id="tally">5. Tally</h2>
+    <div class="tool-card">
+        <div class="tool-card-head">
+            <div class="tool-name">Tally</div>
+            <div class="verdict v-design">Best Design Out of the Box</div>
+        </div>
+        <div class="tool-card-body">
+            <div class="tool-best">Best for</div>
+            <div class="tool-tagline">Modern, polished surveys — especially those embedded in websites or shared externally</div>
+            <p>Tally takes a form-first approach: the default output looks better than anything you will get from Google Forms or Microsoft Forms without design effort. Responses are unlimited, setup is fast, and conditional logic is included on the free tier.</p>
+            <p>The main limitation is data export — CSV download requires a paid plan. For internal employee surveys where the creator reviews results in-browser, that is manageable. For anyone who needs to analyse data in a spreadsheet, it is a genuine blocker.</p>
+
+            <div class="limits-bar">
+                <div class="limit-item">
+                    <div class="limit-key">Responses / survey</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Active surveys</div>
+                    <div class="limit-val lv-ok">Unlimited</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Respondent signup</div>
+                    <div class="limit-val lv-ok">Not required</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">CSV export</div>
+                    <div class="limit-val lv-bad">Paid only</div>
+                </div>
+                <div class="limit-item">
+                    <div class="limit-key">Branching logic</div>
+                    <div class="limit-val lv-ok">Free tier</div>
+                </div>
+            </div>
+
+            <div class="pc-grid">
+                <div class="pc-box pc-pros">
+                    <div class="pc-lbl">Strengths</div>
+                    <ul>
+                        <li>Best visual design with zero effort</li>
+                        <li>Unlimited responses on free plan</li>
+                        <li>Conditional branching included for free</li>
+                        <li>Easy link sharing and embed support</li>
+                        <li>Slack and email notifications</li>
+                        <li>Mobile-responsive by default</li>
+                    </ul>
+                </div>
+                <div class="pc-box pc-cons">
+                    <div class="pc-lbl">Limitations</div>
+                    <ul>
+                        <li>CSV export locked to paid plan</li>
+                        <li>Fewer question types than SurveyMonkey</li>
+                        <li>Limited analytics in-browser</li>
+                        <li>Newer platform — less track record</li>
+                        <li>Less customisation than established tools</li>
+                        <li>Less suitable for high-volume HR use cases</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison table -->
+    <h2 id="comparison">Feature Comparison Table</h2>
+    <p>All limits are for free tiers only. Data verified March 2026.</p>
+
+    <div class="table-wrap">
+        <table class="comp">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>VoteGenerator</th>
+                    <th>Google Forms</th>
+                    <th>SurveyMonkey</th>
+                    <th>Microsoft Forms</th>
+                    <th>Tally</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Responses (free)</td>
+                    <td><span class="t-warn">100 / poll</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                    <td><span class="t-bad">100 / survey</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                </tr>
+                <tr>
+                    <td>Questions (free)</td>
+                    <td><span class="t-warn">10 / survey</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                    <td><span class="t-bad">10 / survey</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                    <td><span class="t-ok">Unlimited</span></td>
+                </tr>
+                <tr>
+                    <td>Respondent signup required</td>
+                    <td><span class="t-ok">No</span></td>
+                    <td><span class="t-warn">Configurable</span></td>
+                    <td><span class="t-ok">No</span></td>
+                    <td><span class="t-ok">No</span></td>
+                    <td><span class="t-ok">No</span></td>
+                </tr>
+                <tr>
+                    <td>Anonymous by default</td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-warn">Config needed</span></td>
+                    <td><span class="t-warn">Config needed</span></td>
+                    <td><span class="t-warn">Config needed</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                </tr>
+                <tr>
+                    <td>Data export (free)</td>
+                    <td><span class="t-bad">Paid only</span><span class="t-note">CSV on paid plan</span></td>
+                    <td><span class="t-ok">Free (Sheets/CSV)</span></td>
+                    <td><span class="t-bad">Paid only</span></td>
+                    <td><span class="t-ok">Free (Excel)</span></td>
+                    <td><span class="t-bad">Paid only</span></td>
+                </tr>
+                <tr>
+                    <td>Branching / skip logic</td>
+                    <td><span class="t-bad">No</span></td>
+                    <td><span class="t-warn">Basic</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes (free)</span></td>
+                </tr>
+                <tr>
+                    <td>Setup speed</td>
+                    <td><span class="t-ok">Fastest (&lt;1 min)</span></td>
+                    <td><span class="t-ok">Fast (2–3 min)</span></td>
+                    <td><span class="t-warn">Moderate (5+ min)</span></td>
+                    <td><span class="t-warn">Moderate</span></td>
+                    <td><span class="t-ok">Fast</span></td>
+                </tr>
+                <tr>
+                    <td>Real-time results</td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                    <td><span class="t-ok">Yes</span></td>
+                </tr>
+                <tr>
+                    <td>Requires paid account to create</td>
+                    <td><span class="t-ok">No</span></td>
+                    <td><span class="t-ok">No (free Google)</span></td>
+                    <td><span class="t-ok">No</span></td>
+                    <td><span class="t-bad">M365 required</span></td>
+                    <td><span class="t-ok">No</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Which one -->
+    <h2 id="which-one">Which Tool Should You Choose?</h2>
+
+    <div class="picks">
+        <div class="pick">
+            <div class="pick-if">Choose if...</div>
+            <div class="pick-tool">VoteGenerator</div>
+            <ul>
+                <li>Speed and anonymity are your top priorities</li>
+                <li>Employees should not need to create accounts</li>
+                <li>Your team is under 100 people</li>
+                <li>You want zero setup friction for respondents</li>
+            </ul>
+        </div>
+        <div class="pick">
+            <div class="pick-if">Choose if...</div>
+            <div class="pick-tool">Google Forms</div>
+            <ul>
+                <li>Your team already uses Google Workspace</li>
+                <li>You need unlimited responses and free export</li>
+                <li>Analysing data in Sheets is comfortable</li>
+                <li>Survey volume or team size is large</li>
+            </ul>
+        </div>
+        <div class="pick">
+            <div class="pick-if">Choose if...</div>
+            <div class="pick-tool">SurveyMonkey</div>
+            <ul>
+                <li>Professional templates matter to you</li>
+                <li>Your team has fewer than 100 employees</li>
+                <li>You plan to upgrade eventually</li>
+                <li>Better analytics are worth the 10-question cap</li>
+            </ul>
+        </div>
+        <div class="pick">
+            <div class="pick-if">Choose if...</div>
+            <div class="pick-tool">Microsoft Forms</div>
+            <ul>
+                <li>Your org runs on Microsoft 365 and Teams</li>
+                <li>You need branching logic for free</li>
+                <li>Results should flow directly to Excel</li>
+                <li>The M365 subscription is already in place</li>
+            </ul>
+        </div>
+        <div class="pick">
+            <div class="pick-if">Choose if...</div>
+            <div class="pick-tool">Tally</div>
+            <ul>
+                <li>Visual design matters and you do not want to design it</li>
+                <li>You want unlimited responses and free branching</li>
+                <li>You will embed surveys in a website or intranet</li>
+                <li>In-browser results are enough — no CSV needed</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+        <h3>Try VoteGenerator — Free, No Signup</h3>
+        <p>Create an anonymous employee survey in under a minute. No account required from you or your employees.</p>
+        <a href="https://votegenerator.com/create" class="cta-btn">Create Your Survey &rarr;</a>
+    </div>
+
+    <!-- FAQ -->
+    <h2 id="faq">Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq">
+            <summary>Does VoteGenerator have unlimited free responses?</summary>
+            <div class="faq-ans">No. The VoteGenerator free plan allows up to 100 responses per poll and up to 3 active polls simultaneously. If you need more than 100 responses per survey, Google Forms (unlimited), Tally (unlimited), or Microsoft Forms (unlimited with M365) are better fits. VoteGenerator's paid plan starts at $19/month for up to 10,000 responses per poll.</div>
+        </details>
+        <details class="faq">
+            <summary>Can free survey tools really protect anonymity?</summary>
+            <div class="faq-ans">Yes, but verify the specific tool's approach. VoteGenerator and Tally are anonymous by default — no respondent login, no identity tracking. Google Forms and Microsoft Forms require configuration to prevent email collection. Always check a tool's privacy policy before using it for sensitive employee feedback.</div>
+        </details>
+        <details class="faq">
+            <summary>Which free tools let me export data to a spreadsheet?</summary>
+            <div class="faq-ans">Google Forms exports free to Google Sheets and CSV. Microsoft Forms exports free to Excel (requires M365 subscription). VoteGenerator, SurveyMonkey, and Tally all restrict CSV export to paid plans. If free data export is a requirement, Google Forms or Microsoft Forms are your only options from this list.</div>
+        </details>
+        <details class="faq">
+            <summary>Which free tool is best for a quick pulse survey?</summary>
+            <div class="faq-ans">VoteGenerator for pure speed and anonymity — employees click a link and respond with no account required. Google Forms for teams already in the Google ecosystem who need more than 100 responses. The choice usually comes down to response volume and whether your team uses Google Workspace.</div>
+        </details>
+        <details class="faq">
+            <summary>Can I switch tools later if my needs change?</summary>
+            <div class="faq-ans">Yes. Most tools support data export from their interfaces (some requiring paid plans). Start with a free tool matched to your current needs, gather data, and move to a paid platform when you genuinely outgrow the free tier. There is no benefit in paying upfront for features you will not use yet.</div>
+        </details>
+    </div>
+
+</main>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <div class="toc-card">
+        <div class="toc-head"><span>Tools Compared</span></div>
+        <ul class="toc-links" id="toc-links">
+            <li><a href="#what-to-look">What to Look For</a></li>
+            <li><a href="#votegenerator">1. VoteGenerator</a></li>
+            <li><a href="#google-forms">2. Google Forms</a></li>
+            <li><a href="#surveymonkey">3. SurveyMonkey</a></li>
+            <li><a href="#microsoft-forms">4. Microsoft Forms</a></li>
+            <li><a href="#tally">5. Tally</a></li>
+            <hr class="toc-divider">
+            <li><a href="#comparison">Comparison Table</a></li>
+            <li><a href="#which-one">Which to Choose</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </div>
+
+    <div class="data-card">
+        <div class="data-card-title">VoteGenerator Free Tier</div>
+        <div class="data-row">
+            <span class="data-row-key">Responses / poll</span>
+            <span class="data-row-val lv-warn">100</span>
+        </div>
+        <div class="data-row">
+            <span class="data-row-key">Active polls</span>
+            <span class="data-row-val lv-warn">3</span>
+        </div>
+        <div class="data-row">
+            <span class="data-row-key">Respondent login</span>
+            <span class="data-row-val lv-ok">No</span>
+        </div>
+        <div class="data-row">
+            <span class="data-row-key">CSV export</span>
+            <span class="data-row-val lv-bad">Paid</span>
+        </div>
+        <div class="data-row">
+            <span class="data-row-key">Anonymous</span>
+            <span class="data-row-val lv-ok">Yes</span>
+        </div>
+    </div>
+
+    <div class="sb-cta">
+        <p>Create an anonymous survey free — no account needed for anyone</p>
+        <a href="https://votegenerator.com/create">Create Survey &rarr;</a>
+    </div>
+
+    <div class="sb-related">
+        <div class="sb-related-hd">Related Guides</div>
+        <ul>
+            <li><a href="https://votegenerator.com/blog/how-to-survey-employees.html">How to Survey Employees</a></li>
+            <li><a href="https://votegenerator.com/blog/employee-survey-questions.html">50 Survey Questions</a></li>
+            <li><a href="https://votegenerator.com/blog/are-work-surveys-anonymous.html">Are Work Surveys Anonymous?</a></li>
+            <li><a href="https://votegenerator.com/blog/employee-engagement-survey-guide.html">Engagement Survey Guide</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Free polls and surveys. No signup required.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="https://votegenerator.com/create">Create Survey</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p class="footer-copy">&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+    const bar = document.getElementById('prog');
+    window.addEventListener('scroll', () => {
+        const d = document.documentElement;
+        bar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+    });
+
+    const links = document.querySelectorAll('#toc-links a[href^="#"]');
+    const targets = Array.from(links).map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                links.forEach(l => l.classList.remove('active'));
+                const a = document.querySelector(`#toc-links a[href="#${e.target.id}"]`);
+                if (a) a.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    targets.forEach(t => obs.observe(t));
+</script>
+</body>
+</html>

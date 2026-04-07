@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Survey Maker: 10 Tools Tested (Honest Review for 2026)</title>
+    <meta name="description" content="We tested 10 free survey makers head-to-head. See real limits, hidden restrictions, and which tools are worth using in 2026.">
+    <meta name="keywords" content="free survey maker, survey maker free, free online survey maker, best free survey tool, survey tool">
+    <link rel="canonical" href="https://votegenerator.com/blog/free-survey-maker-tools">
+    <meta property="og:title" content="Free Survey Maker: 10 Tools Tested (Honest Review for 2026)">
+    <meta property="og:description" content="We tested 10 free survey makers head-to-head. See real limits, hidden restrictions, and which tools are worth using in 2026.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/free-survey-maker-tools">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Free Survey Maker: 10 Tools Tested (Honest Review for 2026)","description":"We tested 10 free survey makers head-to-head. See real limits, hidden restrictions, and which tools are worth using in 2026.","author":{"@type":"Organization","name":"VoteGenerator"},"publisher":{"@type":"Organization","name":"VoteGenerator"},"datePublished":"2026-03-22"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is VoteGenerator really free with no signup required?","acceptedAnswer":{"@type":"Answer","text":"Yes. VoteGenerator requires no account, email, or credit card. You create a survey and share it immediately. The free tier allows 100 responses per poll and up to 3 active polls at once. CSV export requires a paid plan."}},{"@type":"Question","name":"Which free survey maker is best for businesses?","acceptedAnswer":{"@type":"Answer","text":"Google Forms is the safest default if you have a Google account. For quick surveys without signup, VoteGenerator is ideal. For advanced logic and exports, SurveyMonkey's paid tier offers more features but with response limits on free."}},{"@type":"Question","name":"Can I export survey results from free survey makers?","acceptedAnswer":{"@type":"Answer","text":"Most free survey makers restrict CSV exports to their paid plans. Google Forms and Microsoft Forms allow CSV exports on the free tier. VoteGenerator, SurveyMonkey, and Typeform require paid plans for CSV export."}},{"@type":"Question","name":"What are the response limits for free survey makers?","acceptedAnswer":{"@type":"Answer","text":"Google Forms and Microsoft Forms have unlimited responses. VoteGenerator allows 100 responses per poll. SurveyMonkey limits you to 25 responses per survey. Typeform allows only 10 responses per month across all forms."}},{"@type":"Question","name":"Do free survey makers work on mobile?","acceptedAnswer":{"@type":"Answer","text":"All major free survey makers are mobile-responsive, meaning participants can fill them out on phones and tablets."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --navy: #0a0f1e;
+            --navy-mid: #111827;
+            --navy-soft: #1f2937;
+            --blue: #2563eb;
+            --blue-pale: #eff6ff;
+            --blue-border: #bfdbfe;
+            --amber: #d97706;
+            --amber-pale: #fffbeb;
+            --amber-border: #fde68a;
+            --green: #059669;
+            --green-pale: #ecfdf5;
+            --red: #dc2626;
+            --red-pale: #fef2f2;
+            --ink: #111827;
+            --body: #374151;
+            --muted: #6b7280;
+            --rule: #e5e7eb;
+            --bg: #f5f7ff;
+            --surface: #ffffff;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--body); line-height: 1.7; }
+
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--blue), var(--amber)); transform-origin: left; transform: scaleX(0); z-index: 200; transition: transform 0.08s linear; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 100; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-inner { max-width: 1240px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-brand img { height: 28px; width: auto; }
+        .nav-brand-name { font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.01em; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: rgba(255,255,255,0.45); text-decoration: none; font-size: 13px; font-weight: 600; transition: color 0.15s; }
+        .nav-link:hover { color: white; }
+        .nav-cta { display: inline-flex; align-items: center; gap: 6px; background: var(--blue); color: white; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
+        .nav-cta:hover { background: #1d4ed8; }
+
+        /* HERO */
+        .hero { background: var(--navy); position: relative; overflow: hidden; padding: 0 28px; }
+        .hero::before { content: '10'; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); font-size: 280px; font-weight: 800; color: rgba(255,255,255,0.025); line-height: 1; pointer-events: none; user-select: none; }
+        .hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(37,99,235,0.4) 50%, transparent); }
+        .hero-inner { max-width: 1240px; margin: 0 auto; padding: 72px 0 64px; position: relative; z-index: 1; }
+        .hero-label { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .hero-tag { background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.35); color: #93c5fd; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .hero-date { font-size: 12px; color: rgba(255,255,255,0.3); }
+        .hero h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; color: white; line-height: 1.12; letter-spacing: -0.03em; margin-bottom: 18px; max-width: 720px; }
+        .hero h1 span { color: #60a5fa; }
+        .hero-deck { font-size: 17px; color: rgba(255,255,255,0.5); max-width: 600px; margin-bottom: 32px; line-height: 1.65; }
+        .hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .hero-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--blue); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .hero-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hero-chip { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 500; }
+
+        /* LAYOUT */
+        .page-body { max-width: 1240px; margin: 0 auto; padding: 56px 28px; display: grid; grid-template-columns: 1fr 280px; gap: 64px; align-items: start; }
+        .article { min-width: 0; }
+
+        /* TYPOGRAPHY */
+        .article h2 { font-size: 1.6rem; font-weight: 800; color: var(--ink); margin: 56px 0 16px; letter-spacing: -0.03em; scroll-margin-top: 74px; }
+        .article h2:first-child { margin-top: 0; }
+        .article h3 { font-size: 1.1rem; font-weight: 700; color: var(--blue); margin: 28px 0 10px; }
+        .article p { font-size: 16px; color: var(--body); margin-bottom: 16px; line-height: 1.8; }
+        .article ul { list-style: none; margin: 0 0 16px; }
+        .article ul li { padding: 8px 0 8px 20px; position: relative; border-bottom: 1px solid var(--rule); font-size: 15px; color: var(--body); }
+        .article ul li:last-child { border-bottom: none; }
+        .article ul li::before { content: '·'; position: absolute; left: 0; color: var(--blue); font-size: 20px; line-height: 1; top: 6px; }
+        strong { color: var(--ink); font-weight: 700; }
+
+        /* METHODOLOGY BOX */
+        .method-box { background: var(--surface); border: 1px solid var(--rule); border-radius: 16px; padding: 24px 28px; margin: 24px 0; }
+        .method-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+
+        /* COMPARISON TABLE */
+        .table-wrap { overflow-x: auto; margin: 24px 0; border-radius: 14px; border: 1px solid var(--rule); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 13.5px; }
+        thead tr { background: var(--navy); }
+        thead th { padding: 14px 16px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.55); white-space: nowrap; }
+        thead th:first-child { color: rgba(255,255,255,0.85); }
+        tbody tr { border-bottom: 1px solid var(--rule); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fafbff; }
+        tbody tr.hl { background: var(--blue-pale); }
+        tbody tr.hl td:first-child { font-weight: 800; color: var(--blue); }
+        td { padding: 13px 16px; color: var(--body); vertical-align: middle; }
+        td:first-child { font-weight: 600; color: var(--ink); font-size: 14px; }
+        .yes { color: var(--green); font-weight: 700; }
+        .no { color: #d1d5db; font-weight: 700; }
+        .partial { color: var(--amber); font-weight: 600; font-size: 12px; }
+
+        /* TOOL REVIEW CARDS */
+        .tool-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; overflow: hidden; margin: 28px 0; }
+        .tool-card-head { display: flex; align-items: center; gap: 16px; padding: 20px 24px; background: var(--navy-mid); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .tool-n { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+        .tool-info { flex: 1; }
+        .tool-name { font-size: 16px; font-weight: 800; color: white; letter-spacing: -0.02em; }
+        .tool-tagline { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .tool-verdict-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; }
+        .badge-top { background: rgba(37,99,235,0.2); border: 1px solid rgba(37,99,235,0.4); color: #93c5fd; }
+        .badge-ok { background: rgba(5,150,105,0.15); border: 1px solid rgba(5,150,105,0.35); color: #6ee7b7; }
+        .badge-limited { background: rgba(217,119,6,0.15); border: 1px solid rgba(217,119,6,0.35); color: #fcd34d; }
+        .badge-skip { background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.3); color: #fca5a5; }
+        .tool-card-body { padding: 22px 24px; }
+        .tool-card-body > p { margin-bottom: 16px; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+        .pros { background: var(--green-pale); border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px 16px; }
+        .cons { background: var(--red-pale); border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; }
+        .pc-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+        .pros .pc-label { color: var(--green); }
+        .cons .pc-label { color: var(--red); }
+        .pros ul, .cons ul { margin: 0; list-style: none; }
+        .pros ul li, .cons ul li { padding: 4px 0 4px 16px; border-bottom: none; font-size: 13px; color: var(--body); }
+        .pros ul li::before { content: '✓'; color: var(--green); font-weight: 700; left: 0; top: auto; font-size: 13px; }
+        .cons ul li::before { content: '✗'; color: var(--red); font-weight: 700; left: 0; top: auto; font-size: 13px; }
+        .verdict-strip { display: flex; gap: 10px; align-items: flex-start; background: #f8faff; border: 1px solid var(--blue-border); border-radius: 10px; padding: 12px 16px; margin-top: 14px; font-size: 14px; }
+        .verdict-strip-label { font-weight: 800; color: var(--blue); white-space: nowrap; flex-shrink: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+        .verdict-strip p { font-size: 14px; color: var(--body); margin: 0; line-height: 1.6; }
+
+        /* USE CASE SECTION */
+        .use-cases { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+        .use-case-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; }
+        .use-case-title { font-size: 13px; font-weight: 800; color: var(--ink); margin-bottom: 4px; letter-spacing: -0.01em; }
+        .use-case-winner { font-size: 12px; color: var(--blue); font-weight: 700; margin-bottom: 4px; }
+        .use-case-card p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+        /* CTA BLOCK */
+        .cta-block { background: var(--navy); border-radius: 20px; padding: 40px 32px; text-align: center; margin: 48px 0; position: relative; overflow: hidden; }
+        .cta-block::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(37,99,235,0.25) 0%, transparent 65%); }
+        .cta-block h3 { font-size: 1.8rem; font-weight: 800; color: white; letter-spacing: -0.03em; margin-bottom: 10px; position: relative; }
+        .cta-block p { color: rgba(255,255,255,0.45); margin-bottom: 24px; position: relative; }
+        .cta-block-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--blue); color: white; padding: 13px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; position: relative; }
+        .cta-block-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+
+        /* FAQ */
+        .faq { display: flex; flex-direction: column; gap: 6px; }
+        details.faq-item { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--blue); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; font-weight: 700; font-size: 15px; color: var(--ink); cursor: pointer; list-style: none; user-select: none; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 24px; height: 24px; border-radius: 6px; background: #eff6ff; border: 1px solid var(--blue-border); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--blue); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--blue); border-color: var(--blue); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 0 20px 16px; font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+        /* RELATED */
+        .related { margin-top: 52px; padding-top: 36px; border-top: 2px solid var(--rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 14px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--blue); transform: translateX(4px); color: var(--blue); }
+        .related-arrow { color: var(--blue); }
+
+        /* SIDEBAR */
+        .sidebar { position: sticky; top: 74px; }
+        .toc-box { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+        .toc-head { background: var(--navy); padding: 14px 18px; display: flex; align-items: center; gap: 8px; }
+        .toc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 6px rgba(37,99,235,0.8); }
+        .toc-head-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+        .toc-links { padding: 10px; }
+        .toc-link { display: block; padding: 7px 10px; border-radius: 7px; text-decoration: none; font-size: 13px; font-weight: 600; color: var(--muted); transition: background 0.15s, color 0.15s; }
+        .toc-link:hover, .toc-link.active { background: var(--blue-pale); color: var(--blue); }
+        .sidebar-cta { background: var(--navy); border-radius: 14px; padding: 22px; }
+        .sidebar-cta-title { font-size: 1.05rem; font-weight: 800; color: white; margin-bottom: 4px; letter-spacing: -0.02em; }
+        .sidebar-cta-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 16px; }
+        .sidebar-cta-btn { display: flex; align-items: center; justify-content: center; background: var(--blue); color: white; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; transition: background 0.2s; }
+        .sidebar-cta-btn:hover { background: #1d4ed8; }
+
+        /* FOOTER */
+        .foot { background: var(--navy); color: rgba(255,255,255,0.35); text-align: center; padding: 32px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+        .foot-links a:hover { color: white; }
+
+        @media (max-width: 1000px) { .use-cases { grid-template-columns: 1fr; } }
+        @media (max-width: 860px) { .page-body { grid-template-columns: 1fr; gap: 40px; padding: 40px 20px; } .sidebar { position: static; } .toc-box { display: none; } .pros-cons { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { .hero { padding: 0 20px; } .hero-inner { padding: 52px 0 44px; } .nav-link { display: none; } }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-brand">
+            <img src="/logo.svg" alt="VoteGenerator">
+            <span class="nav-brand-name">VoteGenerator</span>
+        </a>
+        <div class="nav-right">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/how-to-create-poll" class="nav-link">How It Works</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create a Survey →</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-label">
+            <span class="hero-tag">Tool Review</span>
+            <span class="hero-date">March 22, 2026 · 10 min read</span>
+        </div>
+        <h1>Free Survey Maker:<br><span>10 Tools Tested</span></h1>
+        <p class="hero-deck">Honest review of the best no-signup survey tools for 2026. Real limits, hidden restrictions, and which tool actually works for your needs.</p>
+        <div class="hero-actions">
+            <a href="https://votegenerator.com/create" class="hero-btn">Create Your First Survey Free →</a>
+            <div class="hero-chips">
+                <span class="hero-chip">10 tools tested</span>
+                <span class="hero-chip">Real response limits</span>
+                <span class="hero-chip">No paid bias</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="page-body">
+    <article class="article">
+
+        <p>You need to gather feedback fast. Maybe you're validating a product idea, collecting event feedback, or surveying customers. But expensive survey software makes no sense when you're just getting started.</p>
+        <p>We tested 10 popular free survey makers to see which ones actually deliver and which ones hide behind paywalls. This guide shows you the real limits, hidden restrictions, and which tool works best for your specific needs.</p>
+
+        <h2 id="how-we-tested">How We Tested These Tools</h2>
+        <p>We created identical surveys in each platform to test setup time, ease of use, question types available, customisation options, and the actual limits you hit on the free tier.</p>
+        <div class="method-box">
+            <div class="method-label">Testing Criteria</div>
+            <ul>
+                <li><strong>No-signup vs signup required:</strong> Can you create and share without an account?</li>
+                <li><strong>Question types:</strong> Multiple choice, open-ended, rating scales, matrices, ranking</li>
+                <li><strong>Response limits:</strong> Unlimited responses or capped, and at what number?</li>
+                <li><strong>Export options:</strong> Can you download results as CSV or Excel on the free plan?</li>
+                <li><strong>Customisation:</strong> Branding, colours, conditional logic</li>
+                <li><strong>Mobile responsiveness:</strong> Does it work on phones?</li>
+                <li><strong>Time to launch:</strong> Minutes from signup to sharing a live survey</li>
+            </ul>
+        </div>
+
+        <div class="cta-block">
+            <h3>Create Your First Survey Free</h3>
+            <p>No signup. No credit card. Live in under a minute.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Get Started at VoteGenerator →</a>
+        </div>
+
+        <h2 id="quick-comparison">Quick Comparison Table</h2>
+        <p>Here is how all 10 tools stack up on the features that matter most for free users:</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Tool</th><th>No Signup</th><th>Free Responses</th><th>CSV Export Free</th><th>Mobile</th><th>Best For</th></tr></thead>
+                <tbody>
+                    <tr class="hl">
+                        <td>VoteGenerator<br><span style="font-size:11px;font-weight:500;color:#2563eb;">3 active polls</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td><span class="partial">100 / poll</span></td>
+                        <td><span class="partial">Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Quick polls, instant feedback</td>
+                    </tr>
+                    <tr>
+                        <td>Google Forms</td>
+                        <td><span class="no">Google account</span></td>
+                        <td><span class="yes">Unlimited</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Structured surveys, teams</td>
+                    </tr>
+                    <tr>
+                        <td>SurveyMonkey</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="no">25 per survey</span></td>
+                        <td><span class="no">✗ Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Upgrade path to paid</td>
+                    </tr>
+                    <tr>
+                        <td>Typeform</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="no">10 per month</span></td>
+                        <td><span class="no">✗ Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Beautiful forms, brand control</td>
+                    </tr>
+                    <tr>
+                        <td>Jotform</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="partial">Limited monthly</span></td>
+                        <td><span class="no">✗ Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Form-heavy surveys</td>
+                    </tr>
+                    <tr>
+                        <td>Microsoft Forms</td>
+                        <td><span class="no">Microsoft account</span></td>
+                        <td><span class="yes">Unlimited</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Enterprise / Office users</td>
+                    </tr>
+                    <tr>
+                        <td>Zoho Survey</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="no">25 per survey</span></td>
+                        <td><span class="no">✗ Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Zoho ecosystem users</td>
+                    </tr>
+                    <tr>
+                        <td>SurveySparrow</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="no">25 per survey</span></td>
+                        <td><span class="no">✗ Paid only</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>NPS surveys, CSAT</td>
+                    </tr>
+                    <tr>
+                        <td>Tally</td>
+                        <td><span class="no">✗ Required</span></td>
+                        <td><span class="yes">Unlimited</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Simple forms, clean design</td>
+                    </tr>
+                    <tr>
+                        <td>LimeSurvey</td>
+                        <td><span class="no">✗ Required (cloud)</span></td>
+                        <td><span class="yes">Unlimited</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td><span class="yes">✓ Yes</span></td>
+                        <td>Self-hosted surveys</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tool 1 -->
+        <h2 id="votegenerator">1. VoteGenerator</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">1</div>
+                <div class="tool-info"><div class="tool-name">VoteGenerator</div><div class="tool-tagline">Best for no-signup speed</div></div>
+                <span class="tool-verdict-badge badge-top">Best for Speed</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free · <strong>Signup:</strong> None required · <strong>Free responses:</strong> 100 per poll · <strong>Active polls:</strong> 3 at a time</p>
+                <p>VoteGenerator is purpose-built for creating quick surveys and polls with zero friction. You land on the site, start typing your question, and share a link or QR code in under a minute. The free tier provides all poll types and real-time results. CSV export, advanced analytics, and branding removal require a paid plan.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Zero signup friction</li><li>QR code generation for instant mobile sharing</li><li>Real-time response tracking</li><li>All 8 poll types on free tier</li><li>Clean, intuitive interface</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>100 responses per poll on free tier</li><li>CSV export requires paid plan</li><li>3 active polls at a time (free)</li><li>No advanced conditional logic</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>If you need to launch a survey in 30 seconds with zero friction, VoteGenerator is unbeatable. The no-signup approach makes it ideal for event feedback, classroom polls, or quick customer tests. The honest trade-off is the 100-response cap and paid-only CSV export, but for basic feedback collection those constraints rarely matter.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 2 -->
+        <h2 id="google-forms">2. Google Forms</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">2</div>
+                <div class="tool-info"><div class="tool-name">Google Forms</div><div class="tool-tagline">Best for structured surveys</div></div>
+                <span class="tool-verdict-badge badge-ok">Solid Choice</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free with Google account · <strong>Signup:</strong> Requires Google account</p>
+                <p>Google Forms is the default choice for businesses and teams already in Google's ecosystem. You get unlimited responses, full CSV export, and integration with Google Sheets for real-time analysis.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Unlimited responses, no caps</li><li>Full CSV export free</li><li>Google Sheets integration</li><li>10+ question types</li><li>Team collaboration</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Requires a Google account</li><li>Limited visual customisation</li><li>Interface feels dated</li><li>Not ideal for branded surveys</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>For internal surveys and team feedback, Google Forms is reliable and trusted. It is especially useful if you already have a Google account and want to analyse results in Sheets. For customer-facing surveys where branding matters, you will feel the limits quickly.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 3 -->
+        <h2 id="surveymonkey">3. SurveyMonkey</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">3</div>
+                <div class="tool-info"><div class="tool-name">SurveyMonkey</div><div class="tool-tagline">Free tier has serious limits</div></div>
+                <span class="tool-verdict-badge badge-limited">Limited Free</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free (limited) · Paid from $25/month · <strong>Signup:</strong> Required · <strong>Free responses:</strong> 25 per survey</p>
+                <p>SurveyMonkey is built to convert free users to paid plans. The free tier caps you at 25 responses per survey and removes CSV export entirely. Response limits reset when you start a new survey, but that means losing your data continuity.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Wide range of professional templates</li><li>Advanced question types</li><li>Good testing ground before upgrading</li><li>Mobile responsive</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Only 25 responses per survey free</li><li>No CSV export on free plan</li><li>Requires signup and email validation</li><li>Paid plan needed for real use</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>The 25-response cap makes SurveyMonkey's free tier impractical for anything beyond testing. Better to use Google Forms or VoteGenerator first, then upgrade to SurveyMonkey's paid plans if you need their advanced analytics and templates.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 4 -->
+        <h2 id="typeform">4. Typeform</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">4</div>
+                <div class="tool-info"><div class="tool-name">Typeform</div><div class="tool-tagline">Beautiful forms, tight free tier</div></div>
+                <span class="tool-verdict-badge badge-limited">Limited Free</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free (limited) · Paid from $25/month · <strong>Signup:</strong> Required · <strong>Free responses:</strong> 10 per month across all forms</p>
+                <p>Typeform is visually stunning and justifiably popular for branded surveys. But the free tier is extremely restricted. You get just 10 total responses per month shared across every form in your account. That is not per survey; it is 10 total for the entire month.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Exceptional visual design</li><li>Customisable themes and branding</li><li>Good question variety</li><li>Conversational survey flow</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Only 10 responses per month free</li><li>No CSV export on free plan</li><li>Requires signup</li><li>Expensive paid plans</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>Use Typeform's free tier only as a design reference or prototype. Ten responses per month makes it unusable for real surveys. If you love Typeform's look, the paid plan is worth it. Otherwise, Google Forms or Tally offer better free-tier value.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 5 -->
+        <h2 id="jotform">5. Jotform</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">5</div>
+                <div class="tool-info"><div class="tool-name">Jotform</div><div class="tool-tagline">Good for form builders</div></div>
+                <span class="tool-verdict-badge badge-ok">Decent Option</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free · Paid from $34/month · <strong>Signup:</strong> Required · <strong>Free tier:</strong> Limited monthly submissions, 5 forms max</p>
+                <p>Jotform is primarily a form builder that handles surveys well. The free tier has monthly submission limits, extensive templates, and conditional logic available without upgrading. CSV export requires a paid plan.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Many pre-built templates</li><li>Conditional logic on free tier</li><li>Good question variety</li><li>Mobile responsive</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>CSV export is paid only</li><li>Requires signup</li><li>Free tier limited to 5 forms</li><li>Interface feels crowded</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>Jotform's free tier is better than SurveyMonkey or Typeform for form building. If you do not need to export results immediately, it works. The CSV export paywall makes data analysis frustrating on the free plan.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 6 -->
+        <h2 id="microsoft-forms">6. Microsoft Forms</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">6</div>
+                <div class="tool-info"><div class="tool-name">Microsoft Forms</div><div class="tool-tagline">Best for Office 365 users</div></div>
+                <span class="tool-verdict-badge badge-ok">Solid for MS Users</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free with Microsoft account · <strong>Signup:</strong> Requires Microsoft / Office account</p>
+                <p>If your organisation uses Microsoft 365, Forms integrates seamlessly with your existing tools. Unlimited responses and Excel integration make it a strong free option, provided you already have an Office account.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Unlimited responses</li><li>Excel integration for analysis</li><li>CSV export available</li><li>Built-in analytics</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Requires Microsoft account</li><li>Limited customisation</li><li>No conditional logic</li><li>Less intuitive than Google Forms</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>If you are already in the Microsoft ecosystem with Office 365, use Forms. Otherwise, Google Forms is more accessible. For pure survey needs, neither beats VoteGenerator's no-signup simplicity.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 7 -->
+        <h2 id="zoho-survey">7. Zoho Survey</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">7</div>
+                <div class="tool-info"><div class="tool-name">Zoho Survey</div><div class="tool-tagline">Limited free tier</div></div>
+                <span class="tool-verdict-badge badge-skip">Skip Unless on Zoho</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free (limited) · Paid from $25/month · <strong>Signup:</strong> Required · <strong>Free responses:</strong> 25 per survey</p>
+                <p>Zoho Survey caters to organisations using other Zoho products. The free tier's 25-response limit is one of the lowest we tested. Without Zoho CRM or similar, there is little reason to choose this over Google Forms.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Zoho ecosystem integration</li><li>Decent question variety</li><li>Good templates</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Only 25 responses free</li><li>CSV export is paid only</li><li>Requires signup</li><li>Not as polished as competitors</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>Skip the free tier unless you are already using Zoho CRM or other Zoho products. The 25-response cap is too restrictive for meaningful survey work. Better alternatives are available at no cost.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 8 -->
+        <h2 id="surveysparrow">8. SurveySparrow</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">8</div>
+                <div class="tool-info"><div class="tool-name">SurveySparrow</div><div class="tool-tagline">NPS specialist, limited free</div></div>
+                <span class="tool-verdict-badge badge-limited">Niche Use Only</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free (limited) · Paid from $99/month · <strong>Signup:</strong> Required · <strong>Free responses:</strong> 25 per survey</p>
+                <p>SurveySparrow specialises in NPS and customer satisfaction surveys. The design is polished and mobile-first. But the 25-response free cap and expensive paid plans make it hard to recommend unless you specifically need its NPS features.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Excellent for NPS and CSAT</li><li>Beautiful survey design</li><li>Mobile-first approach</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Only 25 responses free</li><li>No CSV export free</li><li>Paid plans start at $99/month</li><li>Designed for specialised use cases</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>If you specifically need NPS surveys and have budget, SurveySparrow is professional and polished. For general-purpose surveys, the free tier is too limiting and paid plans are too expensive for most small teams.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 9 -->
+        <h2 id="tally">9. Tally</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">9</div>
+                <div class="tool-info"><div class="tool-name">Tally</div><div class="tool-tagline">Minimalist form building</div></div>
+                <span class="tool-verdict-badge badge-ok">Underrated Pick</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free · <strong>Signup:</strong> Required (free account) · <strong>Free responses:</strong> Unlimited</p>
+                <p>Tally is a newer entrant focusing on clean, simple form building. The free tier is genuinely comprehensive: unlimited responses, CSV export included, and no ads. If you want a no-fuss experience and are willing to create a free account, Tally is worth a look.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Unlimited responses on free</li><li>CSV export included free</li><li>Clean, minimalist interface</li><li>Conditional logic available</li><li>No ads on free plan</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Requires a free signup</li><li>Fewer templates than Google Forms</li><li>Smaller community</li><li>Limited customisation and branding</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>Tally is an underrated option. If you prefer minimalism, want free exports, and are fine creating an account, it sits nicely between VoteGenerator (no signup) and Google Forms (more features). Worth trying before defaulting to Google.</p></div>
+            </div>
+        </div>
+
+        <!-- Tool 10 -->
+        <h2 id="limesurvey">10. LimeSurvey</h2>
+        <div class="tool-card">
+            <div class="tool-card-head">
+                <div class="tool-n">10</div>
+                <div class="tool-info"><div class="tool-name">LimeSurvey</div><div class="tool-tagline">Open-source enterprise option</div></div>
+                <span class="tool-verdict-badge badge-limited">Technical Users Only</span>
+            </div>
+            <div class="tool-card-body">
+                <p><strong>Price:</strong> Free (self-hosted) · Cloud from $99/month · <strong>Signup:</strong> Required (for cloud)</p>
+                <p>LimeSurvey is open-source survey software. The cloud version competes with enterprise solutions, but self-hosting is completely free if you have the technical resources. It is a mature, well-documented platform.</p>
+                <div class="pros-cons">
+                    <div class="pros"><div class="pc-label">Pros</div><ul><li>Self-hosting is completely free</li><li>Unlimited responses and exports</li><li>Advanced branching logic</li><li>Full customisation</li></ul></div>
+                    <div class="cons"><div class="pc-label">Cons</div><ul><li>Self-hosting requires technical setup</li><li>Steep learning curve</li><li>Cloud version is expensive</li><li>Interface feels dated</li></ul></div>
+                </div>
+                <div class="verdict-strip"><span class="verdict-strip-label">Verdict</span><p>LimeSurvey is best for organisations with development resources to self-host or that need enterprise features. For most small businesses, the setup complexity does not justify it when Google Forms or VoteGenerator are available at zero friction.</p></div>
+            </div>
+        </div>
+
+        <div class="cta-block">
+            <h3>Create a Free Survey in 30 Seconds</h3>
+            <p>VoteGenerator requires no account. Just start typing your question and share.</p>
+            <a href="https://votegenerator.com/create" class="cta-block-btn">Try VoteGenerator Free →</a>
+        </div>
+
+        <h2 id="by-use-case">Best Free Survey Maker by Use Case</h2>
+        <div class="use-cases">
+            <div class="use-case-card"><div class="use-case-title">Quick Customer Feedback</div><div class="use-case-winner">VoteGenerator</div><p>No signup, instant sharing, results in real-time. Perfect for "Did this solve your problem?" questions.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Team Surveys Within an Organisation</div><div class="use-case-winner">Google Forms</div><p>Unlimited responses, Gmail and Sheets integration, easy sharing with coworkers.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Beautiful Customer-Facing Surveys</div><div class="use-case-winner">Typeform (paid) or Tally (free)</div><p>If you need to pay, Typeform's design is unmatched. If budget is tight, Tally offers clean design free.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Complex Surveys with Conditional Logic</div><div class="use-case-winner">Google Forms or Jotform</div><p>Both offer branching logic. Google Forms is more reliable; Jotform has it on free but export is paid.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Education and Classroom Polls</div><div class="use-case-winner">VoteGenerator</div><p>Students do not need accounts. Teachers create polls in seconds. Real-time results work perfectly in classrooms.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Event Feedback</div><div class="use-case-winner">VoteGenerator</div><p>Generate a QR code, display it on screen, get instant feedback. No email needed from attendees.</p></div>
+            <div class="use-case-card"><div class="use-case-title">NPS and Customer Satisfaction</div><div class="use-case-winner">SurveySparrow (paid) or Google Forms (free)</div><p>SurveySparrow is specialised but expensive. Google Forms handles basic NPS free and unlimited.</p></div>
+            <div class="use-case-card"><div class="use-case-title">Research Surveys with 500+ Responses</div><div class="use-case-winner">Google Forms or SurveyMonkey (paid)</div><p>Google Forms has unlimited responses free. SurveyMonkey's paid tier ($25+) is worth it for professional templates and analytics.</p></div>
+        </div>
+
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <div class="faq">
+            <details class="faq-item"><summary>Is VoteGenerator really free with no signup required? <span class="faq-ico">+</span></summary><div class="faq-ans">Yes. VoteGenerator requires no account, email, or credit card. You create a survey and share it immediately. The free tier allows 100 responses per poll and up to 3 active polls at once. CSV export and advanced analytics require a paid plan.</div></details>
+            <details class="faq-item"><summary>Which free survey maker is best for businesses? <span class="faq-ico">+</span></summary><div class="faq-ans">It depends on your use case. Google Forms is the safest default if you have a Google account and need unlimited responses with free CSV export. For quick surveys without signup friction, VoteGenerator is ideal. For advanced logic and professional exports, SurveyMonkey's paid tier offers more features but costs money.</div></details>
+            <details class="faq-item"><summary>Can I export survey results from free survey makers? <span class="faq-ico">+</span></summary><div class="faq-ans">Most free survey makers restrict CSV exports to paid plans. Google Forms and Microsoft Forms allow CSV exports on the free tier, as does Tally. VoteGenerator, SurveyMonkey, Typeform, Jotform, SurveySparrow, and Zoho Survey all require paid plans for data export.</div></details>
+            <details class="faq-item"><summary>What are the response limits for free survey makers? <span class="faq-ico">+</span></summary><div class="faq-ans">Response limits vary dramatically. Google Forms, Microsoft Forms, and Tally have unlimited responses. VoteGenerator allows 100 responses per poll (with 3 active polls). SurveyMonkey limits you to 25 responses per survey. Typeform allows only 10 responses per month across all your forms. Zoho Survey and SurveySparrow cap at 25 responses per survey. Always verify the current terms before launching a survey you expect to scale.</div></details>
+            <details class="faq-item"><summary>Do free survey makers work on mobile? <span class="faq-ico">+</span></summary><div class="faq-ans">All the tools we tested are mobile-responsive for respondents. Desktop creation interfaces vary in usability on smaller screens, but the survey-taking experience is consistently good across platforms.</div></details>
+            <details class="faq-item"><summary>Can I brand a survey with my company logo and colours? <span class="faq-ico">+</span></summary><div class="faq-ans">Branding customisation is almost always a paid feature. Typeform and VoteGenerator allow branding removal and custom colours on paid plans. Tally offers basic colour customisation free. Google Forms and Microsoft Forms have very minimal branding options. Most other tools restrict custom branding to paid tiers.</div></details>
+            <details class="faq-item"><summary>How long does it take to create a survey? <span class="faq-ico">+</span></summary><div class="faq-ans">VoteGenerator is fastest at under 1 minute with no account required. Google Forms and Tally typically take 3 to 5 minutes. SurveySparrow, Typeform, and others with more design options take longer if you customise. For basic surveys, 5 to 10 minutes is typical across most platforms.</div></details>
+        </div>
+
+        <div class="related">
+            <p class="related-label">Continue Reading</p>
+            <div class="related-links">
+                <a href="https://votegenerator.com/blog/how-to-create-a-survey.html" class="related-link">How to Create a Survey <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/quick-survey-guide.html" class="related-link">Quick Survey Guide <span class="related-arrow">→</span></a>
+                <a href="https://votegenerator.com/blog/how-to-create-a-poll.html" class="related-link">How to Create a Poll Online <span class="related-arrow">→</span></a>
+            </div>
+        </div>
+
+    </article>
+
+    <aside class="sidebar">
+        <div class="toc-box">
+            <div class="toc-head"><div class="toc-dot"></div><span class="toc-head-label">Contents</span></div>
+            <div class="toc-links">
+                <a href="#how-we-tested" class="toc-link">How We Tested</a>
+                <a href="#quick-comparison" class="toc-link">Quick Comparison</a>
+                <a href="#votegenerator" class="toc-link">1. VoteGenerator ✦</a>
+                <a href="#google-forms" class="toc-link">2. Google Forms</a>
+                <a href="#surveymonkey" class="toc-link">3. SurveyMonkey</a>
+                <a href="#typeform" class="toc-link">4. Typeform</a>
+                <a href="#jotform" class="toc-link">5. Jotform</a>
+                <a href="#microsoft-forms" class="toc-link">6. Microsoft Forms</a>
+                <a href="#zoho-survey" class="toc-link">7. Zoho Survey</a>
+                <a href="#surveysparrow" class="toc-link">8. SurveySparrow</a>
+                <a href="#tally" class="toc-link">9. Tally</a>
+                <a href="#limesurvey" class="toc-link">10. LimeSurvey</a>
+                <a href="#by-use-case" class="toc-link">By Use Case</a>
+                <a href="#faq" class="toc-link">FAQ</a>
+            </div>
+        </div>
+        <div class="sidebar-cta">
+            <div class="sidebar-cta-title">Create a Free Survey</div>
+            <div class="sidebar-cta-sub">No signup needed at VoteGenerator.</div>
+            <a href="https://votegenerator.com/create" class="sidebar-cta-btn">Get Started →</a>
+        </div>
+    </aside>
+</div>
+
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Survey</a>
+        <a href="https://votegenerator.com">VoteGenerator</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>© 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => { const d = document.documentElement; prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')'; }, { passive: true });
+    const sections = document.querySelectorAll('h2[id]');
+    const links = document.querySelectorAll('.toc-link');
+    const io = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector('.toc-link[href="#' + e.target.id + '"]'); if (a) a.classList.add('active'); } }); }, { rootMargin: '-15% 0px -75% 0px' });
+    sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

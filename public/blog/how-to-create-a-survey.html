@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create a Survey: Step-by-Step Guide for Beginners</title>
+    <meta name="description" content="Step-by-step guide to creating your first survey. Learn what questions to ask, which tool to use, and how to boost response rates. Free.">
+    <link rel="canonical" href="https://votegenerator.com/blog/how-to-create-a-survey">
+    <meta property="og:title" content="How to Create a Survey: Step-by-Step Guide for Beginners">
+    <meta property="og:description" content="Step-by-step guide to creating your first survey. Learn what questions to ask, which tool to use, and how to boost response rates. Free.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://votegenerator.com/blog/how-to-create-a-survey">
+    <meta name="keywords" content="how to create a survey, how to make a survey, survey creation guide, create survey online">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"How to Create a Survey: Step-by-Step Guide for Beginners","description":"Step-by-step guide to creating your first survey. Learn what questions to ask, which tool to use, and how to boost response rates. Free.","url":"https://votegenerator.com/blog/how-to-create-a-survey","datePublished":"2026-04-04","author":{"@type":"Organization","name":"VoteGenerator"}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What's the difference between a survey and a poll?","acceptedAnswer":{"@type":"Answer","text":"A poll asks a single question and collects quick feedback. A survey asks multiple questions to gather comprehensive data on attitudes, behaviors, or demographics. Polls are for quick decisions; surveys are for research and deep understanding."}},{"@type":"Question","name":"How long should my survey be?","acceptedAnswer":{"@type":"Answer","text":"Most surveys should take 3-10 minutes to complete. Longer surveys have much lower completion rates. If you need to ask many questions, consider breaking it into shorter surveys or using skip logic."}},{"@type":"Question","name":"What are the best types of survey questions?","acceptedAnswer":{"@type":"Answer","text":"Multiple choice questions are easiest to answer and analyze. Open-ended questions provide deeper insights. Likert scale questions measure sentiment. Matrix questions efficiently ask similar questions about multiple items. Use a mix depending on what you're trying to learn."}},{"@type":"Question","name":"How do I increase survey response rates?","acceptedAnswer":{"@type":"Answer","text":"Keep surveys short (under 5 minutes). Make the purpose clear upfront. Offer incentives if possible. Personalize the invitation. Send reminders to people who haven't responded. Make it mobile-friendly."}},{"@type":"Question","name":"Can I create a survey without a tool?","acceptedAnswer":{"@type":"Answer","text":"You can use Google Forms, Microsoft Forms, or VoteGenerator, which are all free. For simple surveys, Google Forms is free and easy. For more sophisticated surveys, dedicated tools provide better analytics and customization."}}]}</script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --terra: #c2410c;
+            --terra-mid: #ea580c;
+            --terra-pale: #fff7f4;
+            --terra-border: #fed7c3;
+            --emerald: #059669;
+            --emerald-pale: #ecfdf5;
+            --emerald-border: #a7f3d0;
+            --amber: #d97706;
+            --amber-pale: #fffbeb;
+            --amber-border: #fde68a;
+            --slate: #1e293b;
+            --body: #374151;
+            --muted: #6b7280;
+            --rule: #e5e7eb;
+            --cream: #fef8f0;
+            --paper: #fffdf9;
+            --surface: #ffffff;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Karla', sans-serif; background: var(--cream); color: var(--body); line-height: 1.75; }
+
+        #prog { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--terra-mid), var(--amber)); transform-origin: left; transform: scaleX(0); z-index: 200; transition: transform 0.08s linear; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 100; background: var(--paper); border-bottom: 2px solid var(--terra-border); }
+        .nav-inner { max-width: 860px; margin: 0 auto; padding: 0 28px; height: 58px; display: flex; align-items: center; justify-content: space-between; }
+        .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+        .nav-logo img { height: 28px; width: auto; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+        .nav-link:hover { color: var(--slate); }
+        .nav-cta { display: inline-flex; align-items: center; gap: 6px; background: var(--terra-mid); color: white; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
+        .nav-cta:hover { background: var(--terra); }
+
+        /* HERO */
+        .hero { background: var(--paper); border-bottom: 2px solid var(--terra-border); padding: 64px 28px 56px; }
+        .hero-inner { max-width: 860px; margin: 0 auto; }
+        .hero-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .hero-tag { background: var(--terra-pale); border: 1px solid var(--terra-border); color: var(--terra); padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+        .hero-date { font-size: 12px; color: var(--muted); }
+        .hero h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(2.2rem, 5vw, 3.4rem); color: var(--slate); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 18px; }
+        .hero h1 em { font-style: italic; color: var(--terra-mid); }
+        .hero-deck { font-size: 18px; color: var(--muted); max-width: 620px; margin-bottom: 28px; line-height: 1.65; }
+        .hero-footer { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .hero-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--terra-mid); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+        .hero-btn:hover { background: var(--terra); transform: translateY(-1px); }
+        .hero-steps-mini { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .step-chip { background: var(--cream); border: 1px solid var(--rule); color: var(--muted); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+
+        /* MAIN */
+        .main-col { max-width: 860px; margin: 0 auto; padding: 56px 28px; }
+
+        /* SECTIONS */
+        .section { margin-bottom: 56px; }
+        .section-num { font-family: 'DM Serif Display', Georgia, serif; font-size: 3.5rem; color: var(--terra-border); line-height: 1; margin-bottom: -8px; display: block; }
+        .section h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.85rem; color: var(--slate); margin-bottom: 18px; letter-spacing: -0.01em; scroll-margin-top: 74px; position: relative; }
+        .section h2::after { content: ''; display: block; width: 48px; height: 3px; background: var(--terra-mid); margin-top: 10px; border-radius: 2px; }
+        .section h3 { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--terra); margin: 24px 0 10px; }
+        .section p { font-size: 16px; color: var(--body); margin-bottom: 16px; line-height: 1.8; }
+        strong { color: var(--slate); font-weight: 700; }
+        .section a { color: var(--terra-mid); font-weight: 500; }
+        .section ul, .section ol { list-style: none; margin: 0 0 18px; }
+        .section ul li, .section ol li { padding: 9px 0 9px 22px; position: relative; border-bottom: 1px solid var(--rule); font-size: 15px; }
+        .section ul li:last-child, .section ol li:last-child { border-bottom: none; }
+        .section ul li::before { content: '–'; position: absolute; left: 0; color: var(--terra-mid); font-weight: 700; }
+        .section ol { counter-reset: ol; }
+        .section ol li::before { counter-increment: ol; content: counter(ol) '.'; position: absolute; left: 0; color: var(--terra-mid); font-weight: 700; font-size: 13px; top: 10px; }
+
+        /* DIVIDER BETWEEN SECTIONS */
+        .section-rule { height: 1px; background: var(--rule); margin: 48px 0; }
+
+        /* SURVEY VS POLL BOX */
+        .vs-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+        .vs-item { border-radius: 14px; padding: 22px 20px; }
+        .vs-item.poll-item { background: var(--terra-pale); border: 1px solid var(--terra-border); }
+        .vs-item.survey-item { background: var(--emerald-pale); border: 1px solid var(--emerald-border); }
+        .vs-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .poll-item .vs-label { color: var(--terra); }
+        .survey-item .vs-label { color: var(--emerald); }
+        .vs-item p { font-size: 14px; margin-bottom: 0; line-height: 1.6; }
+        .vs-item ul { margin: 10px 0 0; }
+        .vs-item ul li { padding: 5px 0 5px 18px; border-bottom: none; font-size: 13px; }
+        .vs-item ul li::before { color: var(--terra); top: 7px; }
+        .survey-item ul li::before { color: var(--emerald); }
+
+        /* QUESTION TYPE CARDS */
+        .q-types { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+        .q-type { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+        .q-type-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--rule); background: #fafaf8; }
+        .q-type-icon { font-size: 22px; }
+        .q-type-name { font-family: 'DM Serif Display', serif; font-size: 1.05rem; color: var(--slate); }
+        .q-type-tag { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em; }
+        .q-type-body { padding: 16px 20px; }
+        .q-type-body p { font-size: 14px; color: var(--body); margin-bottom: 10px; line-height: 1.6; }
+        .q-example { background: var(--cream); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--muted); font-style: italic; }
+
+        /* GOAL BOX */
+        .goal-box { background: var(--amber-pale); border: 1px solid var(--amber-border); border-radius: 14px; padding: 22px 24px; margin: 20px 0; }
+        .goal-box-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); margin-bottom: 12px; }
+        .goal-box ul { margin: 0; }
+        .goal-box ul li { border-bottom-color: rgba(0,0,0,0.06); font-size: 14px; padding: 7px 0 7px 18px; }
+        .goal-box ul li::before { color: var(--amber); top: 9px; }
+
+        /* MISTAKE BOXES */
+        .mistakes { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+        .mistake { background: var(--surface); border: 1px solid #fecaca; border-radius: 12px; overflow: hidden; display: flex; }
+        .mistake-stripe { width: 6px; background: var(--terra-mid); flex-shrink: 0; }
+        .mistake-body { padding: 16px 18px; }
+        .mistake-title { font-size: 14px; font-weight: 700; color: var(--terra); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .mistake-title::before { content: '⚠'; font-size: 13px; }
+        .mistake-body p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+        /* TOOL QUICK LIST */
+        .tools-list { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+        .tool-row { display: flex; align-items: flex-start; gap: 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; }
+        .tool-emoji { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+        .tool-info h4 { font-size: 15px; font-weight: 700; color: var(--slate); margin-bottom: 2px; }
+        .tool-info p { font-size: 14px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+        /* CHECKLIST BOX */
+        .checklist { background: var(--emerald-pale); border: 1px solid var(--emerald-border); border-radius: 14px; padding: 22px 24px; margin: 20px 0; }
+        .checklist-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald); margin-bottom: 12px; }
+        .checklist ul { margin: 0; }
+        .checklist ul li { border-bottom-color: rgba(0,0,0,0.06); font-size: 14px; padding: 7px 0 7px 22px; }
+        .checklist ul li::before { content: '✓'; color: var(--emerald); font-weight: 700; top: 9px; font-size: 13px; }
+
+        /* CTA BLOCK */
+        .cta-block { background: var(--slate); border-radius: 20px; padding: 40px 32px; text-align: center; margin: 48px 0; position: relative; overflow: hidden; }
+        .cta-block::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 12px); }
+        .cta-block h3 { font-family: 'DM Serif Display', serif; font-size: 2rem; color: white; margin-bottom: 10px; position: relative; letter-spacing: -0.01em; }
+        .cta-block p { color: rgba(255,255,255,0.5); margin-bottom: 24px; font-size: 16px; position: relative; }
+        .cta-block-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--terra-mid); color: white; padding: 13px 30px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; transition: background 0.2s, transform 0.15s; position: relative; }
+        .cta-block-btn:hover { background: var(--terra); transform: translateY(-2px); }
+
+        /* FAQ */
+        .faq { display: flex; flex-direction: column; gap: 6px; }
+        details.faq-item { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+        details.faq-item[open] { border-color: var(--terra-mid); }
+        details.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; font-weight: 700; font-size: 15px; color: var(--slate); cursor: pointer; list-style: none; user-select: none; font-family: 'DM Serif Display', serif; }
+        details.faq-item summary::-webkit-details-marker { display: none; }
+        .faq-ico { width: 24px; height: 24px; border-radius: 6px; background: var(--terra-pale); border: 1px solid var(--terra-border); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--terra-mid); flex-shrink: 0; transition: all 0.2s; }
+        details.faq-item[open] .faq-ico { background: var(--terra-mid); border-color: var(--terra-mid); color: white; transform: rotate(45deg); }
+        .faq-ans { padding: 0 20px 16px; font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+        /* RELATED */
+        .related { margin-top: 52px; padding-top: 36px; border-top: 2px solid var(--rule); }
+        .related-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .related-links { display: flex; flex-direction: column; gap: 8px; }
+        .related-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; text-decoration: none; color: var(--slate); font-weight: 600; font-size: 14px; transition: border-color 0.2s, transform 0.15s; }
+        .related-link:hover { border-color: var(--terra-mid); transform: translateX(4px); color: var(--terra-mid); }
+        .related-arrow { color: var(--terra-mid); }
+
+        /* FOOTER */
+        .foot { background: var(--slate); color: rgba(255,255,255,0.35); text-align: center; padding: 32px; font-size: 13px; }
+        .foot-links { margin-bottom: 10px; }
+        .foot-links a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+        .foot-links a:hover { color: white; }
+
+        @media (max-width: 640px) {
+            .hero { padding: 48px 20px 44px; }
+            .main-col { padding: 40px 20px; }
+            .vs-box { grid-template-columns: 1fr; }
+            .nav-link { display: none; }
+            .section-num { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <a href="https://votegenerator.com" class="nav-logo"><img src="/logo.svg" alt="VoteGenerator"></a>
+        <div class="nav-right">
+            <a href="https://votegenerator.com/blog" class="nav-link">Blog</a>
+            <a href="https://votegenerator.com/create" class="nav-cta">Create a Survey →</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-meta">
+            <span class="hero-tag">Beginner's Guide</span>
+            <span class="hero-date">April 4, 2026 · 10 min read</span>
+        </div>
+        <h1>How to Create a Survey:<br><em>Step-by-Step Guide</em></h1>
+        <p class="hero-deck">Learn to build effective surveys from scratch — what questions to ask, which tool to use, and how to boost response rates.</p>
+        <div class="hero-footer">
+            <a href="https://votegenerator.com/create" class="hero-btn">Create a Survey Free →</a>
+            <div class="hero-steps-mini">
+                <span class="step-chip">7 Steps</span>
+                <span class="step-chip">Question types</span>
+                <span class="step-chip">Common mistakes</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="main-col">
+
+    <div class="cta-block">
+        <h3>Ready to Create Your Survey?</h3>
+        <p>Free, no signup required. Get started in under a minute.</p>
+        <a href="https://votegenerator.com/create" class="cta-block-btn">Create a Survey Today →</a>
+    </div>
+
+    <!-- Survey vs Poll -->
+    <div class="section">
+        <h2 id="survey-vs-poll">Survey vs Poll: What's the Difference?</h2>
+        <p>People often use "survey" and "poll" interchangeably, but they're different tools for different jobs. Understanding the difference helps you choose the right approach.</p>
+        <div class="vs-box">
+            <div class="vs-item poll-item">
+                <span class="vs-label">Poll</span>
+                <p>Asks one question, collects quick feedback. Takes seconds to complete.</p>
+                <ul>
+                    <li>Fast to complete and analyse</li>
+                    <li>Designed for quick decisions</li>
+                    <li>Example: "Which feature would you use most?"</li>
+                </ul>
+            </div>
+            <div class="vs-item survey-item">
+                <span class="vs-label">Survey</span>
+                <p>Asks multiple questions to understand attitudes, behaviours, or satisfaction.</p>
+                <ul>
+                    <li>Takes 3–10 minutes to complete</li>
+                    <li>Provides deeper insights</li>
+                    <li>Example: "How satisfied are you and why?"</li>
+                </ul>
+            </div>
+        </div>
+        <p>This guide covers surveys specifically. If you just need one quick question answered, <a href="https://votegenerator.com/create">create a poll instead</a>. If you're gathering data across multiple dimensions, you need a survey.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 1 -->
+    <div class="section">
+        <span class="section-num">01</span>
+        <h2 id="step-1">Define Your Goal</h2>
+        <p>Before you write a single question, know what you're trying to learn. A vague goal leads to unfocused surveys that waste everyone's time.</p>
+        <h3>Ask Yourself These Questions</h3>
+        <div class="goal-box">
+            <div class="goal-box-label">Before You Start</div>
+            <ul>
+                <li><strong>What decision am I trying to make?</strong> "Should we launch Feature X?" "How satisfied is our team with remote work?"</li>
+                <li><strong>Who do I need to hear from?</strong> All customers, just new customers, team members in one department?</li>
+                <li><strong>What specific information do I need?</strong> Satisfaction levels, feature preferences, usage frequency, pain points?</li>
+                <li><strong>What will I do with these results?</strong> Decide whether to launch, improve a product, change a process?</li>
+                <li><strong>What's my deadline?</strong> Results needed by end of month?</li>
+            </ul>
+        </div>
+        <h3>Write a Goal Statement</h3>
+        <p>Create one sentence that captures your survey's purpose. Examples: "Understand why customers cancel and what might have kept them." "Measure team satisfaction with the new office redesign." Keep this visible while designing. Every question should contribute to the goal — if it doesn't, cut it.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 2 -->
+    <div class="section">
+        <span class="section-num">02</span>
+        <h2 id="step-2">Choose Your Question Types</h2>
+        <p>Different question types gather different kinds of data. Choose the right mix for your goal.</p>
+        <div class="q-types">
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">☑️</span><span class="q-type-name">Multiple Choice (Single Answer)</span><span class="q-type-tag" style="background:#fef2f2;color:#dc2626;">Easiest to analyse</span></div>
+                <div class="q-type-body"><p>Respondent picks one option. Best for demographics, preferences, behaviours.</p><div class="q-example">"What's your job title?" or "How often do you use our app?"</div></div>
+            </div>
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">☰</span><span class="q-type-name">Multiple Choice (Multiple Answers)</span><span class="q-type-tag" style="background:#f0fdf4;color:#15803d;">Captures complexity</span></div>
+                <div class="q-type-body"><p>Respondent selects all that apply. Best for identifying all relevant features, pain points, or interests.</p><div class="q-example">"Which of these features would you find useful?" (check all that apply)</div></div>
+            </div>
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">🔶</span><span class="q-type-name">Likert Scale</span><span class="q-type-tag" style="background:#fffbeb;color:#92400e;">Measures sentiment</span></div>
+                <div class="q-type-body"><p>Respondent indicates agreement level (Strongly Disagree → Strongly Agree). Best for measuring satisfaction and perceived importance.</p><div class="q-example">"I'm satisfied with our customer service: [SD] [D] [Neutral] [A] [SA]"</div></div>
+            </div>
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">⭐</span><span class="q-type-name">Rating Scale</span><span class="q-type-tag" style="background:#fef9c3;color:#854d0e;">Quantifies preference</span></div>
+                <div class="q-type-body"><p>Respondent gives a numerical rating (1–5, 1–10). Best for NPS, satisfaction ratings, importance rankings.</p><div class="q-example">"Rate your experience on a scale of 1–10, where 1 is terrible and 10 is excellent."</div></div>
+            </div>
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">📝</span><span class="q-type-name">Open-Ended</span><span class="q-type-tag" style="background:#f5f3ff;color:#6d28d9;">Deepest insight</span></div>
+                <div class="q-type-body"><p>Respondent writes a free-form answer. Best for understanding the "why" and capturing unexpected suggestions. Use sparingly — max 2–3 per survey.</p><div class="q-example">"What's the biggest challenge you face when using our product?"</div></div>
+            </div>
+            <div class="q-type">
+                <div class="q-type-head"><span class="q-type-icon">🏆</span><span class="q-type-name">Ranking</span><span class="q-type-tag" style="background:#fff7f4;color:#c2410c;">Shows priorities</span></div>
+                <div class="q-type-body"><p>Respondent puts options in order of preference. Best for understanding priority order across multiple items.</p><div class="q-example">"Rank these features by importance: [Feature A] [Feature B] [Feature C]"</div></div>
+            </div>
+        </div>
+        <p><strong>Recommended mix:</strong> 40% multiple choice, 30% Likert/rating, 20% open-ended, 10% ranking. This gives you quantifiable data, sentiment measures, and qualitative insights.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 3 -->
+    <div class="section">
+        <span class="section-num">03</span>
+        <h2 id="step-3">Write Clear Questions</h2>
+        <p>Question quality determines data quality. Unclear or biased questions lead to unusable responses.</p>
+        <div class="checklist">
+            <div class="checklist-label">Clear Question Guidelines</div>
+            <ul>
+                <li><strong>Be specific.</strong> Bad: "How do you feel about work?" Good: "How satisfied are you with your current role?"</li>
+                <li><strong>Avoid jargon.</strong> Use language your respondents understand.</li>
+                <li><strong>Don't ask two things at once.</strong> "Are you satisfied with quality and price?" → split into two questions.</li>
+                <li><strong>Avoid loaded language.</strong> "Don't you think our amazing product is the best?" → ask neutrally.</li>
+                <li><strong>Avoid leading questions.</strong> "Wouldn't you agree remote work is better?" → just ask directly.</li>
+                <li><strong>Provide "not applicable" options.</strong> Not everyone can or should answer every question.</li>
+            </ul>
+        </div>
+        <h3>Question Order Matters</h3>
+        <p>Start with easy, engaging questions to build momentum. Put demographic questions (age, job title) near the end — people are more likely to answer after they've invested time. Group related questions together. Put sensitive questions last so early dropouts don't skew important data.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 4 -->
+    <div class="section">
+        <span class="section-num">04</span>
+        <h2 id="step-4">Pick a Survey Tool</h2>
+        <p>You need a platform to create, distribute, and collect responses. Here are your main options:</p>
+        <div class="tools-list">
+            <div class="tool-row"><span class="tool-emoji">📋</span><div class="tool-info"><h4>VoteGenerator — Free, no signup</h4><p>Purpose-built for polls and quick surveys. Fastest to set up. Best for team feedback and lightweight surveys.</p></div></div>
+            <div class="tool-row"><span class="tool-emoji">🔵</span><div class="tool-info"><h4>Google Forms — Free</h4><p>Simple, integrates with Google Sheets. Best for basic surveys and internal team feedback. Good starting point for beginners.</p></div></div>
+            <div class="tool-row"><span class="tool-emoji">🔷</span><div class="tool-info"><h4>Microsoft Forms — Free</h4><p>Integrates with Microsoft 365. Best for organisations already using the Microsoft ecosystem.</p></div></div>
+            <div class="tool-row"><span class="tool-emoji">📊</span><div class="tool-info"><h4>SurveyMonkey — Paid, with free tier</h4><p>Robust platform with advanced analytics and skip logic. Best for professional research and complex surveys. Free tier is limited to 25 responses per survey.</p></div></div>
+            <div class="tool-row"><span class="tool-emoji">✨</span><div class="tool-info"><h4>Typeform — Paid, with free tier</h4><p>Beautiful, interactive surveys with excellent mobile experience. Best for branded surveys and customer-facing feedback. Free tier limited to 10 responses per month.</p></div></div>
+        </div>
+    </div>
+
+    <div class="cta-block">
+        <h3>Create Your Survey Now</h3>
+        <p>No signup required. VoteGenerator is free and takes under a minute to set up.</p>
+        <a href="https://votegenerator.com/create" class="cta-block-btn">Start Creating →</a>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="section">
+        <span class="section-num">05</span>
+        <h2 id="step-5">Design for Mobile</h2>
+        <p>Most people will take your survey on a phone. Mobile-unfriendly surveys have much lower completion rates.</p>
+        <div class="checklist">
+            <div class="checklist-label">Mobile-Friendly Best Practices</div>
+            <ul>
+                <li><strong>Keep questions short.</strong> Long paragraphs are hard to read on mobile. Break text into smaller chunks.</li>
+                <li><strong>Use single-answer questions when possible.</strong> Multiple-choice with 5+ options is frustrating on mobile.</li>
+                <li><strong>Make buttons and text large.</strong> Small buttons are hard to tap with a thumb.</li>
+                <li><strong>Minimise scrolling.</strong> Each question should fit on one screen if possible.</li>
+                <li><strong>Test on a phone.</strong> Before distributing, open your survey on a smartphone and take it yourself.</li>
+                <li><strong>Use dropdown menus for long lists.</strong> If you have 20+ options, a dropdown beats a scroll-heavy list.</li>
+            </ul>
+        </div>
+        <p>Keep surveys under 10 minutes. Completion rates drop significantly after 5 minutes for mobile users. If you have many questions, consider splitting into two shorter surveys.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 6 -->
+    <div class="section">
+        <span class="section-num">06</span>
+        <h2 id="step-6">Share and Collect Responses</h2>
+        <p>Writing the survey is half the work. Getting people to complete it is the other half.</p>
+        <h3>Distribution Channels</h3>
+        <div class="section ul">
+            <ul>
+                <li><strong>Email:</strong> Most direct for internal surveys or customers you have contact with. Clear subject line explaining the purpose.</li>
+                <li><strong>In-app:</strong> Show a popup to users while they're using your product. Captures natural context.</li>
+                <li><strong>Slack:</strong> For internal teams, post in relevant channels with a direct link.</li>
+                <li><strong>Social media:</strong> Share on LinkedIn, Twitter, etc. Note: self-selection bias may affect results.</li>
+                <li><strong>QR code:</strong> For in-person events — print or display a QR code linking to your survey.</li>
+            </ul>
+        </div>
+        <h3>Crafting the Invitation</h3>
+        <p>Your invitation matters. Include: the clear purpose, a time estimate ("2 minutes"), why their input matters specifically, a deadline, and an easy link. A follow-up reminder 3–5 days later typically improves response rates significantly. For internal surveys, 50%+ response rates are achievable. For external customer surveys, 10–20% is common.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Step 7 -->
+    <div class="section">
+        <span class="section-num">07</span>
+        <h2 id="step-7">Analyse Your Results</h2>
+        <p>The survey is closed. Data is only useful if you act on it.</p>
+        <h3>What to Look For</h3>
+        <ul>
+            <li><strong>Overall trends:</strong> What themes emerge? (70% want feature X, biggest pain point is onboarding)</li>
+            <li><strong>Breakdowns by group:</strong> Do results differ between new and long-time customers, departments, regions?</li>
+            <li><strong>Open-ended feedback:</strong> Read through qualitative responses. Are there unexpected insights or repeated complaints?</li>
+            <li><strong>Priorities:</strong> What matters most? Use ranking questions to make this explicit.</li>
+        </ul>
+        <h3>Creating Actionable Insights</h3>
+        <p>Don't just report the data — translate it into decisions. "78% want better mobile experience" becomes "Prioritise mobile improvements in Q2." Share results with respondents and explain what you're doing about them. If you don't act on feedback, trust erodes and future response rates drop.</p>
+    </div>
+
+    <div class="section-rule"></div>
+
+    <!-- Mistakes -->
+    <div class="section">
+        <h2 id="common-mistakes">Common Survey Mistakes to Avoid</h2>
+        <div class="mistakes">
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">Too Long</div><p>Survey takes 20+ minutes. Result: abandonment. Keep it under 10 minutes. Every question should earn its place.</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">Unclear Questions</div><p>Respondents interpret questions differently. Test questions on someone unfamiliar with your project — does it make sense?</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">Too Many Open-Ended Questions</div><p>Takes forever to analyse. Limit to 2–3 open-ended questions per survey. Use multiple choice for everything else.</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">Biased or Leading Questions</div><p>"Don't you agree our product is amazing?" leads people toward yes. Result: data doesn't reflect real opinion. Ask neutrally.</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">No Mobile Testing</div><p>Survey looks fine on desktop but terrible on phone. Result: low mobile completion rates. Test on an actual phone before distributing.</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">Not Following Up on Feedback</div><p>You collect feedback but don't act on it. People feel unheard and won't respond to future surveys. Always show what you're doing with the feedback.</p></div></div>
+            <div class="mistake"><div class="mistake-stripe"></div><div class="mistake-body"><div class="mistake-title">No Deadline</div><p>Survey stays open indefinitely. Result: low participation and no clear timeline. Set a deadline and stick to it.</p></div></div>
+        </div>
+    </div>
+
+    <div class="cta-block">
+        <h3>Ready to Build Your Survey?</h3>
+        <p>Create your first survey today — free, no signup needed.</p>
+        <a href="https://votegenerator.com/create" class="cta-block-btn">Create Your Survey →</a>
+    </div>
+
+    <div class="section">
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <div class="faq">
+            <details class="faq-item"><summary>What's the difference between a survey and a poll? <span class="faq-ico">+</span></summary><div class="faq-ans">A poll asks a single question for quick feedback. A survey asks multiple questions to understand attitudes, behaviours, or satisfaction across a topic. Polls take seconds; surveys take 3–10 minutes. Use a poll for quick decisions, a survey for comprehensive understanding.</div></details>
+            <details class="faq-item"><summary>How long should my survey be? <span class="faq-ico">+</span></summary><div class="faq-ans">Most surveys should take 3–10 minutes to complete. Longer surveys have much lower completion rates, especially on mobile. If you need many questions, consider breaking into shorter modules or using skip logic. Respect people's time.</div></details>
+            <details class="faq-item"><summary>What are the best types of survey questions? <span class="faq-ico">+</span></summary><div class="faq-ans">Multiple choice questions are easiest to answer and analyse. Open-ended questions provide deeper insights but are harder to analyse. Likert scale questions measure sentiment. Rating scales (1–5 stars) gather numerical feedback. Matrix questions efficiently ask similar questions about multiple items. Use a mix based on what you're trying to learn.</div></details>
+            <details class="faq-item"><summary>How do I increase survey response rates? <span class="faq-ico">+</span></summary><div class="faq-ans">Keep surveys short (under 5 minutes). Make the purpose clear upfront. Personalise the invitation to explain why their feedback matters. Send reminders to people who haven't responded. Make it mobile-friendly. Offer incentives if possible. Most importantly, close the loop — tell respondents what you did with the results.</div></details>
+            <details class="faq-item"><summary>Can I create a survey without a tool? <span class="faq-ico">+</span></summary><div class="faq-ans">You could email questions and track responses manually, but it's tedious and error-prone. Using a free tool like Google Forms, VoteGenerator, or Microsoft Forms is much easier. These tools handle response collection, basic analysis, and data visualisation automatically.</div></details>
+        </div>
+    </div>
+
+    <div class="related">
+        <p class="related-label">Continue Reading</p>
+        <div class="related-links">
+            <a href="https://votegenerator.com/blog/free-survey-maker-tools.html" class="related-link">Free Survey Maker Tools <span class="related-arrow">→</span></a>
+            <a href="https://votegenerator.com/blog/quick-survey-guide.html" class="related-link">Quick Survey Guide <span class="related-arrow">→</span></a>
+            <a href="https://votegenerator.com/blog/how-to-create-a-poll.html" class="related-link">How to Create a Poll Online <span class="related-arrow">→</span></a>
+        </div>
+    </div>
+
+</div>
+
+<footer class="foot">
+    <div class="foot-links">
+        <a href="https://votegenerator.com/create">Create a Poll</a>
+        <a href="https://votegenerator.com">Home</a>
+        <a href="https://votegenerator.com/blog">Blog</a>
+    </div>
+    <div>© 2026 VoteGenerator. All rights reserved.</div>
+</footer>
+
+<script>
+    const prog = document.getElementById('prog');
+    window.addEventListener('scroll', () => { const d = document.documentElement; prog.style.transform = 'scaleX(' + (d.scrollTop / (d.scrollHeight - d.clientHeight)) + ')'; }, { passive: true });
+</script>
+</body>
+</html>

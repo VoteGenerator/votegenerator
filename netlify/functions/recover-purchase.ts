@@ -102,3 +102,4 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Unable to process request. Please try again.' }),
     };
   }
+};

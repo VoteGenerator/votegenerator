@@ -252,6 +252,63 @@ function PremiumNav({ tier, expiresAt }: { tier: string; expiresAt?: string }) {
 }
 
 function CreatePage() {
+    useEffect(() => {
+        const link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = 'https://votegenerator.com/create';
+        document.head.appendChild(link);
+
+        const title = document.querySelector('title');
+        if (title) title.textContent = 'Create a Free Poll | VoteGenerator';
+
+        const desc = document.querySelector('meta[name="description"]');
+        if (desc) desc.setAttribute('content', 'Create a free poll in seconds. Multiple poll types, real-time results, no signup required. Share instantly with anyone.');
+
+        return () => { document.head.removeChild(link); };
+    }, []);
+
+    useEffect(() => {
+        const schema = document.createElement('script');
+        schema.type = 'application/ld+json';
+        schema.text = JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'HowTo',
+            'name': 'How to Create a Free Poll',
+            'description': 'Create a poll in seconds with VoteGenerator. No signup required.',
+            'totalTime': 'PT2M',
+            'step': [
+                {
+                    '@type': 'HowToStep',
+                    'position': 1,
+                    'name': 'Choose a poll type',
+                    'text': 'Select from multiple choice, yes/no, ranked choice, rating, or survey poll types.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    'position': 2,
+                    'name': 'Add your question and options',
+                    'text': 'Type your poll question and add between 2 and 10 answer options.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    'position': 3,
+                    'name': 'Configure settings',
+                    'text': 'Optionally set a deadline, enable vote protection, require voter names, or add a PIN.'
+                },
+                {
+                    '@type': 'HowToStep',
+                    'position': 4,
+                    'name': 'Share your poll',
+                    'text': 'Copy your unique poll link and share it via email, Slack, social media, or embed it on your site.'
+                }
+            ]
+        });
+        document.head.appendChild(schema);
+        return () => { document.head.removeChild(schema); };
+    }, []);
+
+
+
     const purchasedTier = typeof window !== 'undefined' 
         ? (localStorage.getItem('vg_purchased_tier') || localStorage.getItem('vg_subscription_tier')) 
         : null;

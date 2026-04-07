@@ -16,6 +16,7 @@ import PremiumNav from './PremiumNav';
 import { SurveySection, SurveySettings, Poll } from '../types';
 import { Analytics } from '../utils/analytics';
 import { trackPinterestSignup } from '../utils/pinterestTracking';
+import { SURVEY_TEMPLATES } from '../data/surveyTemplates';
 
 // ============================================================================
 // TYPES
@@ -91,16 +92,14 @@ const SurveyCreatePage: React.FC = () => {
     // Tier - use the state value
     const isFree = tier === 'free';
     
-    // Load template from sessionStorage if present
+    // Load template from sessionStorage OR direct ?template= URL param
     useEffect(() => {
         const templateData = sessionStorage.getItem('vg_survey_template');
         if (templateData) {
+            // Existing path: came via /create?template= redirect
             try {
                 const template = JSON.parse(templateData);
-                // Clear the template from storage
                 sessionStorage.removeItem('vg_survey_template');
-                
-                // Apply template data
                 if (template.question) setTitle(template.question);
                 if (template.description) setDescription(template.description);
                 if (template.sections) setSections(template.sections);
@@ -111,6 +110,20 @@ const SurveyCreatePage: React.FC = () => {
                 }
             } catch (e) {
                 console.error('Failed to load survey template:', e);
+            }
+        } else {
+            // New path: direct link from template landing page (/survey?template=id)
+            const params = new URLSearchParams(window.location.search);
+            const templateId = params.get('template');
+            if (templateId) {
+                const tmpl = SURVEY_TEMPLATES.find(t => t.id === templateId);
+                if (tmpl) {
+                    setTitle(tmpl.name);
+                    setSections(tmpl.sections);
+                    if (tmpl.recommendedSettings) {
+                        setSurveySettings(prev => ({ ...prev, ...tmpl.recommendedSettings }));
+                    }
+                }
             }
         }
     }, []);

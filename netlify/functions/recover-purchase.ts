@@ -99,7 +99,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: 'Unable to process request. Please try again.' }),
     };
   }
 };

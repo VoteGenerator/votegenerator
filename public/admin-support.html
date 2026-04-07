@@ -166,8 +166,8 @@
   </div>
 
   <script>
-    // Check if already authenticated
-    if (sessionStorage.getItem('admin_auth') === 'true') {
+    // Check if already authenticated with a stored token
+    if (sessionStorage.getItem('admin_token')) {
       showAdminPanel();
     }
 
@@ -187,7 +187,6 @@
         const data = await response.json();
         
         if (data.success) {
-          sessionStorage.setItem('admin_auth', 'true');
           sessionStorage.setItem('admin_token', data.token);
           showAdminPanel();
         } else {
@@ -204,7 +203,7 @@
     }
 
     function logout() {
-      sessionStorage.removeItem('admin_auth');
+      sessionStorage.removeItem('admin_token');
       location.reload();
     }
 
@@ -221,7 +220,7 @@
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'X-Admin-Auth': sessionStorage.getItem('admin_auth')
+            'X-Admin-Token': sessionStorage.getItem('admin_token')
           },
           body: JSON.stringify({ query })
         });
@@ -331,7 +330,7 @@
 
       try {
         const response = await fetch('/api/admin/recent-purchases', {
-          headers: { 'X-Admin-Auth': sessionStorage.getItem('admin_auth') }
+          headers: { 'X-Admin-Token': sessionStorage.getItem('admin_token') }
         });
         
         const data = await response.json();

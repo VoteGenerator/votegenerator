@@ -162,8 +162,8 @@ async function sendAdminLinkEmail(
                     
                     <!-- Content -->
                     <div style="padding: 30px;">
-                        <h2 style="color: #1e293b; font-size: 20px; margin: 0 0 10px;">
-                            ${poll.displayName || poll.title}
+                        <<h2 style="color: #1e293b; font-size: 20px; margin: 0 0 10px;">
+                            ${escapeHtml(poll.displayName || poll.title)}
                         </h2>
                         <p style="color: #64748b; font-size: 14px; margin: 0 0 30px;">
                             ${poll.pollType} poll • Created ${new Date(poll.createdAt).toLocaleDateString()}
@@ -228,7 +228,7 @@ async function sendAdminLinkEmail(
             body: JSON.stringify({
                 from: FROM_EMAIL,
                 to: email,
-                subject: `Your Poll Admin Link: ${poll.displayName || poll.title}`,
+                subject: `Your Poll Admin Link: ${escapeHtml(poll.displayName || poll.title)}`,
                 html,
             }),
         });
@@ -244,6 +244,15 @@ async function sendAdminLinkEmail(
         console.error('Error sending admin link email:', error);
         return false;
     }
+}
+
+function escapeHtml(str: string): string {
+    return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 export const handler: Handler = async (event) => {

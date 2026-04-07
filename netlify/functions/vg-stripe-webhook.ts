@@ -5,6 +5,17 @@
 import { Handler } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 import Stripe from 'stripe';
+import { createHmac } from 'crypto';
+
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
@@ -44,7 +55,9 @@ function getCustomerStore() {
 // DETERMINISTIC TOKEN GENERATION
 // ============================================================================
 function generateDashboardToken(sessionId: string): string {
-    return 'vg_' + sessionId.replace('cs_', '').substring(0, 32);
+    const secret = process.env.VOTE_TOKEN_SECRET;
+    if (!secret) throw new Error('VOTE_TOKEN_SECRET not set');
+    return 'vg_' + createHmac('sha256', secret).update(sessionId).digest('hex').substring(0, 32);
 }
 
 // ============================================================================
@@ -503,6 +516,6 @@ export const handler: Handler = async (event) => {
     } catch (error: any) {
         console.error('[webhook] ERROR: ' + error.message);
         console.error('[webhook] Stack: ' + error.stack);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Webhook processing failed' }) };
     }
 };

@@ -259,7 +259,9 @@ const generateVoteId = (): string => {
 
 const createIpHash = async (input: string): Promise<string> => {
     const encoder = new TextEncoder();
-    const data = encoder.encode(input + (process.env.VOTE_TOKEN_SECRET || 'salt'));
+    const secret = process.env.VOTE_TOKEN_SECRET;
+if (!secret) throw new Error('VOTE_TOKEN_SECRET env var not set');
+const data = encoder.encode(input + secret);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);

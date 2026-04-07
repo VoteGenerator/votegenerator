@@ -13,6 +13,16 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'noreply@mail.votegenerator.com';
 const SITE_URL = process.env.URL || 'https://votegenerator.com';
 
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+
 interface NotificationPayload {
     pollId: string;
     adminKey: string;
@@ -71,9 +81,18 @@ function getEmailFooter(unsubscribeUrl: string): string {
 }
 
 // Email templates - now accepts unsubscribeUrl
+function escapeHtml(str: string): string {
+    return (str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 const emailTemplates = {
     test: (pollTitle: string, unsubscribeUrl: string) => ({
-        subject: `🔔 Test Notification - ${pollTitle}`,
+        subject: `🔔 Test Notification - ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -84,7 +103,7 @@ const emailTemplates = {
                         Great! Your email notifications are working perfectly.
                     </p>
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        You'll receive notifications for <strong>"${pollTitle}"</strong> based on your settings.
+                        You'll receive notifications for <strong>"${escapeHtml(pollTitle)}"</strong> based on your settings.
                     </p>
                     <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-top: 20px;">
                         <p style="color: #64748b; font-size: 14px; margin: 0;">
@@ -100,7 +119,7 @@ const emailTemplates = {
     }),
 
     milestone: (pollTitle: string, milestone: number, totalVotes: number, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `🎯 ${milestone} votes reached! - ${pollTitle}`,
+        subject: `🎯 ${milestone} votes reached! - ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -110,7 +129,7 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Your poll <strong>"${pollTitle}"</strong> just hit <strong>${milestone} votes</strong>! 🎉
+                        Your poll <strong>"${escapeHtml(pollTitle)}"</strong> just hit <strong>${milestone} votes</strong>! 🎉
                     </p>
                     <p style="color: #64748b; font-size: 14px;">
                         Total votes so far: ${totalVotes}
@@ -125,7 +144,7 @@ const emailTemplates = {
     }),
 
     closed: (pollTitle: string, totalVotes: number, winnerText: string, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `✅ Poll Closed - ${pollTitle}`,
+        subject: `✅ Poll Closed - ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -133,14 +152,14 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Your poll <strong>"${pollTitle}"</strong> has ended.
+                        Your poll <strong>"${escapeHtml(pollTitle)}"</strong> has ended.
                     </p>
                     <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
                         <p style="color: #64748b; font-size: 14px; margin: 0 0 10px;">Final Results:</p>
                         <p style="color: #1e293b; font-size: 24px; font-weight: bold; margin: 0;">
                             ${totalVotes} total votes
                         </p>
-                        ${winnerText ? `<p style="color: #10b981; font-size: 16px; margin: 10px 0 0;">🏆 Winner: ${winnerText}</p>` : ''}
+                        ${winnerText ? `<p style="color: #10b981; font-size: 16px; margin: 10px 0 0;">🏆 Winner: ${escapeHtml(winnerText)}</p>` : ''}
                     </div>
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                         View Final Results →
@@ -152,7 +171,7 @@ const emailTemplates = {
     }),
 
     limit: (pollTitle: string, currentVotes: number, maxVotes: number, percentUsed: number, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `⚠️ ${percentUsed}% of response limit reached - ${pollTitle}`,
+        subject: `⚠️ ${percentUsed}% of response limit reached - ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -160,7 +179,7 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Your poll <strong>"${pollTitle}"</strong> is approaching its response limit.
+                        Your poll <strong>"${escapeHtml(pollTitle)}"</strong> is approaching its response limit.
                     </p>
                     <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -185,7 +204,7 @@ const emailTemplates = {
     }),
 
     daily: (pollTitle: string, newVotes: number, totalVotes: number, topChoice: string, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `📊 Daily Summary: ${newVotes} new votes - ${pollTitle}`,
+        subject: `📊 Daily Summary: ${newVotes} new votes - ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -194,7 +213,7 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Here's what happened with <strong>"${pollTitle}"</strong> today:
+                        Here's what happened with <strong>"${escapeHtml(pollTitle)}"</strong> today:
                     </p>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
                         <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center;">
@@ -209,7 +228,7 @@ const emailTemplates = {
                     ${topChoice ? `
                         <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px;">
                             <p style="color: #64748b; font-size: 12px; margin: 0 0 5px;">Current Leader:</p>
-                            <p style="color: #1e293b; font-size: 18px; font-weight: bold; margin: 0;">🏆 ${topChoice}</p>
+                            <p style="color: #1e293b; font-size: 18px; font-weight: bold; margin: 0;">🏆 ${escapeHtml(topChoice)}</p>
                         </div>
                     ` : ''}
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
@@ -222,7 +241,7 @@ const emailTemplates = {
     }),
 
     comment: (pollTitle: string, commentAuthor: string, commentText: string, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `💬 New comment on ${pollTitle}`,
+        subject: `💬 New comment on ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -230,11 +249,11 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Someone left a comment on <strong>"${pollTitle}"</strong>
+                        Someone left a comment on <strong>"${escapeHtml(pollTitle)}"</strong>
                     </p>
                     <div style="background: #fff; border-left: 4px solid #6366f1; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-                        <p style="color: #1e293b; font-size: 16px; font-style: italic; margin: 0 0 10px;">"${commentText}"</p>
-                        <p style="color: #64748b; font-size: 14px; margin: 0;">— ${commentAuthor}</p>
+                        <p style="color: #1e293b; font-size: 16px; font-style: italic; margin: 0 0 10px;">"${escapeHtml(commentText)}"</p>
+                        <p style="color: #64748b; font-size: 14px; margin: 0;">— ${escapeHtml(commentAuthor)}</p>
                     </div>
                     <a href="${pollUrl}" style="display: inline-block; background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                         View All Comments →
@@ -246,7 +265,7 @@ const emailTemplates = {
     }),
 
     eachResponse: (pollTitle: string, voteCount: number, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `📊 New vote on ${pollTitle}`,
+        subject: `📊 New vote on ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -254,7 +273,7 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Someone just voted on <strong>"${pollTitle}"</strong>
+                        Someone just voted on <strong>"${escapeHtml(pollTitle)}"</strong>
                     </p>
                     <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
                         <p style="color: #6366f1; font-size: 36px; font-weight: bold; margin: 0;">${voteCount}</p>
@@ -270,7 +289,7 @@ const emailTemplates = {
     }),
 
     suspicious: (pollTitle: string, pollUrl: string, unsubscribeUrl: string) => ({
-        subject: `🚨 Suspicious activity on ${pollTitle}`,
+        subject: `🚨 Suspicious activity on ${escapeHtml(pollTitle)}`,
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
@@ -278,7 +297,7 @@ const emailTemplates = {
                 </div>
                 <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
                     <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        We detected unusual voting patterns on <strong>"${pollTitle}"</strong>.
+                        We detected unusual voting patterns on <strong>"${escapeHtml(pollTitle)}"</strong>.
                     </p>
                     <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 20px; margin: 20px 0;">
                         <p style="color: #dc2626; font-size: 14px; margin: 0;">

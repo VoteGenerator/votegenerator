@@ -70,24 +70,51 @@ const CheckoutSuccess: React.FC = () => {
     const TierIcon = planConfig.icon;
     
     useEffect(() => {
-        // Generate dashboard URL with BOTH token and session_id (like the email)
-        if (sessionId) {
-            const token = 'vg_' + sessionId.replace('cs_', '').substring(0, 32);
-            const url = window.location.origin + '/admin?token=' + token + '&session_id=' + sessionId;
-            setDashboardUrl(url);
-            
-            // Store in localStorage - save to BOTH keys for compatibility
-            localStorage.setItem('vg_dashboard_token', token);
-            localStorage.setItem('vg_session_id', sessionId);
-            localStorage.setItem('vg_purchased_tier', tier);
-            localStorage.setItem('vg_subscription_tier', tier);
-            
-            // Track purchase completion
-            const purchaseValue = billing === 'yearly' 
-                ? (tier === 'business' ? 490 : 190) 
-                : (tier === 'business' ? 49 : 19);
-            Analytics.purchaseCompleted(tier, billing === 'yearly' ? 'annual' : 'monthly', purchaseValue);
-        }
+        if (!sessionId) return;
+
+        // Track purchase completion immediately (doesn't need the token)
+        const purchaseValue = billing === 'yearly'
+            ? (tier === 'business' ? 490 : 190)
+            : (tier === 'business' ? 49 : 19);
+        Analytics.purchaseCompleted(tier, billing === 'yearly' ? 'annual' : 'monthly', purchaseValue);
+
+        // Fetch the real token from the server - retry because the webhook
+        // may not have processed yet when the success page first loads
+        setIsLoading(true);
+
+        const fetchToken = async (attempt = 0): Promise<void> => {
+            try {
+                const res = await fetch(
+                    `/.netlify/functions/vg-get-customer?session_id=${encodeURIComponent(sessionId)}`
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.dashboardToken) {
+                        const token = data.dashboardToken;
+                        const url = window.location.origin + '/admin?token=' + token + '&session_id=' + sessionId;
+                        setDashboardUrl(url);
+                        localStorage.setItem('vg_dashboard_token', token);
+                        localStorage.setItem('vg_session_id', sessionId);
+                        localStorage.setItem('vg_purchased_tier', tier);
+                        localStorage.setItem('vg_subscription_tier', tier);
+                        setIsLoading(false);
+                        return;
+                    }
+                }
+            } catch (_) { /* fall through to retry */ }
+
+            // Webhook may not have run yet — retry up to 5 times, 2s apart
+            if (attempt < 5) {
+                await new Promise(r => setTimeout(r, 2000));
+                return fetchToken(attempt + 1);
+            }
+
+            // Gave up after retries — dashboard link won't show but purchase still worked
+            console.error('CheckoutSuccess: could not retrieve dashboard token after retries');
+            setIsLoading(false);
+        };
+
+        fetchToken();
     }, [sessionId, tier, billing]);
     
     const copyDashboardLink = () => {

@@ -17,9 +17,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // ============================================================================
 
 const PRICE_IDS: Record<string, string> = {
-  starter: process.env.STRIPE_PRICE_STARTER || 'price_1Sgt1tGhadLxEBQB3ZMPJLRM',
-  pro_event: process.env.STRIPE_PRICE_PRO_EVENT || 'price_1Sgt3ZGhadLxEBQBX2s10J9x',
-  unlimited: process.env.STRIPE_PRICE_UNLIMITED || 'price_1Sgt7qGhadLxEBQBEyOxbNT3',
+  starter: process.env.STRIPE_PRICE_STARTER || '',
+  pro_event: process.env.STRIPE_PRICE_PRO_EVENT || '',
+  unlimited: process.env.STRIPE_PRICE_UNLIMITED || '',
 };
 
 // Tier configuration

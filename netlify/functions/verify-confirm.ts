@@ -18,8 +18,8 @@ import {
 // Configuration
 // ============================================================================
 
-const EMAIL_HASH_SECRET = process.env.EMAIL_HASH_SECRET || 'change-me-in-production';
-const VOTE_TOKEN_SECRET = process.env.VOTE_TOKEN_SECRET || 'change-me-in-production';
+const EMAIL_HASH_SECRET = process.env.EMAIL_HASH_SECRET || (() => { throw new Error('EMAIL_HASH_SECRET env var not set'); })();
+const VOTE_TOKEN_SECRET = process.env.VOTE_TOKEN_SECRET || (() => { throw new Error('VOTE_TOKEN_SECRET env var not set'); })();
 
 const MAX_ATTEMPTS = 5;
 

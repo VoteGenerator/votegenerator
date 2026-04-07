@@ -1,7 +1,7 @@
 // ============================================================================
 // App.tsx - Main Application Router
 // ============================================================================
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import VoteGeneratorApp from './components/VoteGeneratorApp';
 import VoteGeneratorCreate from './components/VoteGeneratorCreate';
 import AdWall from './components/AdWall';

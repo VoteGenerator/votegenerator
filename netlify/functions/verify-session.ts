@@ -155,7 +155,6 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         error: 'Failed to verify session',
-        message: error.message,
       }),
     };
   }

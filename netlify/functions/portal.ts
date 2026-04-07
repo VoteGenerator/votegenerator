@@ -67,7 +67,6 @@ export const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         error: 'Failed to create portal session',
-        message: error.message,
       }),
     };
   }

@@ -360,6 +360,19 @@ export const handler: Handler = async (event) => {
         if (!question || typeof question !== 'string') {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Question is required' }) };
         }
+        if (question.length > 500) {
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Question must be 500 characters or fewer' }) };
+        }
+        if (options && Array.isArray(options)) {
+            if (options.length > 50) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Maximum 50 options allowed' }) };
+            }
+            for (const opt of options) {
+                if (typeof opt === 'string' && opt.length > 300) {
+                    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Each option must be 300 characters or fewer' }) };
+                }
+            }
+        }
 
         const skipOptionValidation = pollType === 'rating' || pollType === 'survey' || isSurvey;
         

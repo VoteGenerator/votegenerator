@@ -7,6 +7,16 @@ import { getStore } from '@netlify/blobs';
 import Stripe from 'stripe';
 import { createHmac } from 'crypto';
 
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16'
 });
@@ -506,6 +516,6 @@ export const handler: Handler = async (event) => {
     } catch (error: any) {
         console.error('[webhook] ERROR: ' + error.message);
         console.error('[webhook] Stack: ' + error.stack);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Webhook processing failed' }) };
     }
 };

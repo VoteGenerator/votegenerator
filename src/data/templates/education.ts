@@ -1,6 +1,128 @@
 import { SurveyTemplate } from './_types';
  
-export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
-    // Add education templates here: course evaluation, student satisfaction, exit ticket, etc.
-];
+const COURSE_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'course-feedback',
+    name: 'Course Evaluation Survey',
+    emoji: '📚',
+    color: 'text-blue-800',
+    description: 'Overall rating, instructor quality, content relevance, and improvement feedback',
+    category: 'education',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ce-overall',
+            title: 'Overall Assessment',
+            description: 'How would you rate this course?',
+            questions: [
+                {
+                    id: 'ce-q1',
+                    type: 'scale',
+                    question: 'How would you rate this course overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'ce-q2',
+                    type: 'scale',
+                    question: 'How relevant was the course content to your learning goals?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not relevant',
+                    maxLabel: 'Very relevant',
+                    required: true,
+                },
+                {
+                    id: 'ce-q3',
+                    type: 'scale',
+                    question: 'How would you rate the instructor or presenter?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ce-delivery',
+            title: 'Content & Delivery',
+            description: 'How was the course structured and paced?',
+            questions: [
+                {
+                    id: 'ce-q4',
+                    type: 'scale',
+                    question: 'The course content was well-organised and easy to follow',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'ce-q5',
+                    type: 'multiple_choice',
+                    question: 'Was the pace of this course appropriate?',
+                    options: [
+                        { id: 'too-fast',  text: 'Too fast — couldn\'t keep up' },
+                        { id: 'sl-fast',   text: 'Slightly fast but manageable' },
+                        { id: 'right',     text: 'Just right' },
+                        { id: 'sl-slow',   text: 'Slightly slow' },
+                        { id: 'too-slow',  text: 'Too slow — wanted more depth' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'ce-q6',
+                    type: 'multiple_choice',
+                    question: 'Which resources were most helpful? (select all that apply)',
+                    options: [
+                        { id: 'slides',    text: 'Lecture slides or notes' },
+                        { id: 'videos',    text: 'Video recordings' },
+                        { id: 'readings',  text: 'Reading materials' },
+                        { id: 'qa',        text: 'Live Q&A sessions' },
+                        { id: 'exercises', text: 'Exercises and assignments' },
+                        { id: 'links',     text: 'External links and examples' },
+                    ],
+                    allowMultiple: true,
+                },
+            ],
+        },
+        {
+            id: 'ce-outcomes',
+            title: 'Learning Outcomes',
+            description: 'What will you take away?',
+            questions: [
+                {
+                    id: 'ce-q7',
+                    type: 'yes_no',
+                    question: 'Would you recommend this course to others?',
+                    required: true,
+                },
+                {
+                    id: 'ce-q8',
+                    type: 'textarea',
+                    question: 'What will you apply from what you learned in this course?',
+                    placeholder: 'Share the most valuable thing you\'re taking away...',
+                },
+                {
+                    id: 'ce-q9',
+                    type: 'textarea',
+                    question: 'What is the one thing that could most improve this course?',
+                    placeholder: 'Your honest feedback helps improve the course for future students...',
+                },
+            ],
+        },
+    ],
+};
  
+export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
+    COURSE_FEEDBACK_TEMPLATE,
+    // Add future education templates here: student satisfaction, teacher eval, training feedback, etc.
+];

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Customer Satisfaction Survey Template (CSAT) | VoteGenerator</title>
+    <meta name="description" content="Free customer satisfaction survey template. 5 questions covering NPS, product quality, support, and value. Instant NPS score. No signup required from anyone.">
+    <link rel="canonical" href="https://votegenerator.com/templates/customer-satisfaction-survey">
+    <meta property="og:title" content="Free Customer Satisfaction Survey Template | VoteGenerator">
+    <meta property="og:description" content="NPS + CSAT in one 5-question template. Instant results. Free. No signup required.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://votegenerator.com/templates/customer-satisfaction-survey">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Customer Satisfaction Survey Template","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free 5-question customer satisfaction survey covering NPS, overall satisfaction, product quality, and open feedback. Instant NPS Promoter/Passive/Detractor results. No signup required.","url":"https://votegenerator.com/templates/customer-satisfaction-survey","provider":{"@type":"Organization","name":"VoteGenerator","url":"https://votegenerator.com"}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this customer satisfaction survey template free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Free forever. No signup required from you or your customers. The free plan allows up to 100 responses. Pro ($19/month) allows up to 10,000 responses and includes CSV export for your CX team."}},{"@type":"Question","name":"What is a CSAT survey?","acceptedAnswer":{"@type":"Answer","text":"CSAT stands for Customer Satisfaction Score. It measures how satisfied customers are with your product, service, or a specific interaction. A CSAT survey asks customers to rate satisfaction on a scale, then calculates an average score. It is one of the three core CX metrics alongside NPS and CES."}},{"@type":"Question","name":"What is a good CSAT score?","acceptedAnswer":{"@type":"Answer","text":"CSAT scores above 80% (counting 4s and 5s as satisfied on a 1-5 scale) are considered good across most industries. Above 90% is excellent. SaaS typically targets 85-90%, e-commerce 75-85%, and support interactions 80-90%. Track your own trend — improvement matters more than hitting a specific number."}},{"@type":"Question","name":"What is the difference between NPS and CSAT?","acceptedAnswer":{"@type":"Answer","text":"NPS measures customer loyalty and likelihood to recommend — a leading indicator of growth. CSAT measures satisfaction with a specific product or interaction — a snapshot of current quality. NPS predicts future behaviour; CSAT diagnoses current experience. This template combines both in 5 questions."}},{"@type":"Question","name":"How do I share this survey with customers?","acceptedAnswer":{"@type":"Answer","text":"After using the template you get a shareable link. Send it via post-purchase email, support ticket closure, in-app prompt, or SMS. No login is required from customers — they click and respond immediately."}},{"@type":"Question","name":"Can I track satisfaction trends over time?","acceptedAnswer":{"@type":"Answer","text":"Free accounts see current survey results. Pro accounts ($19/month) include response timeline analytics showing how NPS and satisfaction scores change week over week — essential for measuring whether improvements are working."}}]}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root{--navy:#0f2044;--navy-lt:#1a3460;--amber:#f59e0b;--amber-lt:#fbbf24;--amber-pale:#fffbeb;--ink:#0f172a;--ink-mid:#1e293b;--ink-soft:#64748b;--ink-mute:#94a3b8;--bg:#fff;--bg-soft:#f8fafc;--border:#e2e8f0;--pro:#6C3CE1;--green:#16a34a;}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'Onest',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;padding-bottom:80px;}
+        #prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--amber),var(--amber-lt));z-index:2000;transition:width .1s;}
+        .nav{position:sticky;top:0;z-index:100;background:var(--navy);height:56px;display:flex;align-items:center;padding:0 24px;gap:8px;}
+        .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+        .nav-logo img{width:22px;height:22px;filter:brightness(10);}
+        .nav-logo-text{font-weight:800;font-size:.88rem;color:#fff;}
+        .nav-sep{color:rgba(255,255,255,.2);}
+        .nav-crumb{font-size:.78rem;color:rgba(255,255,255,.5);}
+        .nav-crumb a{color:rgba(255,255,255,.5);text-decoration:none;}
+        .nav-crumb a:hover{color:var(--amber-lt);}
+        .nav-cta{margin-left:auto;background:var(--amber);color:var(--navy);font-size:.82rem;font-weight:800;padding:8px 18px;border-radius:6px;text-decoration:none;}
+        .nav-cta:hover{background:var(--amber-lt);}
+        .hero{background:var(--navy);padding:56px 24px 0;position:relative;overflow:hidden;}
+        .hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(245,158,11,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+        .hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:start;position:relative;}
+        .hero-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+        .tag-cat{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber-lt);}
+        .tag-free{font-size:.7rem;font-weight:700;background:rgba(245,158,11,.15);color:var(--amber-lt);border-radius:4px;padding:2px 8px;}
+        .hero h1{font-size:clamp(1.9rem,4vw,2.75rem);font-weight:800;line-height:1.12;letter-spacing:-.02em;color:#fff;margin-bottom:14px;}
+        .hero h1 em{font-style:normal;color:var(--amber-lt);}
+        .hero-sub{font-size:1.04rem;color:rgba(255,255,255,.6);line-height:1.68;max-width:460px;margin-bottom:28px;}
+        .cta-wrap{margin-bottom:12px;}
+        .cta-primary{display:inline-flex;align-items:center;gap:8px;background:var(--amber);color:var(--navy);font-family:'Onest',sans-serif;font-weight:800;font-size:1.05rem;padding:15px 32px;border-radius:8px;text-decoration:none;transition:all .15s;box-shadow:0 4px 20px rgba(245,158,11,.35);}
+        .cta-primary:hover{background:var(--amber-lt);transform:translateY(-1px);}
+        .cta-primary svg{width:16px;height:16px;}
+        .cta-sub{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:8px;}
+        .cta-sub span{margin:0 5px;}
+        /* preview */
+        .preview-card{background:#fff;border:1.5px solid rgba(245,158,11,.3);border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+        .pc-head{background:var(--amber);padding:14px 18px;}
+        .pc-head-title{font-weight:700;font-size:.88rem;color:var(--navy);}
+        .pc-head-sub{font-size:.7rem;color:rgba(15,32,68,.65);margin-top:1px;}
+        .pc-prog{background:var(--amber-pale);border-bottom:1px solid #fde68a;padding:9px 18px;display:flex;align-items:center;gap:10px;}
+        .pc-prog-track{flex:1;height:4px;background:#fde68a;border-radius:2px;overflow:hidden;}
+        .pc-prog-fill{height:100%;background:var(--amber);border-radius:2px;transition:width .4s ease;}
+        .pc-prog-label{font-size:.7rem;font-weight:600;color:var(--ink-mute);white-space:nowrap;}
+        .pc-body{padding:18px;min-height:180px;}
+        .pc-q{font-weight:600;font-size:.9rem;color:var(--ink);margin-bottom:16px;line-height:1.45;}
+        .nps-row{display:flex;gap:3px;}
+        .nps-btn{flex:1;padding:9px 2px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;text-align:center;font-family:'Onest',sans-serif;font-size:.72rem;font-weight:700;color:var(--ink-mute);background:#fff;transition:all .15s;}
+        .nps-btn:hover{border-color:var(--amber);color:var(--amber);}
+        .nps-btn.sel{border-color:var(--amber);background:var(--amber);color:var(--navy);}
+        .nps-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--ink-mute);margin-top:4px;}
+        .stars-row{display:flex;gap:10px;justify-content:center;padding:8px 0;}
+        .star-btn{font-size:2rem;cursor:pointer;transition:transform .15s;line-height:1;color:#d1d5db;}
+        .star-btn.lit{color:var(--amber);}
+        .star-btn:hover{transform:scale(1.15);}
+        .star-lbl{text-align:center;font-size:.78rem;color:var(--ink-mute);margin-top:6px;}
+        .pc-ta{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;resize:none;height:72px;font-family:'Onest',sans-serif;font-size:.86rem;color:var(--ink);outline:none;transition:border-color .15s;}
+        .pc-ta:focus{border-color:var(--amber);}
+        .pc-ta::placeholder{color:var(--ink-mute);}
+        .pc-foot{border-top:1px solid var(--border);background:var(--amber-pale);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+        .pc-live{font-size:.68rem;color:var(--ink-mute);display:flex;align-items:center;gap:4px;}
+        .pc-live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+        .pc-nav{display:flex;gap:6px;}
+        .pc-btn{font-family:'Onest',sans-serif;font-size:.8rem;font-weight:700;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;}
+        .pc-btn-back{background:var(--border);color:var(--ink-soft);}
+        .pc-btn-next{background:var(--amber);color:var(--navy);}
+        .pc-btn-next:disabled{background:var(--border);color:var(--ink-mute);cursor:not-allowed;}
+        /* trust */
+        .trust-bar{background:var(--navy-lt);border-bottom:1px solid rgba(255,255,255,.08);padding:12px 24px;}
+        .trust-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;}
+        .trust-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:rgba(255,255,255,.5);font-weight:500;}
+        .trust-check{color:var(--amber-lt);}
+        /* content */
+        .content{max-width:1100px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:1fr 260px;gap:56px;align-items:start;}
+        .sec{margin-bottom:48px;}
+        .sec-ey{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
+        .sec h2{font-size:1.42rem;font-weight:800;color:var(--ink);margin-bottom:14px;letter-spacing:-.01em;line-height:1.25;}
+        .sec p{font-size:.97rem;line-height:1.78;color:var(--ink-mid);margin-bottom:12px;}
+        .sec p strong{color:var(--ink);font-weight:700;}
+        /* questions */
+        .q-list{display:flex;flex-direction:column;gap:5px;}
+        .q-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:11px 14px;background:var(--amber-pale);border:1px solid #fde68a;border-radius:7px;}
+        .q-n{font-size:.7rem;font-weight:700;color:var(--amber);}
+        .q-t{font-size:.9rem;color:var(--ink-mid);}
+        .qb{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 7px;white-space:nowrap;}
+        .bn{background:#eff6ff;color:#1d4ed8;}.bs{background:#fffbeb;color:#92400e;}.bm{background:#f5f3ff;color:#6C3CE1;}.bo{background:#f0fdf4;color:#15803d;}
+        /* metrics */
+        .m3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;}
+        .mc{border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+        .mc-n{font-size:1.5rem;font-weight:800;margin-bottom:4px;}
+        .mc-l{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+        .mc-d{font-size:.76rem;color:var(--ink-soft);line-height:1.5;}
+        .mc.nps .mc-n{color:#1d4ed8;}.mc.csat .mc-n{color:var(--amber);}.mc.rec .mc-n{color:var(--green);}
+        /* how */
+        .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+        .how-card{text-align:center;padding:18px 14px;background:var(--amber-pale);border:1px solid #fde68a;border-radius:8px;}
+        .how-n{width:34px;height:34px;background:var(--amber);color:var(--navy);border-radius:50%;font-size:.82rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+        .how-title{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+        .how-text{font-size:.78rem;color:var(--ink-soft);line-height:1.5;}
+        /* results */
+        .results-card{background:var(--navy);border-radius:10px;overflow:hidden;}
+        .rc-head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;}
+        .rc-head-title{font-weight:700;font-size:.87rem;color:#fff;}
+        .rc-sub{font-size:.72rem;color:rgba(255,255,255,.4);}
+        .rc-nps{padding:20px 18px 14px;text-align:center;}
+        .rc-nps-score{font-size:3.5rem;font-weight:800;color:var(--amber-lt);line-height:1;}
+        .rc-nps-lbl{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:4px;margin-bottom:14px;}
+        .segs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+        .seg{background:rgba(255,255,255,.05);border-radius:6px;padding:10px;text-align:center;}
+        .seg-n{font-size:1.3rem;font-weight:800;line-height:1;}
+        .seg-l{font-size:.66rem;color:rgba(255,255,255,.45);margin-top:3px;}
+        .seg-p .seg-n{color:#4ade80;}.seg-pa .seg-n{color:var(--amber-lt);}.seg-d .seg-n{color:#f87171;}
+        .rc-body{padding:14px 18px;display:flex;flex-direction:column;gap:9px;}
+        .rc-row{}
+        .rc-lbl{display:flex;justify-content:space-between;font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:5px;font-weight:500;}
+        .rc-lbl span{font-weight:700;color:#fff;}
+        .rc-track{height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+        .rc-fill{height:100%;border-radius:4px;background:var(--amber);transition:width 1s ease;width:0;}
+        .pro-hook{margin:0 18px 16px;padding:12px 14px;background:rgba(108,60,225,.15);border:1px solid rgba(108,60,225,.3);border-radius:7px;display:flex;align-items:flex-start;gap:10px;}
+        .pro-badge{background:var(--pro);color:#fff;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:3px 7px;flex-shrink:0;margin-top:1px;}
+        .pro-hook-text{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.6;}
+        .pro-hook-text a{color:#a78bfa;font-weight:600;text-decoration:none;}
+        /* faq */
+        .faq-list{display:flex;flex-direction:column;gap:6px;}
+        details.faq{background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+        details.faq[open]{border-color:var(--amber);}
+        details.faq summary{padding:13px 16px;font-weight:600;font-size:.9rem;color:var(--ink);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;}
+        details.faq summary::after{content:'+';font-size:1.1rem;color:var(--amber);flex-shrink:0;transition:transform .2s;}
+        details.faq[open] summary::after{transform:rotate(45deg);}
+        details.faq summary::-webkit-details-marker{display:none;}
+        .faq-ans{padding:0 16px 14px;font-size:.9rem;line-height:1.72;color:var(--ink-mid);}
+        .faq-ans a{color:var(--amber);text-decoration:none;}
+        /* related */
+        .rel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+        .rel-card{border:1px solid var(--border);border-radius:7px;padding:14px;text-decoration:none;background:var(--bg);transition:all .15s;}
+        .rel-card:hover{border-color:var(--amber);box-shadow:0 2px 10px rgba(245,158,11,.12);}
+        .rel-cat{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;}
+        .rel-title{font-size:.85rem;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:3px;}
+        .rel-desc{font-size:.76rem;color:var(--ink-soft);line-height:1.5;}
+        /* bottom cta */
+        .bottom-cta{background:var(--navy);border-radius:10px;padding:40px 32px;text-align:center;margin:52px 0;position:relative;overflow:hidden;}
+        .bottom-cta::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(245,158,11,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.05) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;}
+        .bottom-cta h2{font-size:1.55rem;font-weight:800;color:#fff;margin-bottom:8px;position:relative;}
+        .bottom-cta p{font-size:.96rem;color:rgba(255,255,255,.6);margin-bottom:22px;position:relative;}
+        .bottom-cta .cta-primary{position:relative;display:inline-flex;}
+        .bottom-cta .cta-sub{color:rgba(255,255,255,.35);margin-top:10px;position:relative;}
+        /* sidebar */
+        .sidebar{position:sticky;top:72px;}
+        .sb-cta{background:var(--amber);border-radius:8px;padding:18px;text-align:center;margin-bottom:14px;}
+        .sb-cta p{font-size:.83rem;color:rgba(15,32,68,.75);margin-bottom:12px;font-style:italic;line-height:1.5;}
+        .sb-cta a{display:block;background:var(--navy);color:#fff;font-weight:700;font-size:.84rem;padding:10px;border-radius:6px;text-decoration:none;}
+        .sb-cta a:hover{background:var(--navy-lt);}
+        .sb-card{background:var(--amber-pale);border:1px solid #fde68a;border-radius:8px;padding:16px;margin-bottom:14px;}
+        .sb-head{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;}
+        .sb-meta{display:flex;flex-direction:column;gap:7px;}
+        .sb-meta-row{display:flex;justify-content:space-between;font-size:.82rem;}
+        .sb-meta-label{color:var(--ink-soft);}
+        .sb-meta-val{font-weight:700;color:var(--ink);}
+        .sb-links{list-style:none;display:flex;flex-direction:column;gap:7px;}
+        .sb-links a{font-size:.83rem;color:var(--amber);text-decoration:none;font-weight:600;}
+        .sb-links a:hover{text-decoration:underline;}
+        /* footer */
+        .footer{background:var(--navy);padding:36px 24px;text-align:center;margin-top:80px;}
+        .footer-logo{font-weight:800;color:#fff;font-size:.92rem;margin-bottom:5px;}
+        .footer p{font-size:.8rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
+        .footer-links{list-style:none;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+        .footer-links a{font-size:.76rem;color:rgba(255,255,255,.4);text-decoration:none;}
+        .footer-links a:hover{color:#fff;}
+        /* mobile */
+        #mobile-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--navy);border-top:1px solid rgba(255,255,255,.1);padding:12px 20px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.3);}
+        #mobile-cta a{display:block;background:var(--amber);color:var(--navy);font-family:'Onest',sans-serif;font-weight:800;font-size:.97rem;text-align:center;padding:13px;border-radius:8px;text-decoration:none;}
+        #mobile-cta-sub{text-align:center;font-size:.7rem;color:rgba(255,255,255,.35);margin-top:5px;}
+        @media(max-width:900px){.hero-inner,.content{grid-template-columns:1fr;}.sidebar,.m3{display:none;}.how-grid,.rel-grid{grid-template-columns:1fr;}#mobile-cta{display:block;}}
+
+
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mobile-cta">
+    <a href="https://votegenerator.com/survey?template=customer-satisfaction">Use This Template — Free</a>
+    <div id="mobile-cta-sub">No signup required · NPS + CSAT · Instant results</div>
+</div>
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo"><img src="/logo.svg" alt="VoteGenerator"><span class="nav-logo-text">VoteGenerator</span></a>
+    <span class="nav-sep">/</span>
+    <span class="nav-crumb"><a href="/templates/">Templates</a> / <a href="/templates/customer-surveys/">Customer</a> / CSAT Survey</span>
+    <a href="https://votegenerator.com/survey?template=customer-satisfaction" class="nav-cta">Use This Template</a>
+</nav>
+
+<section class="hero" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+        <div>
+            <div class="hero-eyebrow"><span class="tag-cat">Customer Survey Template</span><span class="tag-free">Free</span></div>
+            <h1>Free Customer Satisfaction<br>Survey Template <em>(CSAT)</em></h1>
+            <p class="hero-sub">NPS + satisfaction + quality in one 5-question survey. Know exactly how customers feel — and whether they'd recommend you. No signup from anyone.</p>
+            <div class="cta-wrap">
+                <a href="https://votegenerator.com/survey?template=customer-satisfaction" class="cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Use This Template
+                </a>
+                <p class="cta-sub">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+            </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
+            <div style="display:flex;">
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fed7aa,#fdba74);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#7c2d12;">CX</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fde68a,#fbbf24);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#78350f;margin-left:-7px">PM</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ddd6fe,#c4b5fd);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#3730a3;margin-left:-7px">CS</div>
+            </div>
+            <p style="font-size:.82rem;color:rgba(255,255,255,.55);">Built for <strong style="color:rgba(255,255,255,.8);">CX directors, product managers &amp; founders</strong></p>
+        </div>
+        </div>
+        <div class="preview-card">
+            <div class="pc-head"><div class="pc-head-title">Customer Satisfaction Survey</div><div class="pc-head-sub">5 questions · ~3 minutes · Instant NPS results</div></div>
+            <div class="pc-prog"><div class="pc-prog-track"><div class="pc-prog-fill" id="pv-fill" style="width:20%"></div></div><span class="pc-prog-label" id="pv-label">1 of 5</span></div>
+            <div class="pc-body" id="pv-body"></div>
+            <div class="pc-foot">
+                <div class="pc-live"><span class="pc-live-dot"></span> Live demo</div>
+                <div class="pc-nav">
+                    <button class="pc-btn pc-btn-back" id="pv-back" onclick="pvNav(-1)" style="display:none">Back</button>
+                    <button class="pc-btn pc-btn-next" id="pv-next" onclick="pvNav(1)" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="trust-bar"><div class="trust-inner">
+    <div class="trust-item"><span class="trust-check">✓</span> Free — no credit card</div>
+    <div class="trust-item"><span class="trust-check">✓</span> No signup from customers</div>
+    <div class="trust-item"><span class="trust-check">✓</span> NPS auto-calculated</div>
+    <div class="trust-item"><span class="trust-check">✓</span> Live results dashboard</div>
+    <div class="trust-item"><span class="trust-check">✓</span> Up to 100 responses free</div>
+</div></div>
+
+<div class="content">
+<main style="min-width:0">
+
+<div class="sec" id="questions">
+    <div class="sec-ey">Template Questions</div>
+    <h2>All 5 Survey Questions</h2>
+    <p>These 5 questions give you the three core CX metrics in one short survey — NPS (loyalty), CSAT (satisfaction), and quality ratings across product and overall experience. Short enough that customers complete it. Rich enough to tell you what to fix.</p>
+    <div class="q-list">
+        <div class="q-row"><span class="q-n">01</span><span class="q-t">How likely are you to recommend us to a friend or colleague? (0–10)</span><span class="qb bn">NPS Scale</span></div>
+        <div class="q-row"><span class="q-n">02</span><span class="q-t">How satisfied are you with our product or service overall?</span><span class="qb bs">⭐ Rating</span></div>
+        <div class="q-row"><span class="q-n">03</span><span class="q-t">How would you rate the quality of our product or service?</span><span class="qb bs">⭐ Rating</span></div>
+        <div class="q-row"><span class="q-n">04</span><span class="q-t">What could we improve? (select all that apply)</span><span class="qb bm">Multiple Choice</span></div>
+        <div class="q-row"><span class="q-n">05</span><span class="q-t">What is the main reason for your score?</span><span class="qb bo">Open Text</span></div>
+    </div>
+</div>
+
+<div class="sec" id="why">
+    <div class="sec-ey">Understanding Your Scores</div>
+    <h2>NPS, CSAT, and What They Tell You</h2>
+    <div class="m3">
+        <div class="mc nps"><div class="mc-n">+42</div><div class="mc-l">Net Promoter Score</div><div class="mc-d">Promoters minus Detractors. Above +30 is good; above +70 is excellent.</div></div>
+        <div class="mc csat"><div class="mc-n">4.2★</div><div class="mc-l">Satisfaction Score</div><div class="mc-d">Average star rating across all responses. Diagnoses the current experience.</div></div>
+        <div class="mc rec"><div class="mc-n">78%</div><div class="mc-l">Would Recommend</div><div class="mc-d">Percentage scoring 7+ on NPS. Simple loyalty metric for quick monitoring.</div></div>
+    </div>
+    <p>NPS tells you whether customers will advocate for you. CSAT tells you why or why not. <strong>Question 4</strong> — the multiple-choice improvement question — is the most actionable data point: it tells you exactly where to invest next.</p>
+</div>
+
+<div class="sec" id="how">
+    <div class="sec-ey">How It Works</div>
+    <h2>From Template to Insights in 3 Steps</h2>
+    <div class="how-grid">
+        <div class="how-card"><div class="how-n">1</div><div class="how-title">Use This Template</div><div class="how-text">All 5 questions pre-loaded. Customise to your product name before sharing.</div></div>
+        <div class="how-card"><div class="how-n">2</div><div class="how-title">Send to customers</div><div class="how-text">Post-purchase email, support ticket close, or in-app link. No login needed.</div></div>
+        <div class="how-card"><div class="how-n">3</div><div class="how-title">See NPS + CSAT live</div><div class="how-text">NPS score, Promoter/Passive/Detractor split, and satisfaction ratings update in real time.</div></div>
+    </div>
+</div>
+
+<div class="sec" id="results">
+    <div class="sec-ey">Sample Results</div>
+    <h2>What Your CSAT Dashboard Looks Like</h2>
+    <p>After 156 responses, here's the live results dashboard — including the NPS segmentation that tells you exactly where to focus your retention efforts:</p>
+    <div class="results-card">
+        <div class="rc-head"><span class="rc-head-title">Customer Satisfaction Survey · 156 responses</span><span class="rc-sub">Rolling 30 days</span></div>
+        <div class="rc-nps">
+            <div class="rc-nps-score" id="nps-anim">—</div>
+            <div class="rc-nps-lbl">Net Promoter Score</div>
+            <div class="segs">
+                <div class="seg seg-p"><div class="seg-n">68</div><div class="seg-l">Promoters (9-10)</div></div>
+                <div class="seg seg-pa"><div class="seg-n">54</div><div class="seg-l">Passives (7-8)</div></div>
+                <div class="seg seg-d"><div class="seg-n">34</div><div class="seg-l">Detractors (0-6)</div></div>
+            </div>
+        </div>
+        <div class="rc-body" id="results-body">
+            <div class="rc-row"><div class="rc-lbl">Overall satisfaction<span>4.2 ★</span></div><div class="rc-track"><div class="rc-fill" data-w="84"></div></div></div>
+            <div class="rc-row"><div class="rc-lbl">Product quality<span>4.4 ★</span></div><div class="rc-track"><div class="rc-fill" data-w="88"></div></div></div>
+            <div class="rc-row"><div class="rc-lbl">Would recommend<span>78%</span></div><div class="rc-track"><div class="rc-fill" data-w="78"></div></div></div>
+        </div>
+        <div style="margin:0 0 0;border-top:1px solid rgba(255,255,255,.06);">
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:8px;background:rgba(108,60,225,.12);">
+                <span style="background:#6C3CE1;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:2px 7px;">Pro</span>
+                <span style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.8);">Response Timeline Analytics</span>
+            </div>
+            <div style="position:relative;overflow:hidden;min-height:115px;">
+                <div style="filter:blur(5px);opacity:0.65;pointer-events:none;user-select:none;"><svg viewBox="0 0 460 105" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#1a2a6e">
+  <line x1="0" y1="25" x2="460" y2="25" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="45" x2="460" y2="45" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="65" x2="460" y2="65" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="85" x2="460" y2="85" stroke="#e2e8f0" stroke-width="1"/>
+  <path d="M 20,63 L 77,58 L 135,61 L 192,51 L 250,46 L 307,51 L 365,40 L 422,35 L 422,88 L 20,88 Z" fill="rgba(245,158,11,0.3)"/>
+  <polyline points="20,63 77,58 135,61 192,51 250,46 307,51 365,40 422,35" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="63" r="4.5" fill="#f59e0b"/>
+  <circle cx="77" cy="58" r="4.5" fill="#f59e0b"/>
+  <circle cx="135" cy="61" r="4.5" fill="#f59e0b"/>
+  <circle cx="192" cy="51" r="4.5" fill="#f59e0b"/>
+  <circle cx="250" cy="46" r="4.5" fill="#f59e0b"/>
+  <circle cx="307" cy="51" r="4.5" fill="#f59e0b"/>
+  <circle cx="365" cy="40" r="4.5" fill="#f59e0b"/>
+  <circle cx="422" cy="35" r="4.5" fill="#f59e0b"/>
+  <text x="20" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 1</text>
+  <text x="77" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 2</text>
+  <text x="135" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 3</text>
+  <text x="192" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 4</text>
+  <text x="250" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 5</text>
+  <text x="307" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 6</text>
+  <text x="365" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 7</text>
+  <text x="422" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 8</text>
+</svg></div>
+                <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,16,50,0.87);z-index:10;gap:5px;padding:14px;">
+                    <div style="font-size:1.4rem;">🔒</div>
+                    <div style="font-size:.87rem;font-weight:700;color:#fff;text-align:center;">Track trends across weeks and releases</div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.6);text-align:center;max-width:280px;line-height:1.5;">See whether scores improve after changes. CSV export included.</div>
+                    <a href="https://votegenerator.com/pricing" style="margin-top:7px;background:#6C3CE1;color:#fff;font-size:.8rem;font-weight:700;padding:8px 22px;border-radius:6px;text-decoration:none;">Unlock with Pro — $19/month</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="sec" id="faq">
+    <div class="sec-ey">FAQ</div>
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <details class="faq"><summary>Is this customer satisfaction survey template free?</summary><div class="faq-ans">Yes. Free forever. No signup required from you or your customers. Up to 100 responses free. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows 10,000 responses and includes CSV export.</div></details>
+        <details class="faq"><summary>What is a CSAT survey?</summary><div class="faq-ans">CSAT stands for Customer Satisfaction Score. It measures how satisfied customers are with your product, service, or interaction. One of three core CX metrics alongside NPS and CES.</div></details>
+        <details class="faq"><summary>What is a good CSAT score?</summary><div class="faq-ans">CSAT above 80% (counting 4s and 5s as satisfied) is good. Above 90% is excellent. SaaS typically targets 85-90%, e-commerce 75-85%. Track your own trend — improvement matters more than hitting a specific number.</div></details>
+        <details class="faq"><summary>What is the difference between NPS and CSAT?</summary><div class="faq-ans">NPS measures loyalty and likelihood to recommend — a leading indicator of growth. CSAT measures satisfaction with a specific interaction — a snapshot of current quality. NPS predicts future behaviour; CSAT diagnoses current experience. This template captures both in 5 questions.</div></details>
+        <details class="faq"><summary>How do I share this survey with customers?</summary><div class="faq-ans">You get a shareable link. Send it via post-purchase email, support ticket closure, in-app prompt, or SMS. No login required from customers.</div></details>
+        <details class="faq"><summary>Can I track satisfaction trends over time?</summary><div class="faq-ans">Free accounts see current results. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> includes response timeline analytics showing NPS and satisfaction trends week over week.</div></details>
+    </div>
+</div>
+
+<div class="sec" id="related">
+    <div class="sec-ey">Related Templates</div>
+    <h2>More Customer Survey Templates</h2>
+    <div class="rel-grid">
+        <a href="/templates/nps-survey" class="rel-card"><div class="rel-cat">Customer</div><div class="rel-title">Quick NPS Survey</div><div class="rel-desc">2 questions. NPS only. The fastest customer loyalty check possible.</div></a>
+        <a href="/templates/post-purchase-survey" class="rel-card"><div class="rel-cat">Customer</div><div class="rel-title">Post-Purchase Feedback</div><div class="rel-desc">Shopping experience, product quality, and repurchase intent.</div></a>
+        <a href="/templates/employee-engagement-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Employee Engagement Survey</div><div class="rel-desc">10 Gallup-inspired questions for quarterly team check-ins.</div></a>
+    </div>
+</div>
+
+<div class="bottom-cta">
+    <h2>Know your NPS in 60 seconds</h2>
+    <p>5 questions. NPS + CSAT combined. No signup from anyone.</p>
+    <a href="https://votegenerator.com/survey?template=customer-satisfaction" class="cta-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Use This Template — Free
+    </a>
+    <p class="cta-sub">No signup required · Free up to 100 responses · Pro from $19/month</p>
+</div>
+
+</main>
+<aside class="sidebar">
+    <div class="sb-cta"><p>"NPS + CSAT in one 5-question survey. Ready in 60 seconds."</p><a href="https://votegenerator.com/survey?template=customer-satisfaction">Use This Template →</a></div>
+    <div class="sb-card">
+        <div class="sb-head">Template Details</div>
+        <div class="sb-meta">
+            <div class="sb-meta-row"><span class="sb-meta-label">Questions</span><span class="sb-meta-val">5</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Metrics</span><span class="sb-meta-val">NPS + CSAT</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Free responses</span><span class="sb-meta-val">100</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Completion</span><span class="sb-meta-val">2–3 min</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Best sent</span><span class="sb-meta-val">Post-purchase</span></div>
+        </div>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Related Templates</div>
+        <ul class="sb-links">
+            <li><a href="/templates/nps-survey">Quick NPS Survey</a></li>
+            <li><a href="/templates/post-purchase-survey">Post-Purchase Feedback</a></li>
+            <li><a href="/templates/employee-engagement-survey">Employee Engagement</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Free customer satisfaction survey template. NPS + CSAT. No signup. 100 responses free.</p>
+    <ul class="footer-links"><li><a href="https://votegenerator.com">Home</a></li><li><a href="/templates/">Templates</a></li><li><a href="https://votegenerator.com/blog">Blog</a></li><li><a href="https://votegenerator.com/pricing">Pricing</a></li><li><a href="https://votegenerator.com/privacy">Privacy</a></li></ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const PV_QS=[
+    {q:'How likely are you to recommend us to a friend or colleague?',type:'nps'},
+    {q:'How satisfied are you with our product or service overall?',type:'stars'},
+    {q:'How would you rate the quality of our product or service?',type:'stars'},
+    {q:'What is the main reason for your score?',type:'open'},
+];
+let cur=0,ans={};
+function pvRender(){
+    const q=PV_QS[cur];
+    document.getElementById('pv-fill').style.width=((cur+1)/5*100)+'%';
+    document.getElementById('pv-label').textContent=(cur+1)+' of 5';
+    let h=`<div class="pc-q">${q.q}</div>`;
+    if(q.type==='nps'){
+        h+='<div class="nps-row">';
+        for(let i=0;i<=10;i++){const s=ans[cur]===i?'sel':'';h+=`<button class="nps-btn ${s}" onclick="pvNPS(${i})">${i}</button>`;}
+        h+=`</div><div class="nps-labels"><span>Not likely</span><span>Extremely likely</span></div>`;
+    } else if(q.type==='stars'){
+        const sel=ans[cur]||0;
+        h+='<div class="stars-row" id="sr">';
+        for(let i=1;i<=5;i++){const l=i<=sel?'lit':'';h+=`<span class="star-btn ${l}" onclick="pvStar(${i})" onmouseenter="pvSH(${i})" onmouseleave="pvSL()">★</span>`;}
+        h+=`</div><div class="star-lbl">${sel?['','Very poor','Poor','Neutral','Good','Excellent'][sel]:''}</div>`;
+    } else {
+        h+=`<textarea class="pc-ta" placeholder="Tell us what influenced your rating..." oninput="pvText(this.value)">${ans[cur]||''}</textarea>`;
+    }
+    document.getElementById('pv-body').innerHTML=h;
+    const nx=document.getElementById('pv-next');
+    nx.disabled=ans[cur]===undefined&&q.type!=='open';
+    nx.textContent=cur>=PV_QS.length-1?'Submit ✓':'Next';
+    document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function pvNPS(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvStar(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvSH(v){document.querySelectorAll('.star-btn').forEach((s,i)=>{s.classList.toggle('lit',i<v);});}
+function pvSL(){const s=ans[cur]||0;document.querySelectorAll('.star-btn').forEach((b,i)=>{b.classList.toggle('lit',i<s);});}
+function pvText(v){ans[cur]=v||' ';}
+function pvNav(dir){
+    if(dir===1&&cur>=PV_QS.length-1){
+        document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">⭐</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Thanks for the demo!</div><div style="font-size:.83rem;color:var(--ink-soft);margin-bottom:14px">Your real survey shows NPS scores updating live.</div><a href="https://votegenerator.com/survey?template=customer-satisfaction" style="background:var(--amber);color:var(--navy);font-family:'Onest',sans-serif;font-weight:800;font-size:.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;
+        document.getElementById('pv-fill').style.width='100%';
+        document.getElementById('pv-label').textContent='Complete';
+        document.getElementById('pv-next').style.display='none';
+        document.getElementById('pv-back').style.display='block';
+        return;
+    }
+    cur=Math.max(0,Math.min(PV_QS.length-1,cur+dir));
+    if(dir===1)document.getElementById('pv-next').style.display='block';
+    pvRender();
+}
+pvRender();
+new IntersectionObserver(e=>{if(e[0].isIntersecting){document.querySelectorAll('.rc-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});let n=-60;const el=document.getElementById('nps-anim');const t=setInterval(()=>{n+=2;el.textContent=(n>=0?'+':'')+Math.round(n);if(n>=22){el.textContent='+22';clearInterval(t);}},25);}},{threshold:.3}).observe(document.getElementById('results'));
+const prog=document.getElementById('prog'),mc=document.getElementById('mobile-cta'),h=document.getElementById('hero');
+window.addEventListener('scroll',()=>{const d=document.documentElement;prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';if(window.innerWidth<=900)mc.style.display=h.getBoundingClientRect().bottom<0?'block':'none';},{passive:true});
+</script>
+</body>
+</html>

@@ -308,10 +308,343 @@ const EMPLOYEE_SATISFACTION_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
+
+const EXIT_INTERVIEW_TEMPLATE: SurveyTemplate = {
+    id: 'exit-interview',
+    name: 'Exit Interview Survey',
+    emoji: '🚪',
+    color: 'text-amber-600',
+    description: 'Understand why employees really leave — 10 anonymous questions',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ei-reasons',
+            title: 'Reasons for Leaving',
+            description: 'Help us understand your decision',
+            questions: [
+                {
+                    id: 'ei-q1',
+                    type: 'multiple_choice',
+                    question: 'What is your primary reason for leaving?',
+                    options: [
+                        { id: 'compensation',  text: 'Better compensation elsewhere' },
+                        { id: 'growth',        text: 'Limited career growth opportunities' },
+                        { id: 'manager',       text: 'Issues with management or leadership' },
+                        { id: 'balance',       text: 'Work-life balance' },
+                        { id: 'culture',       text: 'Company culture or direction' },
+                        { id: 'relocation',    text: 'Relocation or personal reasons' },
+                        { id: 'role',          text: 'Role was not what I expected' },
+                        { id: 'other',         text: 'Other' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'ei-q2',
+                    type: 'textarea',
+                    question: 'What could we have done to retain you?',
+                    placeholder: 'Your honest answer helps us improve for others...',
+                },
+                {
+                    id: 'ei-q3',
+                    type: 'multiple_choice',
+                    question: 'How long did you consider leaving before making this decision?',
+                    options: [
+                        { id: 'recent',   text: 'Less than 1 month' },
+                        { id: 'few',      text: '1–3 months' },
+                        { id: 'several',  text: '3–6 months' },
+                        { id: 'long',     text: 'More than 6 months' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ei-experience',
+            title: 'Your Experience Here',
+            description: 'How satisfied were you during your time with us?',
+            questions: [
+                {
+                    id: 'ei-q4',
+                    type: 'scale',
+                    question: 'How satisfied were you with your role overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q5',
+                    type: 'scale',
+                    question: 'How satisfied were you with your manager?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q6',
+                    type: 'scale',
+                    question: 'How satisfied were you with your compensation?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q7',
+                    type: 'scale',
+                    question: 'How would you rate the overall company culture?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ei-final',
+            title: 'Final Thoughts',
+            description: 'Looking back on your time here',
+            questions: [
+                {
+                    id: 'ei-q8',
+                    type: 'yes_no',
+                    question: 'Would you recommend this company to a friend as a place to work?',
+                    required: true,
+                },
+                {
+                    id: 'ei-q9',
+                    type: 'textarea',
+                    question: 'What did you enjoy most about working here?',
+                    placeholder: 'Share what made a positive difference...',
+                },
+                {
+                    id: 'ei-q10',
+                    type: 'textarea',
+                    question: 'What is the one thing we could most improve for future employees?',
+                    placeholder: 'Your honest feedback helps us improve...',
+                },
+            ],
+        },
+    ],
+};
+ 
+const WEEKLY_PULSE_TEMPLATE: SurveyTemplate = {
+    id: 'weekly-pulse',
+    name: 'Weekly Pulse Survey',
+    emoji: '💚',
+    color: 'text-emerald-500',
+    description: '5 quick questions — morale, workload, blockers, and open feedback',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'wp-thisweek',
+            title: 'This Week',
+            description: 'How are things going right now?',
+            questions: [
+                {
+                    id: 'wp-q1',
+                    type: 'scale',
+                    question: 'How are you feeling about work this week?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very low',
+                    maxLabel: 'Very high',
+                    required: true,
+                },
+                {
+                    id: 'wp-q2',
+                    type: 'scale',
+                    question: 'How manageable is your current workload?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Overwhelming',
+                    maxLabel: 'Very manageable',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wp-support',
+            title: 'Support & Blockers',
+            description: 'Do you have what you need?',
+            questions: [
+                {
+                    id: 'wp-q3',
+                    type: 'yes_no',
+                    question: 'Do you have what you need to be successful this week?',
+                    required: true,
+                },
+                {
+                    id: 'wp-q4',
+                    type: 'yes_no',
+                    question: 'Is anything blocking your progress right now?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wp-open',
+            title: 'Open Feedback',
+            description: 'Share anything on your mind',
+            questions: [
+                {
+                    id: 'wp-q5',
+                    type: 'textarea',
+                    question: 'Anything you\'d like to share with your manager this week?',
+                    placeholder: 'Optional — share anything on your mind...',
+                },
+            ],
+        },
+    ],
+};
+ 
+
+const ONBOARDING_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'onboarding-feedback',
+    name: 'Employee Onboarding Survey',
+    emoji: '🌱',
+    color: 'text-cyan-600',
+    description: 'Check if new hires are set up for success at Day 30, 60, or 90',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ob-first',
+            title: 'First Impressions',
+            description: 'How did your first days feel?',
+            questions: [
+                {
+                    id: 'ob-q1',
+                    type: 'scale',
+                    question: 'How would you rate your onboarding experience overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'ob-q2',
+                    type: 'scale',
+                    question: 'How prepared did you feel for your role on Day 1?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all prepared',
+                    maxLabel: 'Fully prepared',
+                    required: true,
+                },
+                {
+                    id: 'ob-q3',
+                    type: 'scale',
+                    question: 'How welcoming was the team when you joined?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not welcoming',
+                    maxLabel: 'Very welcoming',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ob-support',
+            title: 'Support & Setup',
+            description: 'Did you have what you needed?',
+            questions: [
+                {
+                    id: 'ob-q4',
+                    type: 'yes_no',
+                    question: 'Did you have the tools and system access you needed from Day 1?',
+                    required: true,
+                },
+                {
+                    id: 'ob-q5',
+                    type: 'scale',
+                    question: 'How clearly were your role and responsibilities explained?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'ob-q6',
+                    type: 'scale',
+                    question: 'How effective has your manager or onboarding buddy been in supporting you?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not effective',
+                    maxLabel: 'Very effective',
+                    required: true,
+                },
+                {
+                    id: 'ob-q7',
+                    type: 'scale',
+                    question: 'How well do you understand the company culture and values?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very well',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ob-future',
+            title: 'Looking Ahead',
+            description: 'Your confidence and open feedback',
+            questions: [
+                {
+                    id: 'ob-q8',
+                    type: 'scale',
+                    question: 'How confident do you feel about succeeding in your role?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not confident',
+                    maxLabel: 'Very confident',
+                    required: true,
+                },
+                {
+                    id: 'ob-q9',
+                    type: 'textarea',
+                    question: 'What was the best part of your onboarding experience?',
+                    placeholder: 'Share what made a positive difference...',
+                },
+                {
+                    id: 'ob-q10',
+                    type: 'textarea',
+                    question: 'What one thing would have made your onboarding significantly better?',
+                    placeholder: 'Your honest answer helps us improve for the next person...',
+                },
+            ],
+        },
+    ],
+};
  
 export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
     EMPLOYEE_ENGAGEMENT_TEMPLATE,
     EMPLOYEE_SATISFACTION_TEMPLATE,
+    ONBOARDING_FEEDBACK_TEMPLATE,
+    WEEKLY_PULSE_TEMPLATE,
+    EXIT_INTERVIEW_TEMPLATE,
     // Add future employee templates here: pulse survey, exit interview, manager feedback, etc.
 ];
  

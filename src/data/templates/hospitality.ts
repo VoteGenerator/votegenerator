@@ -1,17 +1,17 @@
 import { SurveyTemplate } from './_types';
- 
-export const HOSPITALITY_TEMPLATES: SurveyTemplate[] = [
-    // Add  templates here: 
 
-import { SurveyTemplate } from './_types';
- 
-const HOTEL_GUEST_TEMPLATE: SurveyTemplate = {
-    id: 'hotel-feedback',
+// ============================================================================
+// HOTEL GUEST SATISFACTION SURVEY
+// Keywords: hotel guest satisfaction survey, hotel feedback form (10k-100k vol)
+// ============================================================================
+
+const HOTEL_GUEST_SATISFACTION_TEMPLATE: SurveyTemplate = {
+    id: 'hotel-guest-satisfaction',
     name: 'Hotel Guest Satisfaction Survey',
     emoji: '🏨',
-    color: 'text-amber-700',
-    description: '9 questions — know how guests feel before they post online',
-    category: 'customer',
+    color: 'text-blue-600',
+    description: 'Understand exactly what guests loved, what fell short, and who is planning to return',
+    category: 'hospitality',
     recommendedSettings: {
         anonymousMode: true,
         showProgress: true,
@@ -19,89 +19,132 @@ const HOTEL_GUEST_TEMPLATE: SurveyTemplate = {
     },
     sections: [
         {
-            id: 'hg-stay',
-            title: 'Your Stay',
-            description: 'How was your experience from arrival to departure?',
+            id: 'hg-arrival',
+            title: 'Arrival & Check-In',
+            description: 'First impressions matter',
             questions: [
                 {
                     id: 'hg-q1',
-                    type: 'rating',
-                    question: 'How would you rate your overall stay with us?',
+                    type: 'scale',
+                    question: 'How would you rate your check-in experience?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
                     required: true,
                 },
                 {
                     id: 'hg-q2',
-                    type: 'rating',
-                    question: 'How would you rate the check-in experience?',
+                    type: 'scale',
+                    question: 'How friendly and helpful was the front desk team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Extremely',
                     required: true,
                 },
+            ],
+        },
+        {
+            id: 'hg-room',
+            title: 'Room & Facilities',
+            description: 'Your accommodation experience',
+            questions: [
                 {
                     id: 'hg-q3',
-                    type: 'rating',
-                    question: 'How would you rate your room quality and comfort?',
+                    type: 'scale',
+                    question: 'How would you rate the cleanliness and condition of your room?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
                     required: true,
                 },
                 {
                     id: 'hg-q4',
-                    type: 'rating',
-                    question: 'How would you rate the cleanliness of your room and the property?',
+                    type: 'scale',
+                    question: 'How comfortable was your bed and overall sleep quality?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very uncomfortable',
+                    maxLabel: 'Excellent',
                     required: true,
                 },
                 {
                     id: 'hg-q5',
-                    type: 'rating',
-                    question: 'How would you rate the service provided by our staff?',
-                    required: true,
-                },
-                {
-                    id: 'hg-q6',
-                    type: 'rating',
-                    question: 'How would you rate the value for money of your stay?',
+                    type: 'scale',
+                    question: 'How satisfied were you with the hotel amenities (Wi-Fi, gym, pool, etc.)?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
                     required: true,
                 },
             ],
         },
         {
-            id: 'hg-loyalty',
-            title: 'Would You Return?',
-            description: 'Help us understand your loyalty',
+            id: 'hg-dining',
+            title: 'Dining & Service',
+            description: 'Food, drink, and staff throughout your stay',
             questions: [
+                {
+                    id: 'hg-q6',
+                    type: 'scale',
+                    question: 'How would you rate the food and beverage quality during your stay?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
                 {
                     id: 'hg-q7',
                     type: 'scale',
-                    question: 'How likely are you to recommend us to friends or family?',
+                    question: 'How responsive and helpful were hotel staff throughout your stay?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Extremely',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'hg-overall',
+            title: 'Overall & Value',
+            description: 'The full picture',
+            questions: [
+                {
+                    id: 'hg-q8',
+                    type: 'scale',
+                    question: 'How would you rate the value for money of your stay?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Poor value',
+                    maxLabel: 'Excellent value',
+                    required: true,
+                },
+                {
+                    id: 'hg-q9',
+                    type: 'scale',
+                    question: 'How likely are you to recommend this hotel to a friend or colleague?',
                     minValue: 0,
                     maxValue: 10,
-                    minLabel: 'Not at all likely',
+                    minLabel: 'Not likely',
                     maxLabel: 'Extremely likely',
                     required: true,
                 },
                 {
-                    id: 'hg-q8',
-                    type: 'yes_no',
-                    question: 'Would you choose to stay with us again?',
-                    required: true,
-                },
-            ],
-        },
-        {
-            id: 'hg-feedback',
-            title: 'Open Feedback',
-            description: 'Help us improve',
-            questions: [
-                {
-                    id: 'hg-q9',
+                    id: 'hg-q10',
                     type: 'textarea',
-                    question: 'Is there anything we could improve to make your next visit even better?',
-                    placeholder: 'Your candid feedback helps us improve for your next visit...',
+                    question: 'Is there anything specific we could improve to make your next stay even better?',
+                    placeholder: 'Your feedback goes directly to our management team...',
                 },
             ],
         },
     ],
 };
 
-];
- 
 export const HOSPITALITY_TEMPLATES: SurveyTemplate[] = [
-    HOTEL_GUEST_TEMPLATE,
+    HOTEL_GUEST_SATISFACTION_TEMPLATE,
 ];

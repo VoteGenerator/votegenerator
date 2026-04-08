@@ -1,8 +1,11 @@
 import { SurveyTemplate } from './_types';
  
-export const COMMUNITY_TEMPLATES: SurveyTemplate[] = [
-
-    const VOLUNTEER_FEEDBACK_TEMPLATE: SurveyTemplate = {
+// ============================================================================
+// VOLUNTEER FEEDBACK SURVEY
+// Keywords: volunteer feedback survey, volunteer satisfaction survey (1k-10k vol)
+// ============================================================================
+ 
+const VOLUNTEER_FEEDBACK_TEMPLATE: SurveyTemplate = {
     id: 'volunteer-feedback',
     name: 'Volunteer Feedback Survey',
     emoji: '🤝',
@@ -111,11 +114,6 @@ export const COMMUNITY_TEMPLATES: SurveyTemplate[] = [
     ],
 };
  
-];
-
 export const COMMUNITY_TEMPLATES: SurveyTemplate[] = [
     VOLUNTEER_FEEDBACK_TEMPLATE,
 ];
-    // Add community templates here: volunteer feedback, neighbourhood poll, etc.
-
- 

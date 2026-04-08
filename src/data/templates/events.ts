@@ -300,8 +300,107 @@ const EVENT_FEEDBACK_TEMPLATE: SurveyTemplate = {
     ],
 };
 
+const MEETING_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'meeting-feedback',
+    name: 'Meeting Feedback Survey',
+    emoji: '⏱️',
+    color: 'text-orange-600',
+    description: '7 questions — was this meeting worth the time?',
+    category: 'events',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'mf-overall',
+            title: 'Overall',
+            description: 'How did the meeting go?',
+            questions: [
+                {
+                    id: 'mf-q1',
+                    type: 'scale',
+                    question: 'How would you rate this meeting overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'mf-q2',
+                    type: 'yes_no',
+                    question: 'Was this meeting a good use of your time?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'mf-effectiveness',
+            title: 'Effectiveness',
+            description: 'Did it achieve what it needed to?',
+            questions: [
+                {
+                    id: 'mf-q3',
+                    type: 'scale',
+                    question: 'How clear was the agenda and purpose of this meeting?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'mf-q4',
+                    type: 'yes_no',
+                    question: 'Did this meeting achieve what it set out to do?',
+                    required: true,
+                },
+                {
+                    id: 'mf-q5',
+                    type: 'scale',
+                    question: 'How well was time managed during this meeting?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'mf-future',
+            title: 'Looking Ahead',
+            description: 'Should this meeting happen again?',
+            questions: [
+                {
+                    id: 'mf-q6',
+                    type: 'multiple_choice',
+                    question: 'Should this meeting recur?',
+                    options: [
+                        { id: 'yes-same',    text: 'Yes — keep it as is' },
+                        { id: 'yes-changes', text: 'Yes — with some changes' },
+                        { id: 'email',       text: 'No — could have been an email' },
+                        { id: 'format',      text: 'No — needs a different format' },
+                        { id: 'one-off',     text: 'One-off — not recurring' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'mf-q7',
+                    type: 'textarea',
+                    question: 'What one change would make this meeting more effective?',
+                    placeholder: 'Be specific — what would make it 20% better?',
+                },
+            ],
+        },
+    ],
+};
+
 export const EVENTS_TEMPLATES: SurveyTemplate[] = [
     EVENT_FEEDBACK_TEMPLATE,
+    MEETING_FEEDBACK_TEMPLATE,
     WEDDING_RSVP_TEMPLATE,
     TEAM_FEEDBACK_TEMPLATE,
     PARTY_TEMPLATE,

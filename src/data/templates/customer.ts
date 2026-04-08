@@ -245,10 +245,99 @@ const POST_PURCHASE_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
- 
+
+const RESTAURANT_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'restaurant-feedback',
+    name: 'Restaurant Feedback Survey',
+    emoji: '🍽️',
+    color: 'text-orange-700',
+    description: 'Food, service, atmosphere, value, and return visit intent — 8 questions',
+    category: 'customer',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'rf-experience',
+            title: 'Your Visit',
+            description: 'How was your experience today?',
+            questions: [
+                {
+                    id: 'rf-q1',
+                    type: 'rating',
+                    question: 'How would you rate your overall experience today?',
+                    required: true,
+                },
+                {
+                    id: 'rf-q2',
+                    type: 'rating',
+                    question: 'How would you rate the food quality?',
+                    required: true,
+                },
+                {
+                    id: 'rf-q3',
+                    type: 'rating',
+                    question: 'How would you rate the service?',
+                    required: true,
+                },
+                {
+                    id: 'rf-q4',
+                    type: 'rating',
+                    question: 'How would you rate the atmosphere and ambiance?',
+                },
+                {
+                    id: 'rf-q5',
+                    type: 'rating',
+                    question: 'How would you rate the value for money?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'rf-loyalty',
+            title: 'Would You Return?',
+            description: 'Tell us about your next visit',
+            questions: [
+                {
+                    id: 'rf-q6',
+                    type: 'scale',
+                    question: 'How likely are you to recommend us to friends or family?',
+                    minValue: 0,
+                    maxValue: 10,
+                    minLabel: 'Not at all likely',
+                    maxLabel: 'Extremely likely',
+                    required: true,
+                },
+                {
+                    id: 'rf-q7',
+                    type: 'yes_no',
+                    question: 'Would you visit us again?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'rf-feedback',
+            title: 'Help Us Improve',
+            description: 'One thing we can do better',
+            questions: [
+                {
+                    id: 'rf-q8',
+                    type: 'textarea',
+                    question: 'What is one thing we could improve to make your next visit even better?',
+                    placeholder: 'Your feedback helps us improve every visit...',
+                },
+            ],
+        },
+    ],
+};
+
 export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
     CSAT_SURVEY_TEMPLATE,
     NPS_QUICK_TEMPLATE,
     POST_PURCHASE_TEMPLATE,
+    RESTAURANT_FEEDBACK_TEMPLATE, 
     // Add future customer templates here: churn survey, CES, brand perception, etc.
 ];

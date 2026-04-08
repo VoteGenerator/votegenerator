@@ -638,13 +638,152 @@ const ONBOARDING_FEEDBACK_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
- 
+
+const THREE_SIXTY_TEMPLATE: SurveyTemplate = {
+    id: '360-feedback',
+    name: '360 Degree Feedback Survey',
+    emoji: '360°',
+    color: 'text-amber-600',
+    description: 'Anonymous multi-rater feedback on communication, collaboration, and development',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ts-communication',
+            title: 'Leadership & Communication',
+            description: 'How does this person communicate and lead?',
+            questions: [
+                {
+                    id: 'ts-q1',
+                    type: 'scale',
+                    question: 'How clearly does this person communicate ideas and information?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'ts-q2',
+                    type: 'scale',
+                    question: 'How well does this person listen and incorporate others\' perspectives?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Rarely',
+                    maxLabel: 'Always',
+                    required: true,
+                },
+                {
+                    id: 'ts-q3',
+                    type: 'scale',
+                    question: 'How effectively does this person manage priorities and their workload?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Exceptionally',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ts-collaboration',
+            title: 'Collaboration & Impact',
+            description: 'How does this person work with and impact the team?',
+            questions: [
+                {
+                    id: 'ts-q4',
+                    type: 'scale',
+                    question: 'How reliably does this person follow through on their commitments?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Rarely',
+                    maxLabel: 'Always',
+                    required: true,
+                },
+                {
+                    id: 'ts-q5',
+                    type: 'scale',
+                    question: 'How well does this person collaborate with and support the team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Poorly',
+                    maxLabel: 'Exceptionally',
+                    required: true,
+                },
+                {
+                    id: 'ts-q6',
+                    type: 'scale',
+                    question: 'How would you rate this person\'s overall impact on team outcomes?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Minimal',
+                    maxLabel: 'Outstanding',
+                    required: true,
+                },
+                {
+                    id: 'ts-q7',
+                    type: 'multiple_choice',
+                    question: 'What is this person\'s greatest professional strength?',
+                    options: [
+                        { id: 'strategic',   text: 'Strategic thinking' },
+                        { id: 'comms',       text: 'Clear communication' },
+                        { id: 'collab',      text: 'Team collaboration' },
+                        { id: 'reliability', text: 'Reliability & follow-through' },
+                        { id: 'innovation',  text: 'Innovation & problem solving' },
+                        { id: 'coaching',    text: 'Coaching & developing others' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ts-development',
+            title: 'Development',
+            description: 'What would help this person grow?',
+            questions: [
+                {
+                    id: 'ts-q8',
+                    type: 'multiple_choice',
+                    question: 'What area would most benefit this person\'s professional development?',
+                    options: [
+                        { id: 'strategy',     text: 'Strategic thinking' },
+                        { id: 'stakeholders', text: 'Stakeholder communication' },
+                        { id: 'delegation',   text: 'Delegation & empowerment' },
+                        { id: 'prioritise',   text: 'Prioritisation & focus' },
+                        { id: 'feedback',     text: 'Providing feedback to others' },
+                        { id: 'crossteam',    text: 'Cross-team collaboration' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'ts-q9',
+                    type: 'textarea',
+                    question: 'What would you most like this person to continue doing?',
+                    placeholder: 'Be specific — concrete examples are most useful...',
+                },
+                {
+                    id: 'ts-q10',
+                    type: 'textarea',
+                    question: 'What would you most like this person to change or start doing?',
+                    placeholder: 'Be specific — concrete examples are most useful...',
+                },
+            ],
+        },
+    ],
+};
+
+
 export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
     EMPLOYEE_ENGAGEMENT_TEMPLATE,
     EMPLOYEE_SATISFACTION_TEMPLATE,
     ONBOARDING_FEEDBACK_TEMPLATE,
     WEEKLY_PULSE_TEMPLATE,
     EXIT_INTERVIEW_TEMPLATE,
+    THREE_SIXTY_TEMPLATE,
     // Add future employee templates here: pulse survey, exit interview, manager feedback, etc.
 ];
  

@@ -121,8 +121,115 @@ const COURSE_FEEDBACK_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
- 
+
+const TRAINING_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'training-feedback',
+    name: 'Corporate Training Feedback Survey',
+    emoji: '📋',
+    color: 'text-blue-600',
+    description: '8 questions — know if your training investment is actually landing',
+    category: 'education',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'tf-reaction',
+            title: 'Training Experience',
+            description: 'How did the training go? (Kirkpatrick Level 1)',
+            questions: [
+                {
+                    id: 'tf-q1',
+                    type: 'scale',
+                    question: 'How would you rate this training programme overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'tf-q2',
+                    type: 'scale',
+                    question: 'How relevant was the training content to your current role?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not relevant',
+                    maxLabel: 'Highly relevant',
+                    required: true,
+                },
+                {
+                    id: 'tf-q3',
+                    type: 'scale',
+                    question: 'How would you rate the instructor or facilitator?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'tf-q4',
+                    type: 'scale',
+                    question: 'How well was the training organised and paced?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'tf-q5',
+                    type: 'multiple_choice',
+                    question: 'Which training format was most effective for you?',
+                    options: [
+                        { id: 'inperson',   text: 'In-person, instructor-led' },
+                        { id: 'virtual',    text: 'Live virtual / video call' },
+                        { id: 'elearning',  text: 'Pre-recorded video / e-learning' },
+                        { id: 'handson',    text: 'Hands-on / practical exercises' },
+                        { id: 'discussion', text: 'Small group discussion' },
+                        { id: 'reading',    text: 'Self-paced reading and materials' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'tf-learning',
+            title: 'Knowledge Transfer',
+            description: 'Will it actually change how you work? (Kirkpatrick Level 2)',
+            questions: [
+                {
+                    id: 'tf-q6',
+                    type: 'scale',
+                    question: 'How confident are you in applying what you learned in your daily work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not confident',
+                    maxLabel: 'Very confident',
+                    required: true,
+                },
+                {
+                    id: 'tf-q7',
+                    type: 'yes_no',
+                    question: 'Would you recommend this training to a colleague?',
+                    required: true,
+                },
+                {
+                    id: 'tf-q8',
+                    type: 'textarea',
+                    question: 'What one change would make this training more effective?',
+                    placeholder: 'Be specific — what would make it 20% more effective?',
+                },
+            ],
+        },
+    ],
+};
+
 export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     COURSE_FEEDBACK_TEMPLATE,
+    TRAINING_FEEDBACK_TEMPLATE, 
     // Add future education templates here: student satisfaction, teacher eval, training feedback, etc.
 ];

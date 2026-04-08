@@ -7,7 +7,12 @@ import { HEALTHCARE_TEMPLATES } from './healthcare';
 import { COMMUNITY_TEMPLATES }  from './community';
 import { FUN_TEMPLATES }        from './fun';
 import { SurveyTemplate }       from './_types';
- 
+import { HOSPITALITY_TEMPLATES } from './hospitality';
+
+
+
+
+
 export const SURVEY_TEMPLATES: SurveyTemplate[] = [
     ...EMPLOYEE_TEMPLATES,
     ...CUSTOMER_TEMPLATES,
@@ -17,5 +22,6 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
     ...HEALTHCARE_TEMPLATES,
     ...COMMUNITY_TEMPLATES,
     ...FUN_TEMPLATES,
+    HOSPITALITY_TEMPLATES,
 ];
  

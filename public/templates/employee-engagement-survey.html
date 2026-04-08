@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Employee Engagement Survey Template | VoteGenerator</title>
+    <meta name="description" content="Create a free employee engagement survey in 60 seconds. 10 Gallup-inspired questions, instant results, no signup required. Used by HR teams worldwide.">
+    <link rel="canonical" href="https://votegenerator.com/templates/employee-engagement-survey">
+    <meta property="og:title" content="Free Employee Engagement Survey Template | VoteGenerator">
+    <meta property="og:description" content="10 expert questions. Live in 60 seconds. No signup required. Free employee engagement survey with instant charts.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://votegenerator.com/templates/employee-engagement-survey">
+    <meta property="og:image" content="https://votegenerator.com/og-templates-engagement.png">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Employee Engagement Survey Template",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Free 10-question employee engagement survey template. Gallup-inspired questions covering motivation, leadership, growth, recognition, and culture. No signup required.",
+        "url": "https://votegenerator.com/templates/employee-engagement-survey",
+        "provider": { "@type": "Organization", "name": "VoteGenerator", "url": "https://votegenerator.com" }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            { "@type": "Question", "name": "Is this employee engagement survey template free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. No signup required from you or your employees. VoteGenerator's free plan allows up to 100 responses per survey. For teams larger than 100, Pro ($19/month) allows up to 10,000 responses." } },
+            { "@type": "Question", "name": "Can I customise the survey questions?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. After clicking 'Use This Template', every question is fully editable. Add, remove, or reword any question before launching. The template is a starting point — you own the final survey." } },
+            { "@type": "Question", "name": "Will employees know who submitted what?", "acceptedAnswer": { "@type": "Answer", "text": "VoteGenerator does not store names or email addresses. Responses are anonymous by default. No login is required to vote, so there's no way to tie a response to an individual." } },
+            { "@type": "Question", "name": "How do I export the survey results?", "acceptedAnswer": { "@type": "Answer", "text": "Free accounts can download results as a PNG image. Pro accounts ($19/month) can export to CSV or Excel for analysis in spreadsheets or HR reporting tools." } },
+            { "@type": "Question", "name": "How often should I run an employee engagement survey?", "acceptedAnswer": { "@type": "Answer", "text": "Research recommends a full engagement survey quarterly or annually, combined with a shorter pulse survey (3-5 questions) monthly. Running this template quarterly gives you trend data to measure whether changes you make are working." } },
+            { "@type": "Question", "name": "Can I run this survey anonymously?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. VoteGenerator surveys are anonymous by default — no names, no emails, no accounts needed to respond. For added control over who can access the survey, Pro plan includes PIN code access to restrict voting to invited participants only." } }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --vg:       #6C3CE1;
+            --vg-lt:    #8B5CF6;
+            --vg-dim:   rgba(108,60,225,0.08);
+            --vg-pale:  #f5f3ff;
+            --ink:      #0f172a;
+            --ink-mid:  #1e293b;
+            --ink-soft: #64748b;
+            --ink-mute: #94a3b8;
+            --bg:       #ffffff;
+            --bg-soft:  #f8fafc;
+            --border:   #e2e8f0;
+            --green:    #16a34a;
+            --green-bg: #f0fdf4;
+            --amber:    #d97706;
+            --amber-bg: #fffbeb;
+            --pro:      #6C3CE1;
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Inter Tight',sans-serif; background:#fff; color:var(--ink); overflow-x:hidden; line-height:1.6; }
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--vg),var(--vg-lt)); z-index:2000; transition:width 0.1s; }
+
+        /* ── NAV ── */
+        .nav { height:56px; border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 24px; gap:8px; position:sticky; top:0; background:rgba(255,255,255,0.95); backdrop-filter:blur(8px); z-index:100; }
+        .nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+        .nav-logo img { width:24px; height:24px; }
+        .nav-logo-text { font-weight:700; font-size:0.9rem; color:var(--ink); }
+        .nav-sep { color:var(--border); font-size:1.1rem; }
+        .nav-crumb { font-size:0.82rem; color:var(--ink-soft); }
+        .nav-crumb a { color:var(--ink-soft); text-decoration:none; }
+        .nav-crumb a:hover { color:var(--vg); }
+        .nav-cta { margin-left:auto; background:var(--vg); color:#fff; font-size:0.82rem; font-weight:600; padding:8px 16px; border-radius:6px; text-decoration:none; }
+        .nav-cta:hover { background:var(--vg-lt); }
+
+        /* ── HERO ── */
+        .hero { padding:48px 24px 0; }
+        .hero-inner { max-width:1120px; margin:0 auto; display:grid; grid-template-columns:1fr 440px; gap:56px; align-items:start; }
+        .hero-left {}
+        .hero-eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+        .hero-cat { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--vg); }
+        .hero-free { font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; background:var(--green-bg); color:var(--green); border-radius:4px; padding:2px 8px; }
+        .hero h1 { font-size:clamp(2rem,4vw,2.8rem); font-weight:800; line-height:1.12; letter-spacing:-0.02em; color:var(--ink); margin-bottom:14px; }
+        .hero-sub { font-size:1.08rem; color:var(--ink-soft); line-height:1.65; margin-bottom:28px; font-weight:400; max-width:480px; }
+
+        .cta-group { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+        .cta-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--vg); color:#fff; font-family:'Inter Tight',sans-serif; font-weight:700; font-size:1rem; padding:14px 28px; border-radius:8px; text-decoration:none; transition:background 0.15s,transform 0.15s; }
+        .cta-primary:hover { background:var(--vg-lt); transform:translateY(-1px); }
+        .cta-primary svg { width:16px; height:16px; }
+        .cta-sub { font-size:0.8rem; color:var(--ink-mute); font-weight:400; }
+        .cta-sub span { margin:0 6px; }
+
+        .social-proof { display:flex; align-items:center; gap:10px; }
+        .sp-avatars { display:flex; }
+        .sp-av { width:28px; height:28px; border-radius:50%; border:2px solid #fff; background:linear-gradient(135deg,#e0d7ff,#c4b5fd); display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:700; color:#4c1d95; margin-left:-6px; }
+        .sp-av:first-child { margin-left:0; }
+        .sp-text { font-size:0.82rem; color:var(--ink-soft); }
+        .sp-text strong { color:var(--ink); }
+
+        /* ── PREVIEW CARD ── */
+        .preview-card { background:#fff; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04); }
+        .pc-header { background:var(--vg); padding:16px 20px; }
+        .pc-title { font-weight:700; font-size:0.9rem; color:#fff; margin-bottom:2px; }
+        .pc-sub { font-size:0.73rem; color:rgba(255,255,255,0.65); }
+        .pc-progress { background:var(--bg-soft); padding:10px 20px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+        .pc-prog-bar { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+        .pc-prog-fill { height:100%; background:var(--vg); border-radius:2px; transition:width 0.4s ease; }
+        .pc-prog-label { font-size:0.72rem; font-weight:600; color:var(--ink-mute); white-space:nowrap; }
+        .pc-body { padding:20px; min-height:180px; }
+        .pc-q { font-weight:600; font-size:0.92rem; color:var(--ink); margin-bottom:16px; line-height:1.45; }
+        .pc-options { display:flex; flex-direction:column; gap:7px; }
+        .pc-opt { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1.5px solid var(--border); border-radius:7px; cursor:pointer; transition:all 0.15s; font-size:0.88rem; color:var(--ink-mid); font-weight:400; }
+        .pc-opt:hover { border-color:var(--vg); background:var(--vg-pale); color:var(--vg); }
+        .pc-opt.selected { border-color:var(--vg); background:var(--vg-pale); color:var(--vg); font-weight:600; }
+        .pc-opt-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+        .pc-opt.selected .pc-opt-dot { border-color:var(--vg); background:var(--vg); }
+        .pc-opt.selected .pc-opt-dot::after { content:''; width:6px; height:6px; border-radius:50%; background:#fff; }
+        /* Open text */
+        .pc-textarea { width:100%; border:1.5px solid var(--border); border-radius:7px; padding:10px 14px; font-family:'Inter Tight',sans-serif; font-size:0.88rem; color:var(--ink); resize:none; outline:none; height:80px; transition:border-color 0.15s; }
+        .pc-textarea:focus { border-color:var(--vg); }
+        .pc-textarea::placeholder { color:var(--ink-mute); }
+        .pc-footer { padding:14px 20px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--bg-soft); }
+        .pc-nav { display:flex; gap:8px; }
+        .pc-btn { font-family:'Inter Tight',sans-serif; font-size:0.82rem; font-weight:600; padding:8px 16px; border-radius:6px; border:none; cursor:pointer; transition:all 0.15s; }
+        .pc-btn-back { background:var(--border); color:var(--ink-soft); }
+        .pc-btn-back:hover { background:#cbd5e1; }
+        .pc-btn-next { background:var(--vg); color:#fff; }
+        .pc-btn-next:hover { background:var(--vg-lt); }
+        .pc-btn-next:disabled { background:var(--border); color:var(--ink-mute); cursor:not-allowed; }
+        .pc-demo-label { font-size:0.7rem; color:var(--ink-mute); display:flex; align-items:center; gap:4px; }
+        .pc-demo-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; }
+
+        /* Below hero divider */
+        .hero-bottom { max-width:1120px; margin:36px auto 0; padding:0 24px; border-top:1px solid var(--border); }
+
+        /* ── TRUST BAR ── */
+        .trust-bar { background:var(--bg-soft); border-bottom:1px solid var(--border); padding:14px 24px; }
+        .trust-inner { max-width:1120px; margin:0 auto; display:flex; justify-content:center; gap:32px; flex-wrap:wrap; }
+        .trust-item { display:flex; align-items:center; gap:7px; font-size:0.82rem; color:var(--ink-soft); font-weight:500; }
+        .trust-icon { color:var(--green); }
+
+        /* ── MAIN CONTENT ── */
+        .content { max-width:1120px; margin:0 auto; padding:60px 24px 0; display:grid; grid-template-columns:1fr 280px; gap:56px; align-items:start; }
+        .article { min-width:0; }
+        .sidebar { position:sticky; top:72px; }
+
+        /* Sections */
+        .section { margin-bottom:52px; }
+        .section-label { font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--vg); margin-bottom:10px; }
+        .section h2 { font-size:1.5rem; font-weight:800; color:var(--ink); margin-bottom:16px; letter-spacing:-0.01em; }
+        .section p { font-size:0.98rem; line-height:1.78; color:var(--ink-mid); margin-bottom:14px; font-weight:400; }
+        .section p:last-child { margin-bottom:0; }
+        .section p strong { color:var(--ink); font-weight:600; }
+
+        /* Questions list */
+        .q-list { display:flex; flex-direction:column; gap:6px; }
+        .q-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; padding:12px 16px; background:var(--bg-soft); border:1px solid var(--border); border-radius:8px; }
+        .q-num { font-size:0.72rem; font-weight:700; color:var(--ink-mute); font-variant-numeric:tabular-nums; min-width:18px; }
+        .q-text { font-size:0.92rem; color:var(--ink-mid); font-weight:400; }
+        .q-type { font-size:0.68rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; border-radius:4px; padding:2px 8px; white-space:nowrap; flex-shrink:0; }
+        .qt-rating { background:#eff6ff; color:#1d4ed8; }
+        .qt-open { background:#f0fdf4; color:#15803d; }
+
+        /* How it works */
+        .how-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:4px; }
+        .how-step { text-align:center; padding:20px 16px; background:var(--bg-soft); border:1px solid var(--border); border-radius:10px; }
+        .how-n { width:36px; height:36px; background:var(--vg); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; margin:0 auto 10px; }
+        .how-title { font-weight:700; font-size:0.88rem; color:var(--ink); margin-bottom:4px; }
+        .how-text { font-size:0.82rem; color:var(--ink-soft); line-height:1.55; }
+
+        /* Results visualization */
+        .results-card { background:var(--bg-soft); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+        .results-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .results-title { font-weight:700; font-size:0.9rem; color:var(--ink); }
+        .results-score { font-size:1.4rem; font-weight:800; color:var(--vg); }
+        .results-score span { font-size:0.8rem; font-weight:400; color:var(--ink-soft); }
+        .results-body { padding:16px 20px; }
+        .result-row { margin-bottom:12px; }
+        .result-row:last-child { margin-bottom:0; }
+        .result-label { display:flex; justify-content:space-between; font-size:0.82rem; color:var(--ink-mid); margin-bottom:5px; font-weight:500; }
+        .result-label span { font-weight:600; color:var(--ink); }
+        .result-bar-bg { height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+        .result-bar-fill { height:100%; border-radius:4px; background:var(--vg); transition:width 1s ease; width:0; }
+        /* Pro upgrade teaser */
+        .pro-teaser { margin-top:16px; padding:14px 16px; background:linear-gradient(135deg,rgba(108,60,225,0.06),rgba(139,92,246,0.04)); border:1px solid rgba(108,60,225,0.2); border-radius:8px; display:flex; align-items:center; gap:12px; }
+        .pro-badge { background:var(--vg); color:#fff; font-size:0.65rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; border-radius:4px; padding:3px 8px; flex-shrink:0; }
+        .pro-text { font-size:0.82rem; color:var(--ink-mid); }
+        .pro-text a { color:var(--vg); font-weight:600; text-decoration:none; }
+        .pro-text a:hover { text-decoration:underline; }
+
+        /* FAQ */
+        .faq-list { display:flex; flex-direction:column; gap:6px; }
+        details.faq { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#fff; }
+        details.faq[open] { border-color:var(--vg); }
+        details.faq summary { padding:14px 18px; font-weight:600; font-size:0.92rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.2rem; color:var(--vg); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .fa { padding:0 18px 16px; font-size:0.92rem; line-height:1.72; color:var(--ink-mid); }
+        .fa a { color:var(--vg); text-decoration:none; }
+
+        /* Related templates */
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .related-card { border:1px solid var(--border); border-radius:8px; padding:16px; text-decoration:none; transition:all 0.15s; background:#fff; }
+        .related-card:hover { border-color:var(--vg); box-shadow:0 2px 12px rgba(108,60,225,0.1); }
+        .rc-cat { font-size:0.68rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--vg); margin-bottom:6px; }
+        .rc-title { font-size:0.88rem; font-weight:700; color:var(--ink); line-height:1.4; margin-bottom:4px; }
+        .rc-desc { font-size:0.78rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* Bottom CTA */
+        .bottom-cta { background:var(--vg); border-radius:12px; padding:40px; text-align:center; margin:60px 0; }
+        .bottom-cta h2 { font-size:1.6rem; font-weight:800; color:#fff; margin-bottom:8px; letter-spacing:-0.01em; }
+        .bottom-cta p { font-size:0.98rem; color:rgba(255,255,255,0.72); margin-bottom:22px; }
+        .bottom-cta .cta-primary { display:inline-flex; background:#fff; color:var(--vg); }
+        .bottom-cta .cta-primary:hover { background:#ede9fe; }
+        .bottom-cta .cta-sub { color:rgba(255,255,255,0.5); margin-top:8px; }
+
+        /* Sidebar */
+        .sb-card { background:var(--bg-soft); border:1px solid var(--border); border-radius:8px; padding:18px; margin-bottom:14px; }
+        .sb-head { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; }
+        .sb-cta { background:var(--vg); border-radius:8px; padding:18px; text-align:center; }
+        .sb-cta p { font-size:0.84rem; color:rgba(255,255,255,0.8); margin-bottom:12px; font-style:italic; }
+        .sb-cta a { display:block; background:#fff; color:var(--vg); font-weight:700; font-size:0.84rem; padding:10px; border-radius:6px; text-decoration:none; }
+        .sb-cta a:hover { background:#ede9fe; }
+        .sb-links { list-style:none; display:flex; flex-direction:column; gap:8px; }
+        .sb-links a { font-size:0.84rem; color:var(--vg); text-decoration:none; font-weight:500; }
+        .sb-links a:hover { text-decoration:underline; }
+        .sb-meta { display:flex; flex-direction:column; gap:8px; }
+        .sb-meta-item { display:flex; justify-content:space-between; font-size:0.82rem; }
+        .sb-meta-label { color:var(--ink-soft); }
+        .sb-meta-val { color:var(--ink); font-weight:600; }
+
+        /* Footer */
+        .footer { background:var(--ink); padding:40px 24px; text-align:center; margin-top:80px; }
+        .footer-logo { font-weight:700; color:#fff; font-size:0.95rem; margin-bottom:6px; }
+        .footer p { font-size:0.82rem; color:rgba(255,255,255,0.4); margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:16px; }
+        .footer-links a { font-size:0.78rem; color:rgba(255,255,255,0.45); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+
+        /* Mobile sticky CTA */
+        .mobile-cta { display:none; position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border); padding:12px 20px; z-index:500; box-shadow:0 -4px 16px rgba(0,0,0,0.08); }
+        .mobile-cta a { display:block; background:var(--vg); color:#fff; font-weight:700; font-size:0.95rem; text-align:center; padding:13px; border-radius:8px; text-decoration:none; }
+        .mobile-cta-sub { text-align:center; font-size:0.72rem; color:var(--ink-mute); margin-top:5px; }
+
+        @media(max-width:900px) {
+            .hero-inner { grid-template-columns:1fr; }
+            .content { grid-template-columns:1fr; }
+            .sidebar { display:none; }
+            .how-steps { grid-template-columns:1fr; }
+            .related-grid { grid-template-columns:1fr; }
+            .mobile-cta { display:block; }
+            body { padding-bottom:80px; }
+        }
+        @media(max-width:600px) {
+            .hero h1 { font-size:1.7rem; }
+            .trust-inner { gap:16px; }
+        }
+    </style>
+</head>
+<body>
+<div id="prog"></div>
+
+<!-- Mobile sticky CTA -->
+<div class="mobile-cta" id="mobile-cta" style="display:none">
+    <a href="https://votegenerator.com/survey?template=employee-engagement">Use This Template — Free</a>
+    <div class="mobile-cta-sub">No signup required · Ready in 60 seconds</div>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <span class="nav-sep">/</span>
+    <span class="nav-crumb"><a href="/templates/">Templates</a> / <a href="/templates/employee-surveys/">Employee</a> / Engagement Survey</span>
+    <a href="https://votegenerator.com/survey?template=employee-engagement" class="nav-cta">Use This Template</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="hero">
+    <div class="hero-inner">
+        <div class="hero-left">
+            <div class="hero-eyebrow">
+                <span class="hero-cat">Employee Survey Template</span>
+                <span class="hero-free">Free</span>
+            </div>
+            <h1>Free Employee Engagement Survey Template</h1>
+            <p class="hero-sub">10 Gallup-inspired questions. Anonymous responses. Live results in 60 seconds. No signup required from you or your team.</p>
+            <div class="cta-group">
+                <a href="https://votegenerator.com/survey?template=employee-engagement" class="cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Use This Template
+                </a>
+                <p class="cta-sub">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+            </div>
+          
+        </div>
+
+        <!-- Live interactive preview -->
+        <div class="preview-card" id="preview">
+            <div class="pc-header">
+                <div class="pc-title">Employee Engagement Survey</div>
+                <div class="pc-sub">Anonymous · Results update in real time</div>
+            </div>
+            <div class="pc-progress">
+                <div class="pc-prog-bar"><div class="pc-prog-fill" id="prog-fill" style="width:10%"></div></div>
+                <span class="pc-prog-label" id="prog-label">1 of 10</span>
+            </div>
+            <div class="pc-body" id="pc-body">
+                <!-- Rendered by JS -->
+            </div>
+            <div class="pc-footer">
+                <div class="pc-demo-label"><span class="pc-demo-dot"></span> Live demo</div>
+                <div class="pc-nav">
+                    <button class="pc-btn pc-btn-back" id="btn-back" onclick="previewNav(-1)" style="display:none">Back</button>
+                    <button class="pc-btn pc-btn-next" id="btn-next" onclick="previewNav(1)" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trust bar -->
+<div class="trust-bar">
+    <div class="trust-inner">
+        <div class="trust-item"><span class="trust-icon">✓</span> 100% free — no credit card</div>
+        <div class="trust-item"><span class="trust-icon">✓</span> No signup for you or respondents</div>
+        <div class="trust-item"><span class="trust-icon">✓</span> Anonymous by default</div>
+        <div class="trust-item"><span class="trust-icon">✓</span> Live results dashboard</div>
+        <div class="trust-item"><span class="trust-icon">✓</span> Ready in 60 seconds</div>
+    </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="content">
+<main class="article">
+
+    <!-- Questions -->
+    <div class="section" id="questions">
+        <div class="section-label">Template Questions</div>
+        <h2>All 10 Survey Questions</h2>
+        <p>These questions are based on Gallup's Q12 engagement framework, adapted for modern teams. Every question is fully editable after you click "Use This Template."</p>
+        <div class="q-list">
+            <div class="q-item"><span class="q-num">01</span><span class="q-text">I feel motivated and genuinely interested in my work</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">02</span><span class="q-text">My manager supports my professional growth and development</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">03</span><span class="q-text">I have the tools and resources I need to do my job well</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">04</span><span class="q-text">I feel genuinely recognised for my contributions</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">05</span><span class="q-text">Our company's values align with my own personal values</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">06</span><span class="q-text">I would recommend this company as a great place to work</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">07</span><span class="q-text">Leadership communicates a clear and inspiring vision</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">08</span><span class="q-text">My team collaborates effectively and supports each other</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">09</span><span class="q-text">I see genuine opportunities to grow my career here</span><span class="q-type qt-rating">Rating Scale</span></div>
+            <div class="q-item"><span class="q-num">10</span><span class="q-text">What is one thing we could do to improve your work experience?</span><span class="q-type qt-open">Open-Ended</span></div>
+        </div>
+    </div>
+
+    <!-- Why use this -->
+    <div class="section" id="why">
+        <div class="section-label">Why This Template</div>
+        <h2>Why Use an Employee Engagement Survey?</h2>
+        <p>Employee engagement directly predicts retention, productivity, and profitability. Gallup research consistently finds that highly engaged business units achieve <strong>23% higher profitability</strong> and <strong>18% higher productivity</strong> compared to disengaged ones. But you can only improve what you measure.</p>
+        <p>This template covers the six dimensions that research identifies as the core drivers of engagement: <strong>motivation, manager quality, resources, recognition, cultural alignment, and growth opportunity</strong>. One open-ended question at the end captures anything the rating scale questions miss.</p>
+        <p>The questions are direct enough to give you actionable data, but neutral enough to feel safe for honest answers. Anonymity is the key — VoteGenerator never stores names or emails, so employees can respond candidly without worrying about identification.</p>
+        <p><strong>Best practice:</strong> Run this survey quarterly and share results transparently with your team. Employees who see their feedback lead to real changes participate at significantly higher rates in future surveys.</p>
+    </div>
+
+    <!-- How it works -->
+    <div class="section" id="how">
+        <div class="section-label">How It Works</div>
+        <h2>From Template to Live Survey in 3 Steps</h2>
+        <div class="how-steps">
+            <div class="how-step"><div class="how-n">1</div><div class="how-title">Click "Use This Template"</div><div class="how-text">Opens VoteGenerator with all 10 questions pre-loaded. No blank form to fill in.</div></div>
+            <div class="how-step"><div class="how-n">2</div><div class="how-title">Customise &amp; share</div><div class="how-text">Edit any question, add your company name, then copy your unique survey link and share it via email or Slack.</div></div>
+            <div class="how-step"><div class="how-n">3</div><div class="how-title">See results instantly</div><div class="how-text">Responses appear in real time as a live dashboard. Charts, averages, and open-ended responses all in one place.</div></div>
+        </div>
+    </div>
+
+    <!-- Sample results -->
+    <div class="section" id="results">
+        <div class="section-label">Sample Results</div>
+        <h2>What Your Results Will Look Like</h2>
+        <p>Every response updates the live dashboard instantly. Here's what a typical employee engagement survey result looks like after 47 responses:</p>
+        <div class="results-card">
+            <div class="results-header">
+                <span class="results-title">Employee Engagement Survey · 47 responses</span>
+                <span class="results-score">4.1<span>/5 avg</span></span>
+            </div>
+            <div class="results-body" id="results-body">
+                <div class="result-row"><div class="result-label">Motivation<span>4.3</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="86"></div></div></div>
+                <div class="result-row"><div class="result-label">Manager Support<span>3.9</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="78"></div></div></div>
+                <div class="result-row"><div class="result-label">Resources &amp; Tools<span>4.2</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="84"></div></div></div>
+                <div class="result-row"><div class="result-label">Recognition<span>3.7</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="74"></div></div></div>
+                <div class="result-row"><div class="result-label">Culture Alignment<span>4.4</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="88"></div></div></div>
+                <div class="result-row"><div class="result-label">Growth Opportunities<span>3.8</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="76"></div></div></div>
+            </div>
+            <div class="pro-teaser">
+                <span class="pro-badge">Pro</span>
+                <span class="pro-text">Track engagement <strong>over time</strong> with response timeline analytics, geographic breakdown, and CSV export for HR reporting. <a href="https://votegenerator.com/pricing">Upgrade to Pro from $19/month →</a></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="section" id="faq">
+        <div class="section-label">FAQ</div>
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <details class="faq"><summary>Is this employee engagement survey template free?</summary><div class="fa">Yes, completely free. No signup required from you or your employees. VoteGenerator's free plan allows up to 100 responses per survey. For teams larger than 100 people, <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows up to 10,000 responses per survey.</div></details>
+            <details class="faq"><summary>Can I customise the survey questions?</summary><div class="fa">Yes. After clicking "Use This Template", every question is fully editable. Add, remove, or reword any question before launching. Change the rating scale, add sections, or replace questions entirely — the template is just a starting point.</div></details>
+            <details class="faq"><summary>Will employees know who submitted what?</summary><div class="fa">No. VoteGenerator does not store names or email addresses. Responses are anonymous by default. No login is required to respond, so there's no way to link a response to an individual. Employees can answer honestly without fear of identification.</div></details>
+            <details class="faq"><summary>How do I export the survey results?</summary><div class="fa">Free accounts can download a PNG screenshot of results. Pro accounts ($19/month) can export to CSV or Excel for deeper analysis in spreadsheets, or for sharing with HR leadership in a formal report format.</div></details>
+            <details class="faq"><summary>How often should I run this survey?</summary><div class="fa">Research recommends running a full engagement survey quarterly or annually, combined with a shorter pulse check (3-5 questions) monthly. Running this template every quarter gives you trend data to see whether changes you make are actually improving engagement scores.</div></details>
+            <details class="faq"><summary>Can I restrict access to invited employees only?</summary><div class="fa">Free surveys are accessible to anyone with the link. Pro plan includes PIN code access, which lets you set a password so only employees you share the code with can respond — useful for controlling participation in sensitive workplace surveys.</div></details>
+        </div>
+    </div>
+
+    <!-- Related templates -->
+    <div class="section" id="related">
+        <div class="section-label">Related Templates</div>
+        <h2>More Employee Survey Templates</h2>
+        <div class="related-grid">
+            <a href="/templates/employee-satisfaction-survey" class="related-card">
+                <div class="rc-cat">Employee</div>
+                <div class="rc-title">Employee Satisfaction Survey</div>
+                <div class="rc-desc">8 questions covering compensation, work-life balance, management, and culture.</div>
+            </a>
+            <a href="/templates/weekly-pulse-survey" class="related-card">
+                <div class="rc-cat">Employee</div>
+                <div class="rc-title">Weekly Pulse Survey</div>
+                <div class="rc-desc">5 quick questions for regular morale check-ins. Ready in under 2 minutes.</div>
+            </a>
+            <a href="/templates/exit-interview-survey" class="related-card">
+                <div class="rc-cat">Employee</div>
+                <div class="rc-title">Exit Interview Survey</div>
+                <div class="rc-desc">Structured exit interview with 10 questions covering reasons for leaving and improvement areas.</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="bottom-cta">
+        <h2>Ready to measure engagement?</h2>
+        <p>Pre-filled questions, anonymous responses, instant charts. No signup required from anyone.</p>
+        <a href="https://votegenerator.com/survey?template=employee-engagement" class="cta-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Use This Template — Free
+        </a>
+        <p class="cta-sub">No signup required · Free up to 100 responses · Pro from $19/month</p>
+    </div>
+
+</main>
+
+<aside class="sidebar">
+    <div class="sb-cta">
+        <p>"Pre-filled questions, ready in 60 seconds."</p>
+        <a href="https://votegenerator.com/survey?template=employee-engagement">Use This Template →</a>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Template Details</div>
+        <div class="sb-meta">
+            <div class="sb-meta-item"><span class="sb-meta-label">Questions</span><span class="sb-meta-val">10</span></div>
+            <div class="sb-meta-item"><span class="sb-meta-label">Type</span><span class="sb-meta-val">Rating + Open</span></div>
+            <div class="sb-meta-item"><span class="sb-meta-label">Free responses</span><span class="sb-meta-val">100</span></div>
+            <div class="sb-meta-item"><span class="sb-meta-label">Estimated time</span><span class="sb-meta-val">4–5 min</span></div>
+            <div class="sb-meta-item"><span class="sb-meta-label">Frequency</span><span class="sb-meta-val">Quarterly</span></div>
+        </div>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Related Templates</div>
+        <ul class="sb-links">
+            <li><a href="/templates/employee-satisfaction-survey">Employee Satisfaction Survey</a></li>
+            <li><a href="/templates/weekly-pulse-survey">Weekly Pulse Survey</a></li>
+            <li><a href="/templates/exit-interview-survey">Exit Interview Survey</a></li>
+            <li><a href="/templates/manager-effectiveness-survey">Manager Effectiveness Survey</a></li>
+            <li><a href="/templates/onboarding-feedback">Onboarding Feedback Survey</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Free employee engagement survey template. No signup. Anonymous responses.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="/templates/">Templates</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+// ── Interactive preview ──────────────────────────────────────────────────────
+const PREVIEW_QS = [
+    { q: 'I feel motivated and genuinely interested in my work', type: 'rating' },
+    { q: 'My manager supports my professional growth and development', type: 'rating' },
+    { q: 'I have the tools and resources I need to do my job well', type: 'rating' },
+    { q: 'I feel genuinely recognised for my contributions', type: 'rating' },
+    { q: 'I see genuine opportunities to grow my career here', type: 'rating' },
+    { q: 'What is one thing we could do to improve your work experience?', type: 'open' },
+];
+const RATING_OPTS = ['Strongly Disagree','Disagree','Neutral','Agree','Strongly Agree'];
+let current = 0, answers = {};
+
+function renderPreview() {
+    const q = PREVIEW_QS[current];
+    const total = 10;
+    const pct = Math.round(((current + 1) / total) * 100);
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-label').textContent = (current + 1) + ' of ' + total;
+
+    let html = `<div class="pc-q">${q.q}</div>`;
+    if (q.type === 'rating') {
+        html += '<div class="pc-options">';
+        RATING_OPTS.forEach((opt, i) => {
+            const sel = answers[current] === i ? 'selected' : '';
+            html += `<div class="pc-opt ${sel}" onclick="selectOpt(${i})"><span class="pc-opt-dot"></span>${opt}</div>`;
+        });
+        html += '</div>';
+    } else {
+        html += `<textarea class="pc-textarea" placeholder="Share your thoughts (optional)..." oninput="textAnswer(this.value)">${answers[current] || ''}</textarea>`;
+    }
+    document.getElementById('pc-body').innerHTML = html;
+
+    // Next button state
+    const nextBtn = document.getElementById('btn-next');
+    const isAnswered = answers[current] !== undefined;
+    const isLast = current >= PREVIEW_QS.length - 1;
+    nextBtn.disabled = !isAnswered && q.type === 'rating';
+    nextBtn.textContent = isLast ? 'Submit ✓' : 'Next';
+
+    document.getElementById('btn-back').style.display = current > 0 ? 'block' : 'none';
+}
+
+function selectOpt(i) {
+    answers[current] = i;
+    document.getElementById('btn-next').disabled = false;
+    renderPreview();
+}
+
+function textAnswer(val) {
+    answers[current] = val || ' ';
+    document.getElementById('btn-next').disabled = false;
+}
+
+function previewNav(dir) {
+    const isLast = current >= PREVIEW_QS.length - 1;
+    if (dir === 1 && isLast) {
+        document.getElementById('pc-body').innerHTML = `<div style="text-align:center;padding:24px 0"><div style="font-size:2rem;margin-bottom:8px">✓</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Thanks for the demo!</div><div style="font-size:0.85rem;color:var(--ink-soft)">Use the real template to collect actual responses from your team.</div><div style="margin-top:16px"><a href="https://votegenerator.com/survey?template=employee-engagement" style="background:var(--vg);color:#fff;font-family:Inter Tight,sans-serif;font-weight:700;font-size:0.88rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div></div>`;
+        document.getElementById('btn-back').style.display = 'block';
+        document.getElementById('btn-next').style.display = 'none';
+        document.getElementById('prog-fill').style.width = '100%';
+        document.getElementById('prog-label').textContent = 'Complete';
+        return;
+    }
+    current = Math.max(0, Math.min(PREVIEW_QS.length - 1, current + dir));
+    if (dir === 1) document.getElementById('btn-next').style.display = 'block';
+    renderPreview();
+}
+
+renderPreview();
+
+// ── Animate results bars on scroll ──────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            document.querySelectorAll('.result-bar-fill').forEach(bar => {
+                bar.style.width = bar.dataset.w + '%';
+            });
+            observer.disconnect();
+        }
+    });
+}, { threshold: 0.3 });
+observer.observe(document.getElementById('results'));
+
+// ── Progress bar ─────────────────────────────────────────────────────────────
+const progBar = document.getElementById('prog');
+window.addEventListener('scroll', () => {
+    const d = document.documentElement;
+    progBar.style.width = (window.scrollY / (d.scrollHeight - d.clientHeight) * 100) + '%';
+});
+
+// ── Mobile sticky CTA ────────────────────────────────────────────────────────
+const mobileCta = document.getElementById('mobile-cta');
+const heroEl = document.getElementById('hero');
+window.addEventListener('scroll', () => {
+    const pastHero = heroEl.getBoundingClientRect().bottom < 0;
+    if (window.innerWidth <= 900) {
+        mobileCta.style.display = pastHero ? 'block' : 'none';
+    }
+}, { passive: true });
+</script>
+</body>
+</html>

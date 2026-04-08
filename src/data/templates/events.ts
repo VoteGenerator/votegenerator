@@ -183,6 +183,123 @@ const BABY_SHOWER_TEMPLATE: SurveyTemplate = {
     ],
 };
  
+const EVENT_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'event-feedback',
+    name: 'Event Feedback Survey',
+    emoji: '🎤',
+    color: 'text-rose-600',
+    description: 'Gather attendee feedback to improve future events',
+    category: 'events',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ef-overall',
+            title: 'Overall Experience',
+            description: 'How was the event?',
+            questions: [
+                {
+                    id: 'ef-q1',
+                    type: 'scale',
+                    question: 'How would you rate the event overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'ef-q2',
+                    type: 'scale',
+                    question: 'How likely are you to attend this event again?',
+                    minValue: 0,
+                    maxValue: 10,
+                    minLabel: 'Not likely',
+                    maxLabel: 'Definitely',
+                    required: true,
+                },
+                {
+                    id: 'ef-q3',
+                    type: 'scale',
+                    question: 'How relevant was the content to your needs?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not relevant',
+                    maxLabel: 'Very relevant',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ef-details',
+            title: 'Event Details',
+            description: 'Tell us what worked',
+            questions: [
+                {
+                    id: 'ef-q4',
+                    type: 'multiple_choice',
+                    question: 'What was the highlight of the event?',
+                    options: [
+                        { id: 'speakers',   text: 'Speaker / presenter quality' },
+                        { id: 'content',    text: 'Content depth and quality' },
+                        { id: 'networking', text: 'Networking opportunities' },
+                        { id: 'venue',      text: 'Venue / platform experience' },
+                        { id: 'other',      text: 'Something else' },
+                    ],
+                    allowMultiple: true,
+                },
+                {
+                    id: 'ef-q5',
+                    type: 'scale',
+                    question: 'How would you rate the speakers or presenters?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                },
+                {
+                    id: 'ef-q6',
+                    type: 'yes_no',
+                    question: 'Would you recommend this event to a colleague?',
+                    required: true,
+                },
+                {
+                    id: 'ef-q7',
+                    type: 'multiple_choice',
+                    question: 'Was the event length appropriate?',
+                    options: [
+                        { id: 'too-short',  text: 'Too short — wanted more' },
+                        { id: 'just-right', text: 'Just right' },
+                        { id: 'too-long',   text: 'Too long' },
+                    ],
+                },
+            ],
+        },
+        {
+            id: 'ef-future',
+            title: 'Looking Ahead',
+            description: 'Help us plan the next one',
+            questions: [
+                {
+                    id: 'ef-q8',
+                    type: 'textarea',
+                    question: 'What topics would you like covered at future events?',
+                    placeholder: 'Share what you\'d love to learn or discuss next time...',
+                },
+                {
+                    id: 'ef-q9',
+                    type: 'textarea',
+                    question: 'Any other feedback for the organizers?',
+                    placeholder: 'What should we keep, change, or improve?',
+                },
+            ],
+        },
+    ],
+};
+
 export const EVENTS_TEMPLATES: SurveyTemplate[] = [
     WEDDING_RSVP_TEMPLATE,
     TEAM_FEEDBACK_TEMPLATE,

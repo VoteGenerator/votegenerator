@@ -398,9 +398,126 @@ const MEETING_FEEDBACK_TEMPLATE: SurveyTemplate = {
     ],
 };
 
+const CONFERENCE_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'conference-feedback',
+    name: 'Conference Feedback Survey',
+    emoji: '🎟️',
+    color: 'text-sky-600',
+    description: '9 questions — speaker quality, networking, NPS, and what to fix for next year',
+    category: 'events',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'cf-experience',
+            title: 'Event Experience',
+            description: 'Content, speakers, and logistics',
+            questions: [
+                {
+                    id: 'cf-q1',
+                    type: 'scale',
+                    question: 'How would you rate this conference overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'cf-q2',
+                    type: 'scale',
+                    question: 'How would you rate the quality of speakers and presentations?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'cf-q3',
+                    type: 'scale',
+                    question: 'How relevant and applicable was the session content to your work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not relevant',
+                    maxLabel: 'Highly relevant',
+                    required: true,
+                },
+                {
+                    id: 'cf-q4',
+                    type: 'scale',
+                    question: 'How valuable were the networking opportunities at this event?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not valuable',
+                    maxLabel: 'Extremely valuable',
+                    required: true,
+                },
+                {
+                    id: 'cf-q5',
+                    type: 'scale',
+                    question: 'How would you rate the venue, logistics, and event organisation?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'cf-value',
+            title: 'Value & Loyalty',
+            description: 'Was it worth it? Will you return?',
+            questions: [
+                {
+                    id: 'cf-q6',
+                    type: 'yes_no',
+                    question: 'Was this conference worth the time and cost of attending?',
+                    required: true,
+                },
+                {
+                    id: 'cf-q7',
+                    type: 'scale',
+                    question: 'How likely are you to recommend this conference to a colleague?',
+                    minValue: 0,
+                    maxValue: 10,
+                    minLabel: 'Not likely',
+                    maxLabel: 'Extremely likely',
+                    required: true,
+                },
+                {
+                    id: 'cf-q8',
+                    type: 'yes_no',
+                    question: 'Would you attend this conference again next year?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'cf-improve',
+            title: 'Improve Next Year',
+            description: 'Shape the next edition',
+            questions: [
+                {
+                    id: 'cf-q9',
+                    type: 'textarea',
+                    question: 'What is the one thing that would make next year\'s conference better?',
+                    placeholder: 'Be specific — what would you change for next year?',
+                },
+            ],
+        },
+    ],
+};
+
+
 export const EVENTS_TEMPLATES: SurveyTemplate[] = [
     EVENT_FEEDBACK_TEMPLATE,
     MEETING_FEEDBACK_TEMPLATE,
+    CONFERENCE_FEEDBACK_TEMPLATE,
     WEDDING_RSVP_TEMPLATE,
     TEAM_FEEDBACK_TEMPLATE,
     PARTY_TEMPLATE,

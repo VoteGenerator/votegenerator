@@ -1,5 +1,9 @@
 import { SurveyTemplate } from './_types';
- 
+
+// ============================================================================
+// COURSE EVALUATION SURVEY
+// Keyword: course evaluation survey, course feedback form (5k-10k/mo)
+// ============================================================================
 const COURSE_FEEDBACK_TEMPLATE: SurveyTemplate = {
     id: 'course-feedback',
     name: 'Course Evaluation Survey',
@@ -70,11 +74,11 @@ const COURSE_FEEDBACK_TEMPLATE: SurveyTemplate = {
                     type: 'multiple_choice',
                     question: 'Was the pace of this course appropriate?',
                     options: [
-                        { id: 'too-fast',  text: 'Too fast — couldn\'t keep up' },
-                        { id: 'sl-fast',   text: 'Slightly fast but manageable' },
-                        { id: 'right',     text: 'Just right' },
-                        { id: 'sl-slow',   text: 'Slightly slow' },
-                        { id: 'too-slow',  text: 'Too slow — wanted more depth' },
+                        { id: 'too-fast', text: 'Too fast — couldn\'t keep up' },
+                        { id: 'sl-fast',  text: 'Slightly fast but manageable' },
+                        { id: 'right',    text: 'Just right' },
+                        { id: 'sl-slow',  text: 'Slightly slow' },
+                        { id: 'too-slow', text: 'Too slow — wanted more depth' },
                     ],
                     required: true,
                 },
@@ -122,6 +126,10 @@ const COURSE_FEEDBACK_TEMPLATE: SurveyTemplate = {
     ],
 };
 
+// ============================================================================
+// CORPORATE TRAINING FEEDBACK SURVEY
+// Keyword: training feedback survey, corporate training evaluation (5k/mo)
+// ============================================================================
 const TRAINING_FEEDBACK_TEMPLATE: SurveyTemplate = {
     id: 'training-feedback',
     name: 'Corporate Training Feedback Survey',
@@ -228,8 +236,268 @@ const TRAINING_FEEDBACK_TEMPLATE: SurveyTemplate = {
     ],
 };
 
+// ============================================================================
+// STUDENT SATISFACTION SURVEY
+// Keyword: student satisfaction survey, NSS survey template (5k-10k/mo)
+// ============================================================================
+const STUDENT_SATISFACTION_TEMPLATE: SurveyTemplate = {
+    id: 'student-satisfaction',
+    name: 'Student Satisfaction Survey',
+    emoji: '🎓',
+    color: 'text-violet-700',
+    description: '9 questions — NSS-aligned teaching, assessment, support, and student voice',
+    category: 'education',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'stu-academic',
+            title: 'Academic Experience',
+            description: 'Teaching quality, content, and assessment',
+            questions: [
+                {
+                    id: 'stu-q1',
+                    type: 'scale',
+                    question: 'How satisfied are you with your overall academic experience so far?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'stu-q2',
+                    type: 'scale',
+                    question: 'How would you rate the quality of teaching on your programme?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'stu-q3',
+                    type: 'scale',
+                    question: 'How fair and well-structured are the assessments and marking on your course?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unfair',
+                    maxLabel: 'Very fair',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'stu-support',
+            title: 'Support & Environment',
+            description: 'Services, resources, and student voice',
+            questions: [
+                {
+                    id: 'stu-q4',
+                    type: 'scale',
+                    question: 'How helpful and accessible are student support services at your institution?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'stu-q5',
+                    type: 'scale',
+                    question: 'How would you rate the learning environment and resources available to you?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'stu-q6',
+                    type: 'yes_no',
+                    question: 'Do you feel your feedback is listened to and acted upon by your institution?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'stu-loyalty',
+            title: 'Satisfaction & Recommendation',
+            description: 'Would you choose us again?',
+            questions: [
+                {
+                    id: 'stu-q7',
+                    type: 'scale',
+                    question: 'How likely are you to recommend this institution to a prospective student?',
+                    minValue: 0,
+                    maxValue: 10,
+                    minLabel: 'Not likely',
+                    maxLabel: 'Extremely likely',
+                    required: true,
+                },
+                {
+                    id: 'stu-q8',
+                    type: 'yes_no',
+                    question: 'Would you choose this institution again if starting your studies over?',
+                    required: true,
+                },
+                {
+                    id: 'stu-q9',
+                    type: 'textarea',
+                    question: 'What is the one thing that would most improve your academic experience?',
+                    placeholder: 'Your honest feedback helps improve the experience for all students...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// SCHOOL SATISFACTION SURVEY (PARENTS)
+// Keyword: school satisfaction survey, parent survey for schools (1k-5k/mo)
+// ============================================================================
+const SCHOOL_SATISFACTION_TEMPLATE: SurveyTemplate = {
+    id: 'school-satisfaction',
+    name: 'School Satisfaction Survey (Parents)',
+    emoji: '🏫',
+    color: 'text-orange-600',
+    description: 'Ofsted-relevant parent satisfaction survey — 10 questions for governing bodies',
+    category: 'education',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'sch-academic',
+            title: 'Teaching & Learning',
+            description: 'Quality of education and child experience',
+            questions: [
+                {
+                    id: 'sch-q1',
+                    type: 'scale',
+                    question: 'Overall, how satisfied are you with our school?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'sch-q2',
+                    type: 'scale',
+                    question: 'How would you rate the quality of teaching and learning at this school?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'sch-q3',
+                    type: 'scale',
+                    question: 'How happy and settled does your child feel at school?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unhappy',
+                    maxLabel: 'Very happy',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'sch-communication',
+            title: 'Communication & Wellbeing',
+            description: 'How well the school communicates and supports pupils',
+            questions: [
+                {
+                    id: 'sch-q4',
+                    type: 'scale',
+                    question: 'How well does the school keep you informed and communicate with parents?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'sch-q5',
+                    type: 'scale',
+                    question: 'How well does the school support your child\'s emotional wellbeing and safety?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'sch-q6',
+                    type: 'scale',
+                    question: 'How well does the school manage homework and workload to suit family life?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'sch-leadership',
+            title: 'Inclusion & Leadership',
+            description: 'Inclusion, confidence in leadership, and parent engagement',
+            questions: [
+                {
+                    id: 'sch-q7',
+                    type: 'scale',
+                    question: 'How well does the school celebrate and include children from all backgrounds and abilities?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'sch-q8',
+                    type: 'scale',
+                    question: 'How confident are you in the school\'s leadership and direction?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not confident',
+                    maxLabel: 'Very confident',
+                    required: true,
+                },
+                {
+                    id: 'sch-q9',
+                    type: 'scale',
+                    question: 'How well does the school involve parents and carers in school life?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'sch-q10',
+                    type: 'textarea',
+                    question: 'What one thing could the school do to improve your experience as a parent or carer?',
+                    placeholder: 'Your suggestion goes to the headteacher and governing body...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     COURSE_FEEDBACK_TEMPLATE,
-    TRAINING_FEEDBACK_TEMPLATE, 
-    // Add future education templates here: student satisfaction, teacher eval, training feedback, etc.
+    TRAINING_FEEDBACK_TEMPLATE,
+    STUDENT_SATISFACTION_TEMPLATE,
+    SCHOOL_SATISFACTION_TEMPLATE,
 ];

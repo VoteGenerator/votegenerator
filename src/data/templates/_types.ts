@@ -12,8 +12,13 @@ export const TEMPLATE_CATEGORIES = {
     product:     { label: 'Product & Business',   emoji: '🚀' },
     healthcare:  { label: 'Healthcare',           emoji: '🏥' },
     community:   { label: 'Community',            emoji: '🤝' },
+    civic:       { label: 'Civic & Nonprofit',    emoji: '🏘️' },
     fun:         { label: 'Fun & Social',         emoji: '🎮' },
     hospitality: { label: 'Hospitality',          emoji: '🏨' },
+    membership:  { label: 'Membership & Clubs',   emoji: '🏅' },
+    procurement: { label: 'Procurement',          emoji: '📋' },
+    property:    { label: 'Property & Housing',   emoji: '🏠' },
+    marketing:   { label: 'Marketing & Brand',    emoji: '🎯' },
 } as const;
 
 export type TemplateCategory = keyof typeof TEMPLATE_CATEGORIES;

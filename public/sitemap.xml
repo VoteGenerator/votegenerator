@@ -337,6 +337,14 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+<url>
+  <loc>https://votegenerator.com/templates/subscription-service-survey/</loc>
+  <lastmod>2026-04-09</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
+
+
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- EVENTS & PLANNING TEMPLATES (3 pages)                           -->
@@ -359,6 +367,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+<url>
+  <loc>https://votegenerator.com/templates/speaker-evaluation-survey/</loc>
+  <lastmod>2026-04-09</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
+
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- EDUCATION TEMPLATES (4 pages)                                   -->
@@ -387,6 +402,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <url>
+  <loc>https://votegenerator.com/templates/school-parent-survey/</loc>
+  <lastmod>2026-04-09</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- PRODUCT & BUSINESS TEMPLATES (7 pages)                          -->
@@ -754,43 +776,43 @@
   </url>
 
 <url>
-  <loc>https://votegenerator.com/templates/childcare-parent-survey</loc>
+  <loc>https://votegenerator.com/templates/childcare-parent-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/candidate-experience-survey</loc>
+  <loc>https://votegenerator.com/templates/candidate-experience-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/client-satisfaction-survey</loc>
+  <loc>https://votegenerator.com/templates/client-satisfaction-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/personal-trainer-feedback-survey</loc>
+  <loc>https://votegenerator.com/templates/personal-trainer-feedback-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/online-course-feedback-survey</loc>
+  <loc>https://votegenerator.com/templates/online-course-feedback-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/team-building-survey</loc>
+  <loc>https://votegenerator.com/templates/team-building-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://votegenerator.com/templates/coworking-space-survey</loc>
+  <loc>https://votegenerator.com/templates/coworking-space-survey.html</loc>
   <lastmod>2026-04-09</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>

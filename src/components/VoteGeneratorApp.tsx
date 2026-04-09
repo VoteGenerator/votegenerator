@@ -312,11 +312,11 @@ const shouldShowVoterAdWallAfter = (poll: Poll, isAdmin: boolean): boolean => {
                 if (allowMultiple) {
                     // Allow multiple votes - go directly to voting form
                     const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
-                    if (shouldShowVoterAdWall(poll, isAdmin) && !adWallShown) {
-                        setViewState({ type: 'ad-wall-before', poll });
-                    } else {
-                        setViewState({ type: 'vote', poll });
-                    }
+                    if (shouldShowVoterAdWallBefore() && !adWallShown) {
+    setViewState({ type: 'ad-wall-before', poll });
+} else {
+    setViewState({ type: 'vote', poll });
+}
                 } else if (hideResults) {
                     // Results hidden - show thank you page
                     setViewState({ 
@@ -334,12 +334,11 @@ const shouldShowVoterAdWallAfter = (poll: Poll, isAdmin: boolean): boolean => {
                 // User hasn't voted yet - check if we need to show ad-wall first
                 const adWallShown = localStorage.getItem(`vg_adwall_before_${pollId}`);
                 
-                if (shouldShowVoterAdWall(poll, isAdmin) && !adWallShown) {
-                    // Show ad-wall before poll for free tier
-                    setViewState({ type: 'ad-wall-before', poll });
-                } else {
-                    setViewState({ type: 'vote', poll });
-                }
+                if (shouldShowVoterAdWallBefore() && !adWallShown) {
+    setViewState({ type: 'ad-wall-before', poll });
+} else {
+    setViewState({ type: 'vote', poll });
+}
             }
         } catch (error) {
             console.error('Failed to load poll:', error);

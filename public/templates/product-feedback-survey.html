@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Product Feedback Survey Template | User Feedback Survey | VoteGenerator</title>
+<meta name="description" content="Free product feedback survey template. 8 questions on satisfaction, NPS, usability, and top improvement requests. Built for product teams. No signup required.">
+<link rel="canonical" href="https://votegenerator.com/templates/product-feedback-survey">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Product Feedback Survey Template","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free 8-question product feedback survey. Covers overall satisfaction, NPS, usage frequency, most valued features, ease of use, unmet needs, and top improvement requests. Built for product managers and founders. No signup required.","url":"https://votegenerator.com/templates/product-feedback-survey","provider":{"@type":"Organization","name":"VoteGenerator","url":"https://votegenerator.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this product feedback survey template free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Free forever, no signup required from you or your users. Up to 100 responses per survey on the free plan. Pro ($19/month) allows 10,000 responses — better for large-scale product feedback campaigns."}},{"@type":"Question","name":"What questions should a product feedback survey include?","acceptedAnswer":{"@type":"Answer","text":"The most actionable product feedback surveys cover: overall satisfaction, NPS (likelihood to recommend), usage frequency, most valued features, ease of use, unmet needs, top improvement request, and open text for anything else. This template covers all eight dimensions."}},{"@type":"Question","name":"When should I send a product feedback survey?","acceptedAnswer":{"@type":"Answer","text":"Send after meaningful product usage — at least a few sessions, not immediately after signup. In-product prompts triggered after key actions work best. Email surveys work well at quarterly intervals for relationship NPS. Avoid sending during major onboarding flows when users are still orienting."}},{"@type":"Question","name":"How do I get more users to complete product feedback surveys?","acceptedAnswer":{"@type":"Answer","text":"Keep it under 5 minutes (this template takes 3-4 minutes). Trigger it at a moment of success — after a user completes a task or reaches a milestone — not at a friction point. A brief explanation of how you use feedback ('Your answers directly shape our roadmap') increases completion rates meaningfully."}},{"@type":"Question","name":"What is the difference between a product feedback survey and a CSAT survey?","acceptedAnswer":{"@type":"Answer","text":"A CSAT survey measures satisfaction with your service as a whole. A product feedback survey goes deeper into specific product dimensions — feature value, usability, unmet needs, and roadmap priorities. Use CSAT for business-level health monitoring; use product feedback to inform your product roadmap."}},{"@type":"Question","name":"How do I use product feedback to prioritise my roadmap?","acceptedAnswer":{"@type":"Answer","text":"Question 7 ('What is the one thing you'd most like us to improve?') is your most direct roadmap signal. Cross-reference it with Q4 (most valued features) and Q6 (unmet needs) to find the intersection of what users love and what's still missing. High-frequency answers in Q7 are your highest-confidence roadmap bets."}},{"@type":"Question","name":"Can I export product feedback data?","acceptedAnswer":{"@type":"Answer","text":"Free accounts can screenshot or download a visual of your results. Pro accounts ($19/month) include full CSV and Excel export — structured data you can load into your product analytics tool, share with engineering, or use for investor updates."}},{"@type":"Question","name":"How is this different from in-app feedback tools like Pendo or Hotjar?","acceptedAnswer":{"@type":"Answer","text":"In-app tools like Pendo and Hotjar embed directly in your product UI. VoteGenerator is a standalone shareable link — ideal for email surveys, Slack outreach, user interview follow-ups, or any context where you can't or don't want to instrument your product. No code required from you; no login required from your users."}}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--dark:#0c1445;--dark-lt:#122060;--lime:#84cc16;--lime-lt:#a3e635;--lime-pale:#f7fee7;--ink:#0c1445;--ink-mid:#1e3a6b;--ink-soft:#4b6b9a;--ink-mute:#8ba8cc;--bg:#fff;--bg-soft:#f8faff;--b:#e0e8f8;--b-std:#e2e8f0;--pro:#6C3CE1;--green:#16a34a;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Fira Sans',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;padding-bottom:80px;}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--lime),var(--lime-lt));z-index:2000;transition:width .1s;}
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:var(--dark);height:56px;display:flex;align-items:center;padding:0 24px;gap:8px;}
+.nav a.logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.nav a.logo img{width:22px;height:22px;filter:brightness(10);}
+.nav-n{font-weight:800;font-size:.88rem;color:#fff;}
+.nav-sep{color:rgba(255,255,255,.2);}
+.nav-cr{font-size:.78rem;color:rgba(255,255,255,.5);}
+.nav-cr a{color:rgba(255,255,255,.5);text-decoration:none;}
+.nav-cr a:hover{color:var(--lime-lt);}
+.nav-cta{margin-left:auto;background:var(--lime);color:var(--dark);font-size:.82rem;font-weight:800;padding:8px 18px;border-radius:6px;text-decoration:none;transition:background .15s;}
+.nav-cta:hover{background:var(--lime-lt);}
+/* HERO — dark with grid */
+.hero{background:var(--dark);padding:52px 24px 0;position:relative;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(132,204,22,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(132,204,22,.06) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;}
+.hero-glow{position:absolute;top:-100px;left:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(132,204,22,.08) 0%,transparent 60%);pointer-events:none;}
+.hi{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:start;position:relative;}
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.tag-a{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(163,230,53,.8);}
+.tag-b{font-size:.7rem;font-weight:700;background:var(--lime);color:var(--dark);border-radius:4px;padding:2px 9px;}
+h1{font-size:clamp(1.9rem,4vw,2.75rem);font-weight:900;line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:14px;}
+h1 em{font-style:normal;color:var(--lime-lt);}
+.hero-sub{font-size:1.04rem;color:rgba(255,255,255,.6);line-height:1.68;max-width:460px;margin-bottom:28px;}
+.cta-p{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:var(--dark);font-family:'Fira Sans',sans-serif;font-weight:800;font-size:1.05rem;padding:15px 32px;border-radius:8px;text-decoration:none;transition:all .15s;box-shadow:0 4px 20px rgba(132,204,22,.3);}
+.cta-p:hover{background:var(--lime-lt);transform:translateY(-1px);}
+.cta-p svg{width:16px;height:16px;}
+.cta-s{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:8px;}
+.cta-s span{margin:0 5px;}
+/* stat pills */
+.stat-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+.stat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:6px 14px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.7);}
+.stat em{font-style:normal;color:var(--lime-lt);font-weight:800;}
+/* PREVIEW */
+.pv-card{background:var(--dark-lt);border:1.5px solid rgba(132,204,22,.2);border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.pv-head{background:var(--lime);padding:14px 18px;}
+.pv-ht{font-weight:800;font-size:.88rem;color:var(--dark);}
+.pv-hs{font-size:.7rem;color:rgba(12,20,69,.6);margin-top:1px;}
+.pv-prog{background:rgba(132,204,22,.08);border-bottom:1px solid rgba(132,204,22,.15);padding:9px 18px;display:flex;align-items:center;gap:10px;}
+.pv-track{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+.pv-fill{height:100%;background:var(--lime);border-radius:2px;transition:width .4s ease;}
+.pv-lbl{font-size:.7rem;font-weight:600;color:rgba(255,255,255,.4);white-space:nowrap;}
+.pv-body{padding:18px;min-height:175px;}
+.pv-q{font-weight:600;font-size:.9rem;color:#fff;margin-bottom:14px;line-height:1.45;}
+.scale-row{display:flex;gap:5px;}
+.scale-btn{flex:1;padding:10px 3px;border:1.5px solid rgba(255,255,255,.1);border-radius:6px;cursor:pointer;text-align:center;font-family:'Fira Sans',sans-serif;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.5);background:transparent;transition:all .15s;}
+.scale-btn:hover{border-color:var(--lime);color:var(--lime);}
+.scale-btn.sel{border-color:var(--lime);background:var(--lime);color:var(--dark);}
+.scale-labels{display:flex;justify-content:space-between;font-size:.64rem;color:rgba(255,255,255,.35);margin-top:4px;}
+.nps-row{display:flex;gap:3px;}
+.nps-btn{flex:1;padding:9px 2px;border:1.5px solid rgba(255,255,255,.1);border-radius:4px;cursor:pointer;text-align:center;font-family:'Fira Sans',sans-serif;font-size:.72rem;font-weight:700;color:rgba(255,255,255,.5);background:transparent;transition:all .15s;}
+.nps-btn:hover{border-color:var(--lime);color:var(--lime);}
+.nps-btn.sel{border-color:var(--lime);background:var(--lime);color:var(--dark);}
+.nps-labels{display:flex;justify-content:space-between;font-size:.62rem;color:rgba(255,255,255,.3);margin-top:4px;}
+.opt-list{display:flex;flex-direction:column;gap:5px;}
+.opt-btn{padding:9px 12px;border:1.5px solid rgba(255,255,255,.1);border-radius:6px;cursor:pointer;font-family:'Fira Sans',sans-serif;font-size:.84rem;color:rgba(255,255,255,.65);background:transparent;text-align:left;transition:all .15s;}
+.opt-btn:hover{border-color:var(--lime);color:var(--lime-lt);}
+.opt-btn.sel{border-color:var(--lime);background:rgba(132,204,22,.12);color:var(--lime-lt);}
+.pv-ta{width:100%;border:1.5px solid rgba(255,255,255,.1);border-radius:6px;padding:10px 12px;resize:none;height:72px;font-family:'Fira Sans',sans-serif;font-size:.86rem;color:#fff;background:transparent;outline:none;transition:border-color .15s;}
+.pv-ta:focus{border-color:var(--lime);}
+.pv-ta::placeholder{color:rgba(255,255,255,.3);}
+.pv-foot{border-top:1px solid rgba(255,255,255,.08);background:rgba(132,204,22,.05);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+.pv-live{font-size:.68rem;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:4px;}
+.pv-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.pv-nav{display:flex;gap:6px;}
+.pv-btn{font-family:'Fira Sans',sans-serif;font-size:.8rem;font-weight:700;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;}
+.pv-back-btn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);}
+.pv-next-btn{background:var(--lime);color:var(--dark);}
+.pv-next-btn:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.3);cursor:not-allowed;}
+/* TRUST */
+.trust-bar{background:var(--dark-lt);border-bottom:1px solid rgba(255,255,255,.06);padding:12px 24px;}
+.ti{max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;}
+.titem{display:flex;align-items:center;gap:6px;font-size:.8rem;color:rgba(255,255,255,.5);font-weight:500;}
+.tck{color:var(--lime-lt);}
+/* CONTENT — switches to light */
+.wrap{max-width:1100px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:1fr 260px;gap:56px;align-items:start;}
+.art{min-width:0;}
+.sec{margin-bottom:48px;}
+.ey{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin-bottom:8px;}
+/* override lime for light bg */
+.ey{color:#4d7c0f;}
+h2{font-size:1.42rem;font-weight:800;color:var(--ink);margin-bottom:14px;letter-spacing:-.01em;line-height:1.25;}
+p{font-size:.97rem;line-height:1.78;color:var(--ink-mid);margin-bottom:12px;}
+p strong{color:var(--ink);font-weight:700;}
+p:last-child{margin-bottom:0;}
+/* questions */
+.ql{display:flex;flex-direction:column;gap:5px;}
+.qr{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:11px 14px;background:var(--lime-pale);border:1px solid #d9f99d;border-radius:7px;}
+.qn{font-size:.7rem;font-weight:700;color:#4d7c0f;}
+.qt{font-size:.9rem;color:var(--ink-mid);}
+.qb{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 7px;white-space:nowrap;}
+.bl{background:#ecfccb;color:#3f6212;}.bn{background:#eff6ff;color:#1d4ed8;}.bm{background:#f5f3ff;color:#6C3CE1;}.bo{background:#f0fdf4;color:#15803d;}
+/* how */
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.hc{text-align:center;padding:18px 14px;background:var(--lime-pale);border:1px solid #d9f99d;border-radius:8px;}
+.hn{width:34px;height:34px;background:var(--dark);color:var(--lime);border-radius:50%;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.ht{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.hd{font-size:.78rem;color:var(--ink-soft);line-height:1.5;}
+/* results — dark dashboard */
+.rc{background:var(--dark);border-radius:10px;overflow:hidden;}
+.rch{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;}
+.rch-t{font-weight:700;font-size:.87rem;color:#fff;}
+.rch-s{font-size:.72rem;color:rgba(255,255,255,.4);}
+.rc-dash{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.06);}
+.rg{background:var(--dark);padding:14px 10px;text-align:center;}
+.rg-n{font-size:1.4rem;font-weight:800;color:var(--lime-lt);line-height:1;}
+.rg-l{font-size:.64rem;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.4;}
+.rb-body{padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.rb-row{}
+.rb-lbl{display:flex;justify-content:space-between;font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:5px;font-weight:500;}
+.rb-lbl span{font-weight:700;color:#fff;}
+.rb-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.rb-fill{height:100%;border-radius:3px;background:var(--lime);transition:width 1s ease;width:0;}
+.pro-hook{margin:0 18px 16px;padding:12px 14px;background:rgba(108,60,225,.2);border:1px solid rgba(108,60,225,.35);border-radius:7px;display:flex;align-items:flex-start;gap:10px;}
+.pro-badge{background:var(--pro);color:#fff;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:3px 7px;flex-shrink:0;margin-top:1px;}
+.pro-t{font-size:.82rem;color:rgba(255,255,255,.75);line-height:1.6;}
+.pro-t a{color:#c4b5fd;font-weight:600;text-decoration:none;}
+/* faq */
+.faq-list{display:flex;flex-direction:column;gap:6px;}
+details.fq{background:var(--bg);border:1px solid var(--b-std);border-radius:7px;overflow:hidden;}
+details.fq[open]{border-color:#4d7c0f;}
+details.fq summary{padding:13px 16px;font-weight:700;font-size:.9rem;color:var(--ink);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;}
+details.fq summary::after{content:'+';font-size:1.1rem;color:#4d7c0f;flex-shrink:0;transition:transform .2s;}
+details.fq[open] summary::after{transform:rotate(45deg);}
+details.fq summary::-webkit-details-marker{display:none;}
+.fq-ans{padding:0 16px 14px;font-size:.9rem;line-height:1.72;color:var(--ink-mid);}
+.fq-ans a{color:#4d7c0f;text-decoration:none;}
+/* related */
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.rc2{border:1px solid var(--b-std);border-radius:7px;padding:14px;text-decoration:none;background:var(--bg);transition:all .15s;}
+.rc2:hover{border-color:#4d7c0f;box-shadow:0 2px 10px rgba(132,204,22,.12);}
+.rc2-cat{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4d7c0f;margin-bottom:5px;}
+.rc2-t{font-size:.85rem;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:3px;}
+.rc2-d{font-size:.76rem;color:var(--ink-soft);line-height:1.5;}
+/* bottom cta */
+.bcta{background:var(--dark);border-radius:10px;padding:40px 32px;text-align:center;margin:52px 0;position:relative;overflow:hidden;}
+.bcta::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(132,204,22,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(132,204,22,.05) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+.bcta h2{font-size:1.55rem;font-weight:800;color:#fff;margin-bottom:8px;position:relative;}
+.bcta p{font-size:.96rem;color:rgba(255,255,255,.6);margin-bottom:22px;position:relative;}
+.bcta .cta-p{position:relative;display:inline-flex;}
+.bcta .cta-s{color:rgba(255,255,255,.35);margin-top:10px;position:relative;}
+/* sidebar */
+.sb{position:sticky;top:72px;}
+.sb-cta{background:var(--dark);border-radius:8px;padding:18px;text-align:center;margin-bottom:14px;}
+.sb-cta p{font-size:.83rem;color:rgba(255,255,255,.7);margin-bottom:12px;font-style:italic;line-height:1.5;}
+.sb-cta a{display:block;background:var(--lime);color:var(--dark);font-weight:800;font-size:.84rem;padding:10px;border-radius:6px;text-decoration:none;}
+.sb-cta a:hover{background:var(--lime-lt);}
+.sb-card{background:var(--lime-pale);border:1px solid #d9f99d;border-radius:8px;padding:16px;margin-bottom:14px;}
+.sb-head{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4d7c0f;margin-bottom:12px;}
+.sb-meta{display:flex;flex-direction:column;gap:7px;}
+.sb-r{display:flex;justify-content:space-between;font-size:.82rem;}
+.sb-rl{color:var(--ink-soft);}
+.sb-rv{font-weight:700;color:var(--ink);}
+.sb-links{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.sb-links a{font-size:.83rem;color:#4d7c0f;text-decoration:none;font-weight:600;}
+.sb-links a:hover{text-decoration:underline;}
+footer{background:var(--dark);border-top:1px solid rgba(255,255,255,.06);padding:36px 24px;text-align:center;margin-top:80px;}
+footer .fl{font-weight:800;color:#fff;font-size:.92rem;margin-bottom:5px;}
+footer p{font-size:.8rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
+footer ul{list-style:none;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+footer ul a{font-size:.76rem;color:rgba(255,255,255,.4);text-decoration:none;}
+footer ul a:hover{color:#fff;}
+#mc{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--dark);border-top:1px solid rgba(255,255,255,.1);padding:12px 20px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.3);}
+#mc a{display:block;background:var(--lime);color:var(--dark);font-family:'Fira Sans',sans-serif;font-weight:800;font-size:.97rem;text-align:center;padding:13px;border-radius:8px;text-decoration:none;}
+#mc-s{text-align:center;font-size:.7rem;color:rgba(255,255,255,.35);margin-top:5px;}
+@media(max-width:900px){.hi,.wrap{grid-template-columns:1fr;}.sb{display:none;}.how,.rel,.rc-dash{grid-template-columns:repeat(2,1fr);}#mc{display:block;}}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mc"><a href="https://votegenerator.com/survey?template=product-feedback">Use This Template — Free</a><div id="mc-s">No signup required · 8 questions · Built for product teams</div></div>
+<nav class="nav">
+<a href="https://votegenerator.com" class="logo"><img src="/logo.svg" alt="VoteGenerator"><span class="nav-n">VoteGenerator</span></a>
+<span class="nav-sep">/</span>
+<span class="nav-cr"><a href="/templates/">Templates</a> / <a href="/templates/product-surveys/">Product</a> / Product Feedback</span>
+<a href="https://votegenerator.com/survey?template=product-feedback" class="nav-cta">Use This Template</a>
+</nav>
+
+<section class="hero" id="hero">
+<div class="hero-grid"></div>
+<div class="hero-glow"></div>
+<div class="hi">
+<div>
+<div class="eyebrow"><span class="tag-a">Product Survey Template</span><span class="tag-b">Free</span></div>
+<h1>Free Product Feedback<br>Survey Template</h1>
+<p class="hero-sub">8 questions covering satisfaction, NPS, usability, and your top roadmap priority. Know what users actually think — before you build the wrong thing next.</p>
+<div style="margin-bottom:12px">
+<a href="https://votegenerator.com/survey?template=product-feedback" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template</a>
+<p class="cta-s">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+</div>
+<div class="stat-row">
+<div class="stat"><em>8</em> questions</div>
+<div class="stat"><em>NPS</em> + CSAT</div>
+<div class="stat">Roadmap signal</div>
+<div class="stat"><em>Free</em> — no signup</div>
+</div>
+</div>
+<div class="pv-card">
+<div class="pv-head"><div class="pv-ht">Product Feedback Survey</div><div class="pv-hs">8 questions · ~4 minutes · Instant results</div></div>
+<div class="pv-prog"><div class="pv-track"><div class="pv-fill" id="pv-fill" style="width:12%"></div></div><span class="pv-lbl" id="pv-lbl">1 of 8</span></div>
+<div class="pv-body" id="pv-body"></div>
+<div class="pv-foot">
+<div class="pv-live"><span class="pv-dot"></span> Live demo</div>
+<div class="pv-nav">
+<button class="pv-btn pv-back-btn" id="pv-back" onclick="pvN(-1)" style="display:none">Back</button>
+<button class="pv-btn pv-next-btn" id="pv-next" onclick="pvN(1)" disabled>Next</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div class="trust-bar"><div class="ti">
+<div class="titem"><span class="tck">✓</span> Free — no credit card</div>
+<div class="titem"><span class="tck">✓</span> No login from users</div>
+<div class="titem"><span class="tck">✓</span> NPS auto-calculated</div>
+<div class="titem"><span class="tck">✓</span> Roadmap signal built in</div>
+<div class="titem"><span class="tck">✓</span> 100 responses free</div>
+</div></div>
+
+<div class="wrap">
+<main class="art">
+
+<div class="sec" id="questions">
+<div class="ey">Template Questions</div>
+<h2>All 8 Survey Questions</h2>
+<p>Eight questions covering satisfaction, loyalty, usage depth, feature value, usability, unmet needs, and your single highest-confidence roadmap signal. <strong>Question 7</strong> — "What's the one thing you'd most like us to improve?" — is the question every product team should be tracking monthly. Everything else gives it context.</p>
+<div class="ql">
+<div class="qr"><span class="qn">01</span><span class="qt">How satisfied are you with this product overall?</span><span class="qb bl">Scale 1–5</span></div>
+<div class="qr"><span class="qn">02</span><span class="qt">How likely are you to recommend this product to a colleague? (0–10)</span><span class="qb bn">NPS Scale</span></div>
+<div class="qr"><span class="qn">03</span><span class="qt">How would you describe your level of usage?</span><span class="qb bm">Multiple Choice</span></div>
+<div class="qr"><span class="qn">04</span><span class="qt">What do you value most about this product? (select all that apply)</span><span class="qb bm">Multiple Choice</span></div>
+<div class="qr"><span class="qn">05</span><span class="qt">How easy is this product to use?</span><span class="qb bl">Scale 1–5</span></div>
+<div class="qr"><span class="qn">06</span><span class="qt">How well does this product meet your needs?</span><span class="qb bl">Scale 1–5</span></div>
+<div class="qr"><span class="qn">07</span><span class="qt">What is the one thing you'd most like us to improve?</span><span class="qb bm">Multiple Choice</span></div>
+<div class="qr"><span class="qn">08</span><span class="qt">Any other feedback for the product team?</span><span class="qb bo">Open Text</span></div>
+</div>
+</div>
+
+<div class="sec" id="how">
+<div class="ey">How It Works</div>
+<h2>From Template to Roadmap Signal in 3 Steps</h2>
+<div class="how">
+<div class="hc"><div class="hn">1</div><div class="ht">Use This Template</div><div class="hd">8 questions pre-loaded. Add your product name and edit the feature options to match your product.</div></div>
+<div class="hc"><div class="hn">2</div><div class="ht">Share with users</div><div class="hd">In-app prompt, email, Slack, or after a support call. No login from users needed.</div></div>
+<div class="hc"><div class="hn">3</div><div class="ht">Prioritise with confidence</div><div class="hd">Q7 shows your top improvement request. Cross-reference with Q4 to find the gap between what users value and what's missing.</div></div>
+</div>
+</div>
+
+<div class="sec" id="results">
+<div class="ey">Sample Results</div>
+<h2>Your Product Dashboard</h2>
+<p>After 312 users responded over a 30-day window, here's what the dashboard showed — the ease-of-use gap against overall satisfaction is the clearest UX signal in the data:</p>
+<div class="rc">
+<div class="rch"><span class="rch-t">Product Feedback Survey · 312 responses</span><span class="rch-s">Rolling 30 days</span></div>
+<div class="rc-dash">
+<div class="rg"><div class="rg-n" id="rg1">—</div><div class="rg-l">Satisfaction</div></div>
+<div class="rg"><div class="rg-n" id="rg2">—</div><div class="rg-l">NPS</div></div>
+<div class="rg"><div class="rg-n" id="rg3">—</div><div class="rg-l">Ease of use</div></div>
+<div class="rg"><div class="rg-n" id="rg4">—</div><div class="rg-l">Meets needs</div></div>
+</div>
+<div class="rb-body" id="results-body">
+<div class="rb-row"><div class="rb-lbl">Overall satisfaction<span>4.1 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="82"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Ease of use<span>3.6 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="72" style="background:#f59e0b"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Meets needs<span>3.9 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="78"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Top improvement: "Better mobile experience"<span>44%</span></div><div class="rb-track"><div class="rb-fill" data-w="44"></div></div></div>
+</div>
+<div class="pro-hook">
+<span class="pro-badge">Pro</span>
+<span class="pro-t"><strong>Response timeline analytics</strong> — see whether your product score improves after each release. CSV export to bring data into your analytics stack or share with engineering. <a href="https://votegenerator.com/pricing">Upgrade to Pro from $19/month →</a></span>
+</div>
+</div>
+</div>
+
+<div class="sec" id="faq">
+<div class="ey">FAQ</div>
+<h2>Frequently Asked Questions</h2>
+<div class="faq-list">
+<details class="fq"><summary>Is this product feedback survey template free?</summary><div class="fq-ans">Yes. Free forever, no signup from you or your users. Up to 100 responses free. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows 10,000 responses for large-scale product feedback campaigns.</div></details>
+<details class="fq"><summary>What questions should a product feedback survey include?</summary><div class="fq-ans">The most actionable product surveys cover: overall satisfaction, NPS, usage frequency, most valued features, ease of use, unmet needs, top improvement request, and open feedback. This template covers all eight dimensions.</div></details>
+<details class="fq"><summary>When should I send a product feedback survey?</summary><div class="fq-ans">Send after meaningful product usage — at least a few sessions, not immediately after signup. In-product prompts triggered after key actions work best. Email surveys work well quarterly for relationship NPS. Avoid sending during onboarding flows.</div></details>
+<details class="fq"><summary>How do I get more users to complete the survey?</summary><div class="fq-ans">Keep it under 5 minutes (this template takes 3-4 minutes). Trigger it at a moment of success — after completing a task, not at a friction point. "Your answers directly shape our roadmap" increases completion rates meaningfully.</div></details>
+<details class="fq"><summary>What is the difference between product feedback and CSAT?</summary><div class="fq-ans">CSAT measures satisfaction with your service as a whole. Product feedback goes deeper into specific product dimensions — feature value, usability, unmet needs, roadmap priorities. Use our <a href="/templates/customer-satisfaction-survey">CSAT template</a> for business-level health; use this template to inform your product roadmap.</div></details>
+<details class="fq"><summary>How do I use product feedback to prioritise my roadmap?</summary><div class="fq-ans">Question 7 ('What is the one thing you'd most like us to improve?') is your most direct roadmap signal. Cross-reference with Q4 (most valued features) and Q6 (unmet needs) to find the intersection of what users love and what's missing. High-frequency Q7 answers are your highest-confidence roadmap bets.</div></details>
+<details class="fq"><summary>Can I export product feedback data?</summary><div class="fq-ans">Free accounts can download a visual screenshot. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> includes CSV and Excel export — structured data you can load into your analytics tool, share with engineering, or use for investor updates.</div></details>
+<details class="fq"><summary>How is this different from tools like Pendo or Hotjar?</summary><div class="fq-ans">In-app tools embed directly in your product UI. VoteGenerator is a shareable link — ideal for email surveys, Slack outreach, user interview follow-ups, or any context where you can't or don't want to instrument your product. No code required from you; no login from your users.</div></details>
+</div>
+</div>
+
+<div class="sec" id="related">
+<div class="ey">Related Templates</div>
+<h2>More Survey Templates</h2>
+<div class="rel">
+<a href="/templates/customer-satisfaction-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">Customer Satisfaction (CSAT)</div><div class="rc2-d">NPS + satisfaction in one 5-question template.</div></a>
+<a href="/templates/nps-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">NPS Survey</div><div class="rc2-d">Pure Net Promoter Score in 2 questions. Fastest loyalty measure.</div></a>
+<a href="/templates/post-purchase-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">Post-Purchase Survey</div><div class="rc2-d">7 questions on shopping experience and repurchase intent.</div></a>
+</div>
+</div>
+
+<div class="bcta">
+<h2>Know what your users actually think</h2>
+<p>8 questions. NPS + roadmap signal. No signup from anyone.</p>
+<a href="https://votegenerator.com/survey?template=product-feedback" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template — Free</a>
+<p class="cta-s">No signup required · Free up to 100 responses · Pro from $19/month</p>
+</div>
+</main>
+<aside class="sb">
+<div class="sb-cta"><p>"8 questions. Satisfaction + NPS + roadmap priority. Ready in 60 seconds."</p><a href="https://votegenerator.com/survey?template=product-feedback">Use This Template →</a></div>
+<div class="sb-card"><div class="sb-head">Template Details</div><div class="sb-meta">
+<div class="sb-r"><span class="sb-rl">Questions</span><span class="sb-rv">8</span></div>
+<div class="sb-r"><span class="sb-rl">Metrics</span><span class="sb-rv">CSAT + NPS</span></div>
+<div class="sb-r"><span class="sb-rl">Free responses</span><span class="sb-rv">100</span></div>
+<div class="sb-r"><span class="sb-rl">Completion</span><span class="sb-rv">3–4 min</span></div>
+<div class="sb-r"><span class="sb-rl">Best for</span><span class="sb-rv">SaaS, apps, tools</span></div>
+</div></div>
+<div class="sb-card"><div class="sb-head">Related</div><ul class="sb-links">
+<li><a href="/templates/customer-satisfaction-survey">Customer Satisfaction</a></li>
+<li><a href="/templates/nps-survey">Quick NPS Survey</a></li>
+<li><a href="/templates/event-feedback-survey">Event Feedback</a></li>
+</ul></div>
+</aside>
+</div>
+<footer><div class="fl">VoteGenerator</div><p>Free product feedback survey template. 8 questions. NPS + roadmap signal. No signup. 100 responses free.</p><ul><li><a href="https://votegenerator.com">Home</a></li><li><a href="/templates/">Templates</a></li><li><a href="https://votegenerator.com/blog">Blog</a></li><li><a href="https://votegenerator.com/pricing">Pricing</a></li><li><a href="https://votegenerator.com/privacy">Privacy</a></li></ul><p>&copy; 2026 VoteGenerator. All rights reserved.</p></footer>
+<script>
+const USAGE=['Daily','Several times a week','Weekly','Monthly','Less than monthly'];
+const VALUES=['Core functionality','Ease of use','Time saved','Price / value','Reliability','Integrations with other tools'];
+const IMPROVE=['Better mobile experience','Faster performance','More integrations','Improved UI/UX','More features','Better documentation','Lower pricing'];
+const Q=[
+{t:'scale',q:'How satisfied are you with this product overall?',min:'Very dissatisfied',max:'Very satisfied'},
+{t:'nps',q:'How likely are you to recommend this product to a colleague?'},
+{t:'mc',q:'How would you describe your level of usage?',opts:USAGE},
+{t:'mc-multi',q:'What do you value most? (select all that apply)',opts:VALUES},
+{t:'scale',q:'How easy is this product to use?',min:'Very difficult',max:'Very easy'},
+{t:'scale',q:'How well does this product meet your needs?',min:'Not at all',max:'Completely'},
+{t:'mc',q:'What is the one thing you\'d most like us to improve?',opts:IMPROVE},
+{t:'open',q:'Any other feedback for the product team?'},
+];
+let cur=0,ans={};
+function render(){
+const q=Q[cur];
+document.getElementById('pv-fill').style.width=((cur+1)/8*100)+'%';
+document.getElementById('pv-lbl').textContent=(cur+1)+' of 8';
+let h=`<div class="pv-q">${q.q}</div>`;
+if(q.t==='scale'){
+h+='<div class="scale-row">';
+[1,2,3,4,5].forEach(v=>{const s=ans[cur]===v?'sel':'';h+=`<button class="scale-btn ${s}" onclick="psc(${v})">${v}</button>`;});
+h+=`</div><div class="scale-labels"><span>${q.min}</span><span>${q.max}</span></div>`;
+}else if(q.t==='nps'){
+h+='<div class="nps-row">';
+for(let i=0;i<=10;i++){const s=ans[cur]===i?'sel':'';h+=`<button class="nps-btn ${s}" onclick="pnps(${i})">${i}</button>`;}
+h+=`</div><div class="nps-labels"><span>Not likely</span><span>Extremely likely</span></div>`;
+}else if(q.t==='mc'||q.t==='mc-multi'){
+h+='<div class="opt-list">';
+q.opts.forEach((o,i)=>{const s=q.t==='mc-multi'?(Array.isArray(ans[cur])&&ans[cur].includes(i)?'sel':''):(ans[cur]===i?'sel':'');h+=`<button class="opt-btn ${s}" onclick="${q.t==='mc-multi'?'pmcm':'pmc'}(${i})">${o}</button>`;});
+h+='</div>';
+}else{
+h+=`<textarea class="pv-ta" placeholder="Your thoughts help us build better..." oninput="ptx(this.value)">${ans[cur]||''}</textarea>`;
+}
+document.getElementById('pv-body').innerHTML=h;
+const nx=document.getElementById('pv-next');
+const hasAns=q.t==='mc-multi'?(Array.isArray(ans[cur])&&ans[cur].length>0):ans[cur]!==undefined;
+nx.disabled=!hasAns&&q.t!=='open';
+nx.textContent=cur>=Q.length-1?'Submit ✓':'Next';
+document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function psc(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function pnps(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function pmc(i){ans[cur]=i;document.getElementById('pv-next').disabled=false;render();}
+function pmcm(i){if(!Array.isArray(ans[cur]))ans[cur]=[];const idx=ans[cur].indexOf(i);if(idx>-1)ans[cur].splice(idx,1);else ans[cur].push(i);document.getElementById('pv-next').disabled=ans[cur].length===0;render();}
+function ptx(v){ans[cur]=v||' ';}
+function pvN(d){
+if(d===1&&cur>=Q.length-1){document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">🚀</div><div style="font-weight:700;color:#fff;margin-bottom:4px">Feedback received!</div><div style="font-size:.83rem;color:rgba(255,255,255,.6);margin-bottom:14px">Your real survey tracks NPS and roadmap priorities live.</div><a href="https://votegenerator.com/survey?template=product-feedback" style="background:var(--lime);color:var(--dark);font-family:'Fira Sans',sans-serif;font-weight:800;font-size:.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;document.getElementById('pv-fill').style.width='100%';document.getElementById('pv-lbl').textContent='Complete';document.getElementById('pv-next').style.display='none';document.getElementById('pv-back').style.display='block';return;}
+cur=Math.max(0,Math.min(Q.length-1,cur+d));
+if(d===1)document.getElementById('pv-next').style.display='block';
+render();
+}
+render();
+new IntersectionObserver(e=>{if(e[0].isIntersecting){document.querySelectorAll('.rb-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});const s=[['rg1','4.1/5'],['rg2','+38'],['rg3','3.6/5'],['rg4','3.9/5']];s.forEach(([id,v],i)=>setTimeout(()=>{document.getElementById(id).textContent=v;},i*150));}},{threshold:.3}).observe(document.getElementById('results'));
+const prog=document.getElementById('prog'),mc=document.getElementById('mc'),h=document.getElementById('hero');
+window.addEventListener('scroll',()=>{const d=document.documentElement;prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';if(window.innerWidth<=900)mc.style.display=h.getBoundingClientRect().bottom<0?'block':'none';},{passive:true});
+</script>
+</body>
+</html>

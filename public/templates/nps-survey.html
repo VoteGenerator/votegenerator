@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free NPS Survey Template | Net Promoter Score Survey | VoteGenerator</title>
+<meta name="description" content="Free NPS survey template. 2 questions. Measure customer loyalty with the Net Promoter Score in 60 seconds. No signup required. Instant Promoter/Passive/Detractor results.">
+<link rel="canonical" href="https://votegenerator.com/templates/nps-survey">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"NPS Survey Template","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free 2-question NPS survey template. Measure customer loyalty with Net Promoter Score. Instant Promoter/Passive/Detractor segmentation. No signup required.","url":"https://votegenerator.com/templates/nps-survey","provider":{"@type":"Organization","name":"VoteGenerator","url":"https://votegenerator.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this NPS survey template free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Free forever with no signup from you or your customers. The free plan allows up to 100 responses. Pro ($19/month) allows 10,000 responses and includes response timeline analytics to track NPS trends over time."}},{"@type":"Question","name":"What is NPS (Net Promoter Score)?","acceptedAnswer":{"@type":"Answer","text":"Net Promoter Score (NPS) is a loyalty metric based on one question: how likely are you to recommend us, on a scale of 0 to 10. Respondents scoring 9-10 are Promoters, 7-8 are Passives, and 0-6 are Detractors. Your NPS is calculated as Promoters% minus Detractors%. Scores range from -100 to +100."}},{"@type":"Question","name":"What is a good NPS score?","acceptedAnswer":{"@type":"Answer","text":"Any positive NPS (above 0) means you have more Promoters than Detractors. Above +30 is considered good. Above +50 is excellent. Above +70 is world-class. Industry benchmarks vary significantly — SaaS companies average around +30, while consumer brands like Apple have historically scored above +70."}},{"@type":"Question","name":"How often should I measure NPS?","acceptedAnswer":{"@type":"Answer","text":"Transactional NPS surveys (sent after a specific interaction like a purchase or support ticket) can run continuously. Relationship NPS surveys (measuring overall brand loyalty) are typically sent quarterly. Running NPS more than quarterly for relationship measurement can cause survey fatigue and lower response rates."}},{"@type":"Question","name":"What is the difference between NPS and CSAT?","acceptedAnswer":{"@type":"Answer","text":"NPS measures overall loyalty and likelihood to recommend — a leading indicator of growth. CSAT measures satisfaction with a specific product or interaction. NPS is better for tracking brand health over time; CSAT is better for diagnosing specific touchpoints. If you need both, use our Customer Satisfaction (CSAT) template which combines NPS and satisfaction in 5 questions."}},{"@type":"Question","name":"How do I improve a low NPS?","acceptedAnswer":{"@type":"Answer","text":"The follow-up open text question in this template is critical for improvement. Segment your responses: contact Detractors directly to understand and resolve their issues, ask Promoters for referrals or reviews, and use Passives' feedback to identify quick wins. Track your NPS monthly to see whether changes are working."}}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ind:#4338ca;--ind-lt:#6366f1;--ind-pale:#eef2ff;--ind-dim:rgba(67,56,202,0.08);--ink:#0f0f23;--ink-mid:#1e1e3a;--ink-soft:#6b7280;--ink-mute:#9ca3af;--bg:#fff;--bg-soft:#fafafa;--b:#e5e7eb;--pro:#6C3CE1;--green:#16a34a;--yellow:#ca8a04;--red:#dc2626;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;padding-bottom:80px;}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--ind),var(--ind-lt));z-index:2000;transition:width .1s;}
+.nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--b);height:56px;display:flex;align-items:center;padding:0 24px;gap:8px;}
+.nav a.logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.nav a.logo img{width:22px;height:22px;}
+.nav-name{font-weight:800;font-size:.88rem;color:var(--ink);}
+.nav-sep{color:var(--b);}
+.nav-cr{font-size:.78rem;color:var(--ink-soft);}
+.nav-cr a{color:var(--ink-soft);text-decoration:none;}
+.nav-cr a:hover{color:var(--ind);}
+.nav-cta{margin-left:auto;background:var(--ind);color:#fff;font-size:.82rem;font-weight:700;padding:8px 18px;border-radius:6px;text-decoration:none;}
+.nav-cta:hover{background:var(--ind-lt);}
+/* HERO */
+.hero{padding:56px 24px 0;background:linear-gradient(135deg,#1e1e4a 0%,#312e81 50%,#1e1e4a 100%);position:relative;overflow:hidden;}
+.hero-dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:start;position:relative;}
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.tag-a{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(165,180,252,1);}
+.tag-b{font-size:.7rem;font-weight:700;background:rgba(99,102,241,.2);color:#a5b4fc;border-radius:4px;padding:2px 8px;}
+h1{font-size:clamp(1.9rem,4vw,2.8rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:14px;}
+h1 em{font-style:normal;color:#a5b4fc;}
+.hero-sub{font-size:1.04rem;color:rgba(255,255,255,.65);line-height:1.68;max-width:460px;margin-bottom:28px;}
+.cta-wrap{margin-bottom:12px;}
+.cta-p{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--ind);font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;padding:15px 32px;border-radius:8px;text-decoration:none;transition:all .15s;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.cta-p:hover{background:#eef2ff;transform:translateY(-1px);}
+.cta-p svg{width:16px;height:16px;}
+.cta-s{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:8px;}
+.cta-s span{margin:0 5px;}
+/* PREVIEW */
+.pv-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.pv-head{background:var(--ind);padding:14px 18px;}
+.pv-head-t{font-weight:700;font-size:.88rem;color:#fff;}
+.pv-head-s{font-size:.7rem;color:rgba(255,255,255,.65);margin-top:1px;}
+.pv-prog{background:var(--ind-pale);border-bottom:1px solid #c7d2fe;padding:9px 18px;display:flex;align-items:center;gap:10px;}
+.pv-track{flex:1;height:4px;background:#c7d2fe;border-radius:2px;overflow:hidden;}
+.pv-fill{height:100%;background:var(--ind);border-radius:2px;transition:width .4s ease;}
+.pv-lbl{font-size:.7rem;font-weight:700;color:var(--ink-mute);white-space:nowrap;}
+.pv-body{padding:18px;min-height:175px;}
+.pv-q{font-weight:700;font-size:.9rem;color:var(--ink);margin-bottom:14px;line-height:1.45;}
+/* NPS colored zones */
+.nps-zones{margin-bottom:6px;}
+.nps-zone-labels{display:flex;gap:3px;margin-bottom:4px;}
+.nz{flex:1;text-align:center;font-size:.6rem;font-weight:700;padding:3px;border-radius:3px;}
+.nz.d{background:#fee2e2;color:var(--red);}
+.nz.pa{background:#fef9c3;color:var(--yellow);}
+.nz.pr{background:#dcfce7;color:var(--green);}
+.nps-row{display:flex;gap:3px;}
+.nps-btn{flex:1;padding:10px 2px;border:1.5px solid var(--b);border-radius:5px;cursor:pointer;text-align:center;font-family:'Syne',sans-serif;font-size:.76rem;font-weight:700;color:var(--ink-mute);background:#fff;transition:all .15s;}
+.nps-btn:hover{transform:scale(1.05);}
+.nps-btn.det{border-color:var(--red);background:#fee2e2;color:var(--red);}
+.nps-btn.pas{border-color:var(--yellow);background:#fef9c3;color:var(--yellow);}
+.nps-btn.pro{border-color:var(--green);background:#dcfce7;color:var(--green);}
+.nps-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--ink-mute);margin-top:4px;}
+.pv-ta{width:100%;border:1.5px solid var(--b);border-radius:6px;padding:10px 12px;resize:none;height:72px;font-family:'Syne',sans-serif;font-size:.86rem;color:var(--ink);outline:none;transition:border-color .15s;}
+.pv-ta:focus{border-color:var(--ind);}
+.pv-ta::placeholder{color:var(--ink-mute);}
+.pv-foot{border-top:1px solid var(--b);background:var(--ind-pale);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+.pv-live{font-size:.68rem;color:var(--ink-mute);display:flex;align-items:center;gap:4px;}
+.pv-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.pv-nav{display:flex;gap:6px;}
+.pv-btn{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;}
+.pv-back{background:var(--b);color:var(--ink-soft);}
+.pv-next{background:var(--ind);color:#fff;}
+.pv-next:disabled{background:var(--b);color:var(--ink-mute);cursor:not-allowed;}
+/* TRUST */
+.trust-bar{background:var(--ind-pale);border-bottom:1px solid #c7d2fe;padding:12px 24px;}
+.trust-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--ink-soft);font-weight:500;}
+.trust-check{color:var(--ind);}
+/* CONTENT */
+.wrap{max-width:1100px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:1fr 260px;gap:56px;align-items:start;}
+.art{min-width:0;}
+.sec{margin-bottom:48px;}
+.ey{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ind);margin-bottom:8px;}
+h2{font-size:1.42rem;font-weight:800;color:var(--ink);margin-bottom:14px;letter-spacing:-.01em;line-height:1.25;}
+p{font-size:.97rem;line-height:1.78;color:var(--ink-mid);margin-bottom:12px;}
+p strong{color:var(--ink);font-weight:700;}
+p:last-child{margin-bottom:0;}
+/* questions */
+.q-list{display:flex;flex-direction:column;gap:5px;}
+.q-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:11px 14px;background:var(--ind-pale);border:1px solid #c7d2fe;border-radius:7px;}
+.q-n{font-size:.7rem;font-weight:700;color:var(--ind);}
+.q-t{font-size:.9rem;color:var(--ink-mid);}
+.qb{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 7px;white-space:nowrap;}
+.bn{background:#eff6ff;color:#1d4ed8;}.bo{background:#f0fdf4;color:#15803d;}
+/* nps explain */
+.nps-explain{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0;}
+.ne{border-radius:8px;padding:14px;text-align:center;}
+.ne-n{font-size:1.6rem;font-weight:800;margin-bottom:3px;}
+.ne-l{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;}
+.ne-d{font-size:.76rem;line-height:1.5;}
+.ne.d{background:#fee2e2;}.ne.d .ne-n,.ne.d .ne-l{color:var(--red);}.ne.d .ne-d{color:#991b1b;}
+.ne.pa{background:#fef9c3;}.ne.pa .ne-n,.ne.pa .ne-l{color:var(--yellow);}.ne.pa .ne-d{color:#713f12;}
+.ne.pr{background:#dcfce7;}.ne.pr .ne-n,.ne.pr .ne-l{color:var(--green);}.ne.pr .ne-d{color:#14532d;}
+/* how */
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.hc{text-align:center;padding:18px 14px;background:var(--ind-pale);border:1px solid #c7d2fe;border-radius:8px;}
+.hn{width:34px;height:34px;background:var(--ind);color:#fff;border-radius:50%;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.ht{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.hd{font-size:.78rem;color:var(--ink-soft);line-height:1.5;}
+/* results */
+.rc{background:linear-gradient(135deg,#1e1e4a,#312e81);border-radius:10px;overflow:hidden;}
+.rch{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;}
+.rch-t{font-weight:700;font-size:.87rem;color:#fff;}
+.rch-s{font-size:.72rem;color:rgba(255,255,255,.4);}
+.rc-score-area{padding:24px 18px 16px;text-align:center;}
+.rc-gauge{position:relative;width:140px;margin:0 auto 12px;}
+.rc-nps-num{font-size:3rem;font-weight:800;color:#a5b4fc;line-height:1;}
+.rc-nps-lbl{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:4px;margin-bottom:16px;}
+.rc-segs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.rs{background:rgba(255,255,255,.06);border-radius:6px;padding:10px;text-align:center;}
+.rs-n{font-size:1.4rem;font-weight:800;line-height:1;}
+.rs-l{font-size:.66rem;color:rgba(255,255,255,.45);margin-top:3px;}
+.rs.p .rs-n{color:#4ade80;}.rs.pa .rs-n{color:#fbbf24;}.rs.d .rs-n{color:#f87171;}
+.rc-bars{padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.rb-row{}
+.rb-lbl{display:flex;justify-content:space-between;font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:5px;font-weight:500;}
+.rb-lbl span{font-weight:700;color:#fff;}
+.rb-track{height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.rb-fill{height:100%;border-radius:4px;background:#a5b4fc;transition:width 1s ease;width:0;}
+.pro-hook{margin:0 18px 16px;padding:12px 14px;background:rgba(108,60,225,.2);border:1px solid rgba(108,60,225,.4);border-radius:7px;display:flex;align-items:flex-start;gap:10px;}
+.pro-badge{background:var(--pro);color:#fff;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:3px 7px;flex-shrink:0;margin-top:1px;}
+.pro-t{font-size:.82rem;color:rgba(255,255,255,.75);line-height:1.6;}
+.pro-t a{color:#c4b5fd;font-weight:600;text-decoration:none;}
+/* faq */
+.faq-list{display:flex;flex-direction:column;gap:6px;}
+details.fq{background:var(--bg);border:1px solid var(--b);border-radius:7px;overflow:hidden;}
+details.fq[open]{border-color:var(--ind);}
+details.fq summary{padding:13px 16px;font-weight:700;font-size:.9rem;color:var(--ink);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;}
+details.fq summary::after{content:'+';font-size:1.1rem;color:var(--ind);flex-shrink:0;transition:transform .2s;}
+details.fq[open] summary::after{transform:rotate(45deg);}
+details.fq summary::-webkit-details-marker{display:none;}
+.fq-ans{padding:0 16px 14px;font-size:.9rem;line-height:1.72;color:var(--ink-mid);}
+.fq-ans a{color:var(--ind);text-decoration:none;}
+/* related */
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.rc2{border:1px solid var(--b);border-radius:7px;padding:14px;text-decoration:none;background:var(--bg);transition:all .15s;}
+.rc2:hover{border-color:var(--ind);box-shadow:0 2px 10px rgba(67,56,202,.1);}
+.rc2-cat{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ind);margin-bottom:5px;}
+.rc2-t{font-size:.85rem;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:3px;}
+.rc2-d{font-size:.76rem;color:var(--ink-soft);line-height:1.5;}
+/* bottom cta */
+.bcta{background:linear-gradient(135deg,#1e1e4a,#312e81);border-radius:10px;padding:40px 32px;text-align:center;margin:52px 0;position:relative;overflow:hidden;}
+.bcta::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:20px 20px;pointer-events:none;}
+.bcta h2{color:#fff;font-size:1.55rem;font-weight:800;margin-bottom:8px;position:relative;}
+.bcta p{font-size:.96rem;color:rgba(255,255,255,.6);margin-bottom:22px;position:relative;}
+.bcta .cta-p{position:relative;display:inline-flex;}
+.bcta .cta-s{color:rgba(255,255,255,.35);margin-top:10px;position:relative;}
+/* sidebar */
+.sb{position:sticky;top:72px;}
+.sb-cta{background:var(--ind);border-radius:8px;padding:18px;text-align:center;margin-bottom:14px;}
+.sb-cta p{font-size:.83rem;color:rgba(255,255,255,.8);margin-bottom:12px;font-style:italic;line-height:1.5;}
+.sb-cta a{display:block;background:#fff;color:var(--ind);font-weight:700;font-size:.84rem;padding:10px;border-radius:6px;text-decoration:none;}
+.sb-cta a:hover{background:var(--ind-pale);}
+.sb-card{background:var(--ind-pale);border:1px solid #c7d2fe;border-radius:8px;padding:16px;margin-bottom:14px;}
+.sb-head{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;}
+.sb-meta{display:flex;flex-direction:column;gap:7px;}
+.sb-r{display:flex;justify-content:space-between;font-size:.82rem;}
+.sb-rl{color:var(--ink-soft);}
+.sb-rv{font-weight:700;color:var(--ink);}
+.sb-links{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.sb-links a{font-size:.83rem;color:var(--ind);text-decoration:none;font-weight:600;}
+.sb-links a:hover{text-decoration:underline;}
+/* footer */
+footer{background:var(--ink);padding:36px 24px;text-align:center;margin-top:80px;}
+footer .fl{font-weight:800;color:#fff;font-size:.92rem;margin-bottom:5px;}
+footer p{font-size:.8rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
+footer ul{list-style:none;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+footer ul a{font-size:.76rem;color:rgba(255,255,255,.4);text-decoration:none;}
+footer ul a:hover{color:#fff;}
+/* mobile */
+#mc{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:#fff;border-top:1px solid var(--b);padding:12px 20px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
+#mc a{display:block;background:var(--ind);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.97rem;text-align:center;padding:13px;border-radius:8px;text-decoration:none;}
+#mc-s{text-align:center;font-size:.7rem;color:var(--ink-mute);margin-top:5px;}
+@media(max-width:900px){.hero-inner,.wrap{grid-template-columns:1fr;}.sb,.nps-explain{display:none;}.how,.rel{grid-template-columns:1fr;}#mc{display:block;}}
+
+
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mc"><a href="https://votegenerator.com/survey?template=nps-quick">Use This Template — Free</a><div id="mc-s">No signup required · 2 questions · Instant NPS score</div></div>
+<nav class="nav">
+<a href="https://votegenerator.com" class="logo"><img src="/logo.svg" alt="VoteGenerator"><span class="nav-name">VoteGenerator</span></a>
+<span class="nav-sep">/</span>
+<span class="nav-cr"><a href="/templates/">Templates</a> / <a href="/templates/customer-surveys/">Customer</a> / NPS Survey</span>
+<a href="https://votegenerator.com/survey?template=nps-quick" class="nav-cta">Use This Template</a>
+</nav>
+<section class="hero" id="hero">
+<div class="hero-dots"></div>
+<div class="hero-inner">
+<div>
+<div class="eyebrow"><span class="tag-a">NPS Survey Template</span><span class="tag-b">Free</span></div>
+<h1>Free NPS Survey<br>Template</h1>
+<p class="hero-sub">2 questions. Instant Net Promoter Score. Know your Promoters, Passives, and Detractors the moment responses come in. No signup from anyone.</p>
+<div class="cta-wrap">
+<a href="https://votegenerator.com/survey?template=nps-quick" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template</a>
+<p class="cta-s">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
+<div style="display:flex;">
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c7d2fe,#a5b4fc);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#312e81;">PM</div>
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ddd6fe,#c4b5fd);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#3730a3;margin-left:-7px">CS</div>
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#1e1b4b;margin-left:-7px">FM</div>
+</div>
+<p style="font-size:.82rem;color:rgba(255,255,255,.5);">Built for <strong style="color:rgba(255,255,255,.75);">product managers, customer success &amp; founders</strong></p>
+</div>
+</div>
+<div class="pv-card">
+<div class="pv-head"><div class="pv-head-t">NPS Survey</div><div class="pv-head-s">2 questions · Under 90 seconds · Instant score</div></div>
+<div class="pv-prog"><div class="pv-track"><div class="pv-fill" id="pv-fill" style="width:50%"></div></div><span class="pv-lbl" id="pv-lbl">1 of 2</span></div>
+<div class="pv-body" id="pv-body"></div>
+<div class="pv-foot">
+<div class="pv-live"><span class="pv-dot"></span> Live demo</div>
+<div class="pv-nav">
+<button class="pv-btn pv-back" id="pv-back" onclick="pvN(-1)" style="display:none">Back</button>
+<button class="pv-btn pv-next" id="pv-next" onclick="pvN(1)" disabled>Next</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="trust-bar"><div class="trust-inner">
+<div class="trust-item"><span class="trust-check">✓</span> 100% free</div>
+<div class="trust-item"><span class="trust-check">✓</span> No signup from customers</div>
+<div class="trust-item"><span class="trust-check">✓</span> NPS auto-calculated</div>
+<div class="trust-item"><span class="trust-check">✓</span> Promoter/Passive/Detractor split</div>
+<div class="trust-item"><span class="trust-check">✓</span> Up to 100 responses free</div>
+</div></div>
+<div class="wrap">
+<main class="art">
+<div class="sec" id="questions">
+<div class="ey">Template Questions</div>
+<h2>Both Survey Questions</h2>
+<p>NPS is intentionally minimal. The 0–10 loyalty question is the only standardised, benchmarkable metric. The follow-up open text gives you the <em>why</em> — the qualitative insight that turns a score into action. Two questions. That's all you need.</p>
+<div class="q-list">
+<div class="q-row"><span class="q-n">01</span><span class="q-t">How likely are you to recommend us to a friend or colleague? (0–10)</span><span class="qb bn">NPS Scale</span></div>
+<div class="q-row"><span class="q-n">02</span><span class="q-t">What is the main reason for your score?</span><span class="qb bo">Open Text</span></div>
+</div>
+</div>
+<div class="sec" id="why">
+<div class="ey">Understanding NPS</div>
+<h2>Promoters, Passives, and Detractors</h2>
+<div class="nps-explain">
+<div class="ne d"><div class="ne-n">0–6</div><div class="ne-l">Detractors</div><div class="ne-d">Unhappy customers who may actively discourage others from buying.</div></div>
+<div class="ne pa"><div class="ne-n">7–8</div><div class="ne-l">Passives</div><div class="ne-d">Satisfied but unenthusiastic. Vulnerable to competitive offers.</div></div>
+<div class="ne pr"><div class="ne-n">9–10</div><div class="ne-l">Promoters</div><div class="ne-d">Loyal enthusiasts who fuel growth through word-of-mouth.</div></div>
+</div>
+<p>Your NPS = Promoters% − Detractors%. Passives do not count toward the score. Scores range from −100 to +100. <strong>Above +30 is good. Above +50 is excellent.</strong> The open text question tells you why — which is what you actually need to move the number.</p>
+</div>
+<div class="sec" id="how">
+<div class="ey">How It Works</div>
+<h2>Measure Loyalty in 3 Steps</h2>
+<div class="how">
+<div class="hc"><div class="hn">1</div><div class="ht">Use This Template</div><div class="hd">2 questions pre-loaded. Send in 60 seconds — no setup required.</div></div>
+<div class="hc"><div class="hn">2</div><div class="ht">Share with customers</div><div class="hd">Post-purchase email, support close, in-app. No login needed.</div></div>
+<div class="hc"><div class="hn">3</div><div class="ht">See your NPS live</div><div class="hd">Score, segmentation, and open text reasons update instantly.</div></div>
+</div>
+</div>
+<div class="sec" id="results">
+<div class="ey">Sample Results</div>
+<h2>Your NPS Dashboard</h2>
+<p>After 243 responses, here's what your live dashboard shows. The Detractor percentage and open text responses are where improvement starts:</p>
+<div class="rc">
+<div class="rch"><span class="rch-t">NPS Survey · 243 responses</span><span class="rch-s">Rolling 90 days</span></div>
+<div class="rc-score-area">
+<div class="rc-nps-num" id="nps-n">—</div>
+<div class="rc-nps-lbl">Net Promoter Score</div>
+<div class="rc-segs">
+<div class="rs p"><div class="rs-n">142</div><div class="rs-l">Promoters (9–10)</div></div>
+<div class="rs pa"><div class="rs-n">64</div><div class="rs-l">Passives (7–8)</div></div>
+<div class="rs d"><div class="rs-n">37</div><div class="rs-l">Detractors (0–6)</div></div>
+</div>
+</div>
+<div class="rc-bars" id="results-body">
+<div class="rb-row"><div class="rb-lbl">Promoters (9–10)<span>58%</span></div><div class="rb-track"><div class="rb-fill" data-w="58"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Passives (7–8)<span>26%</span></div><div class="rb-track"><div class="rb-fill" data-w="26" style="background:#fbbf24"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Detractors (0–6)<span>15%</span></div><div class="rb-track"><div class="rb-fill" data-w="15" style="background:#f87171"></div></div></div>
+</div>
+        <div style="margin:0 0 0;border-top:1px solid rgba(255,255,255,.06);">
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:8px;background:rgba(108,60,225,.12);">
+                <span style="background:#6C3CE1;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:2px 7px;">Pro</span>
+                <span style="font-size:.82rem;font-weight:600;color:rgba(255,255,255,.8);">Response Timeline Analytics</span>
+            </div>
+            <div style="position:relative;overflow:hidden;min-height:115px;">
+                <div style="filter:blur(5px);opacity:0.65;pointer-events:none;user-select:none;"><svg viewBox="0 0 460 105" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#1e1e4a">
+  <line x1="0" y1="25" x2="460" y2="25" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="45" x2="460" y2="45" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="65" x2="460" y2="65" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="85" x2="460" y2="85" stroke="#e2e8f0" stroke-width="1"/>
+  <path d="M 20,63 L 77,58 L 135,61 L 192,51 L 250,46 L 307,51 L 365,40 L 422,35 L 422,88 L 20,88 Z" fill="rgba(165,180,252,0.25)"/>
+  <polyline points="20,63 77,58 135,61 192,51 250,46 307,51 365,40 422,35" fill="none" stroke="#a5b4fc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="63" r="4.5" fill="#a5b4fc"/>
+  <circle cx="77" cy="58" r="4.5" fill="#a5b4fc"/>
+  <circle cx="135" cy="61" r="4.5" fill="#a5b4fc"/>
+  <circle cx="192" cy="51" r="4.5" fill="#a5b4fc"/>
+  <circle cx="250" cy="46" r="4.5" fill="#a5b4fc"/>
+  <circle cx="307" cy="51" r="4.5" fill="#a5b4fc"/>
+  <circle cx="365" cy="40" r="4.5" fill="#a5b4fc"/>
+  <circle cx="422" cy="35" r="4.5" fill="#a5b4fc"/>
+  <text x="20" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 1</text>
+  <text x="77" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 2</text>
+  <text x="135" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 3</text>
+  <text x="192" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 4</text>
+  <text x="250" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 5</text>
+  <text x="307" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 6</text>
+  <text x="365" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 7</text>
+  <text x="422" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 8</text>
+</svg></div>
+                <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,16,50,0.87);z-index:10;gap:5px;padding:14px;">
+                    <div style="font-size:1.4rem;">🔒</div>
+                    <div style="font-size:.87rem;font-weight:700;color:#fff;text-align:center;">Track trends across weeks and releases</div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,.6);text-align:center;max-width:280px;line-height:1.5;">See whether scores improve after changes. CSV export included.</div>
+                    <a href="https://votegenerator.com/pricing" style="margin-top:7px;background:#6C3CE1;color:#fff;font-size:.8rem;font-weight:700;padding:8px 22px;border-radius:6px;text-decoration:none;">Unlock with Pro — $19/month</a>
+                </div>
+            </div>
+        </div>
+
+</div>
+</div>
+<div class="sec" id="faq">
+<div class="ey">FAQ</div>
+<h2>Frequently Asked Questions</h2>
+<div class="faq-list">
+<details class="fq"><summary>Is this NPS survey template free?</summary><div class="fq-ans">Yes. Free forever, no signup required from you or your customers. Up to 100 responses free. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows 10,000 responses and response timeline analytics for tracking NPS trends.</div></details>
+<details class="fq"><summary>What is NPS (Net Promoter Score)?</summary><div class="fq-ans">NPS is a loyalty metric based on one question: how likely are you to recommend us, on a 0-10 scale. Scores 9-10 are Promoters, 7-8 are Passives, 0-6 are Detractors. Your NPS = Promoters% minus Detractors%. Range: -100 to +100.</div></details>
+<details class="fq"><summary>What is a good NPS score?</summary><div class="fq-ans">Any positive score means more Promoters than Detractors. Above +30 is good. Above +50 is excellent. Above +70 is world-class. SaaS companies average around +30; consumer brands like Apple have historically scored above +70.</div></details>
+<details class="fq"><summary>How often should I measure NPS?</summary><div class="fq-ans">Transactional NPS (sent after a purchase or support ticket) can run continuously. Relationship NPS (overall brand loyalty) is typically sent quarterly. More than quarterly for relationship NPS risks survey fatigue and lower response rates.</div></details>
+<details class="fq"><summary>What is the difference between NPS and CSAT?</summary><div class="fq-ans">NPS measures overall loyalty and likelihood to recommend — a leading growth indicator. CSAT measures satisfaction with a specific interaction. Use NPS to track brand health over time; use our <a href="/templates/customer-satisfaction-survey">CSAT template</a> to diagnose specific touchpoints.</div></details>
+<details class="fq"><summary>How do I improve a low NPS?</summary><div class="fq-ans">Segment your open text: contact Detractors directly to resolve their issues, ask Promoters for referrals, and use Passives' feedback for quick wins. Track NPS monthly to see whether changes are working.</div></details>
+</div>
+</div>
+<div class="sec" id="related">
+<div class="ey">Related Templates</div>
+<h2>More Customer Survey Templates</h2>
+<div class="rel">
+<a href="/templates/customer-satisfaction-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">Customer Satisfaction Survey</div><div class="rc2-d">NPS + CSAT + quality ratings in one 5-question template.</div></a>
+<a href="/templates/post-purchase-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">Post-Purchase Feedback</div><div class="rc2-d">5 questions sent right after purchase. Experience, quality, repurchase.</div></a>
+<a href="/templates/employee-engagement-survey" class="rc2"><div class="rc2-cat">Employee</div><div class="rc2-t">Employee Engagement Survey</div><div class="rc2-d">10 Gallup-inspired questions for quarterly team check-ins.</div></a>
+</div>
+</div>
+<div class="bcta">
+<h2>Measure loyalty in 60 seconds</h2>
+<p>2 questions. Instant NPS. No signup from anyone.</p>
+<a href="https://votegenerator.com/survey?template=nps-quick" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template — Free</a>
+<p class="cta-s">No signup required · Free up to 100 responses · Pro from $19/month</p>
+</div>
+</main>
+<aside class="sb">
+<div class="sb-cta"><p>"2 questions. Instant NPS score. Send in 60 seconds."</p><a href="https://votegenerator.com/survey?template=nps-quick">Use This Template →</a></div>
+<div class="sb-card"><div class="sb-head">Template Details</div><div class="sb-meta">
+<div class="sb-r"><span class="sb-rl">Questions</span><span class="sb-rv">2</span></div>
+<div class="sb-r"><span class="sb-rl">Metric</span><span class="sb-rv">NPS</span></div>
+<div class="sb-r"><span class="sb-rl">Free responses</span><span class="sb-rv">100</span></div>
+<div class="sb-r"><span class="sb-rl">Completion</span><span class="sb-rv">&lt;90 seconds</span></div>
+<div class="sb-r"><span class="sb-rl">Frequency</span><span class="sb-rv">Quarterly</span></div>
+</div></div>
+<div class="sb-card"><div class="sb-head">Related</div><ul class="sb-links">
+<li><a href="/templates/customer-satisfaction-survey">Customer Satisfaction (CSAT)</a></li>
+<li><a href="/templates/post-purchase-survey">Post-Purchase Feedback</a></li>
+<li><a href="/templates/exit-interview-survey">Exit Interview Survey</a></li>
+</ul></div>
+</aside>
+</div>
+<footer><div class="fl">VoteGenerator</div><p>Free NPS survey template. Net Promoter Score in 2 questions. No signup. 100 responses free.</p><ul><li><a href="https://votegenerator.com">Home</a></li><li><a href="/templates/">Templates</a></li><li><a href="https://votegenerator.com/blog">Blog</a></li><li><a href="https://votegenerator.com/pricing">Pricing</a></li><li><a href="https://votegenerator.com/privacy">Privacy</a></li></ul><p>&copy; 2026 VoteGenerator. All rights reserved.</p></footer>
+<script>
+const Q=[{type:'nps',q:'How likely are you to recommend us to a friend or colleague?'},{type:'open',q:'What is the main reason for your score?'}];
+let cur=0,ans={};
+function zone(v){return v<=6?'det':v<=8?'pas':'pro';}
+function zl(v){return v<=6?'Detractor':v<=8?'Passive':'Promoter';}
+function render(){
+const q=Q[cur];
+document.getElementById('pv-fill').style.width=((cur+1)/2*100)+'%';
+document.getElementById('pv-lbl').textContent=(cur+1)+' of 2';
+let h=`<div class="pv-q">${q.q}</div>`;
+if(q.type==='nps'){
+h+='<div class="nps-zones"><div class="nps-zone-labels"><div class="nz d" style="flex:7">Detractors 0–6</div><div class="nz pa" style="flex:2">Passive</div><div class="nz pr" style="flex:2">Promoters</div></div><div class="nps-row">';
+for(let i=0;i<=10;i++){const z=zone(i),s=ans[cur]===i?z:'';h+=`<button class="nps-btn ${s}" onclick="pnps(${i})" onmouseenter="ph(${i})" onmouseleave="pl()">${i}</button>`;}
+h+=`</div><div class="nps-labels"><span>Not likely</span><span>Extremely likely</span></div></div>`;
+if(ans[cur]!==undefined){const z=zl(ans[cur]);const col=ans[cur]<=6?'#dc2626':ans[cur]<=8?'#ca8a04':'#16a34a';h+=`<p style="text-align:center;font-size:.82rem;font-weight:700;color:${col};margin-top:10px">You are a ${z}</p>`;}
+}else{h+=`<textarea class="pv-ta" placeholder="Your reason helps us improve..." oninput="ptx(this.value)">${ans[cur]||''}</textarea>`;}
+document.getElementById('pv-body').innerHTML=h;
+const nx=document.getElementById('pv-next');
+nx.disabled=ans[cur]===undefined&&q.type!=='open';
+nx.textContent=cur>=Q.length-1?'Submit ✓':'Next';
+document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function pnps(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function ptx(v){ans[cur]=v||' ';}
+function ph(v){document.querySelectorAll('.nps-btn').forEach((b,i)=>{b.className='nps-btn '+zone(i);});}
+function pl(){document.querySelectorAll('.nps-btn').forEach((b,i)=>{b.className='nps-btn '+(ans[cur]===i?zone(i):'');});}
+function pvN(d){
+if(d===1&&cur>=Q.length-1){document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">📊</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">NPS captured!</div><div style="font-size:.83rem;color:var(--ink-soft);margin-bottom:14px">Your real survey auto-calculates NPS as responses arrive.</div><a href="https://votegenerator.com/survey?template=nps-quick" style="background:var(--ind);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;document.getElementById('pv-fill').style.width='100%';document.getElementById('pv-lbl').textContent='Complete';document.getElementById('pv-next').style.display='none';document.getElementById('pv-back').style.display='block';return;}
+cur=Math.max(0,Math.min(Q.length-1,cur+d));
+if(d===1)document.getElementById('pv-next').style.display='block';
+render();
+}
+render();
+new IntersectionObserver(e=>{if(e[0].isIntersecting){document.querySelectorAll('.rb-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});let n=-40;const el=document.getElementById('nps-n');const t=setInterval(()=>{n+=2;el.textContent=(n>=0?'+':'')+Math.round(n);if(n>=43){el.textContent='+43';clearInterval(t);}},20);}},{threshold:.3}).observe(document.getElementById('results'));
+const prog=document.getElementById('prog'),mc=document.getElementById('mc'),h=document.getElementById('hero');
+window.addEventListener('scroll',()=>{const d=document.documentElement;prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';if(window.innerWidth<=900)mc.style.display=h.getBoundingClientRect().bottom<0?'block':'none';},{passive:true});
+</script>
+</body>
+</html>

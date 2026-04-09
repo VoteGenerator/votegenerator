@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Patient Satisfaction Survey Template | Healthcare Feedback | VoteGenerator</title>
+<meta name="description" content="Free patient satisfaction survey template. 8 questions covering care quality, provider communication, wait times, and likelihood to recommend. Works for clinics, practices, and hospitals. No signup required.">
+<link rel="canonical" href="https://votegenerator.com/templates/patient-satisfaction-survey">
+<meta property="og:title" content="Free Patient Satisfaction Survey Template | VoteGenerator">
+<meta property="og:description" content="8 questions covering care quality, communication, wait times, and NPS. Anonymous. No signup. Free.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Patient Satisfaction Survey Template","applicationCategory":"MedicalApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free 8-question patient satisfaction survey covering overall care quality, provider communication, wait times, staff friendliness, facility cleanliness, NPS, return intent, and open feedback. Works for medical practices, clinics, dental offices, and hospitals. No signup required.","url":"https://votegenerator.com/templates/patient-satisfaction-survey","provider":{"@type":"Organization","name":"VoteGenerator","url":"https://votegenerator.com"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is this patient satisfaction survey template free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Free forever with no signup required from you or your patients. Up to 100 responses per survey on the free plan. Pro ($19/month) allows 10,000 responses — better for busy practices collecting patient feedback continuously."}},{"@type":"Question","name":"What questions should a patient satisfaction survey include?","acceptedAnswer":{"@type":"Answer","text":"Effective patient satisfaction surveys cover: overall care experience, provider communication and listening, wait time satisfaction, staff friendliness, facility cleanliness and comfort, likelihood to recommend the practice (NPS), intent to return, and open feedback. This template covers all eight dimensions."}},{"@type":"Question","name":"When should I send a patient satisfaction survey?","acceptedAnswer":{"@type":"Answer","text":"Send within 24 hours of the appointment while the experience is fresh. Text or email surveys immediately post-visit achieve the highest response rates. Avoid sending more than 24-48 hours after the visit — patient recall decreases significantly and response rates drop."}},{"@type":"Question","name":"Does this patient survey comply with HIPAA?","acceptedAnswer":{"@type":"Answer","text":"VoteGenerator collects survey responses anonymously — no names, email addresses, or patient identifiers are stored. The survey link does not transmit protected health information (PHI). However, practices should consult their compliance officer before implementing any patient communication tool to ensure it meets their specific HIPAA requirements."}},{"@type":"Question","name":"How do I share this survey with patients?","acceptedAnswer":{"@type":"Answer","text":"Share via text message post-appointment, in your patient portal, on printed cards at checkout, via QR code in the waiting room, or in your post-visit email. No login required from patients — they click and respond immediately."}},{"@type":"Question","name":"Can I use this survey for dental or specialist practices?","acceptedAnswer":{"@type":"Answer","text":"Yes. The template works for any healthcare setting — GP practices, dental offices, specialist clinics, physiotherapy, mental health, and urgent care. All 8 questions are fully editable. Replace 'doctor' with 'dentist' or 'therapist' to match your practice before sharing."}},{"@type":"Question","name":"How do I use patient feedback to improve care?","acceptedAnswer":{"@type":"Answer","text":"Focus on the gap between your highest and lowest dimension scores. If care quality scores 4.6 but wait time scores 2.8, wait time management is your priority. The open text question reveals the specific 'one thing' patients wish you'd change. Aggregate at least 20 responses before drawing conclusions to avoid outlier bias."}}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1e3a5f;--navy-lt:#2563eb;--sky:#0ea5e9;--sky-pale:#f0f9ff;--sky-dim:rgba(14,165,233,0.1);--ink:#0f1e2d;--ink-mid:#1e3a5f;--ink-soft:#4b7096;--ink-mute:#8fb0cc;--bg:#fff;--bg-soft:#f8fbff;--b:#bae6fd;--b-std:#e2e8f0;--pro:#6C3CE1;--green:#16a34a;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{font-family:'Asap',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;padding-bottom:80px;}
+#prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--sky),var(--navy-lt));z-index:2000;transition:width .1s;}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(30,58,95,.97);backdrop-filter:blur(10px);height:56px;display:flex;align-items:center;padding:0 24px;gap:8px;}
+.nav a.logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.nav a.logo img{width:22px;height:22px;filter:brightness(10);}
+.nav-n{font-weight:700;font-size:.88rem;color:#fff;}
+.nav-sep{color:rgba(255,255,255,.2);}
+.nav-cr{font-size:.78rem;color:rgba(255,255,255,.5);}
+.nav-cr a{color:rgba(255,255,255,.5);text-decoration:none;}
+.nav-cr a:hover{color:var(--sky);}
+.nav-cta{margin-left:auto;background:var(--sky);color:#fff;font-size:.82rem;font-weight:700;padding:8px 18px;border-radius:6px;text-decoration:none;}
+.nav-cta:hover{background:var(--navy-lt);}
+
+/* HERO — dark navy with EKG line */
+.hero{background:var(--navy);padding:56px 24px 0;position:relative;overflow:hidden;}
+.ekg-wrap{position:absolute;bottom:0;left:0;right:0;opacity:.25;pointer-events:none;}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center;position:relative;}
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.tag-a{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(186,230,253,.8);}
+.tag-b{font-size:.7rem;font-weight:700;background:var(--sky);color:#fff;border-radius:4px;padding:2px 9px;}
+h1{font-size:clamp(1.9rem,4vw,2.75rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;color:#fff;margin-bottom:14px;}
+h1 em{font-style:normal;color:#7dd3fc;}
+.hero-sub{font-size:1.04rem;color:rgba(255,255,255,.65);line-height:1.68;max-width:480px;margin-bottom:28px;}
+.cta-p{display:inline-flex;align-items:center;gap:8px;background:var(--sky);color:#fff;font-family:'Asap',sans-serif;font-weight:700;font-size:1.05rem;padding:15px 32px;border-radius:8px;text-decoration:none;transition:all .15s;box-shadow:0 4px 20px rgba(14,165,233,.3);}
+.cta-p:hover{background:var(--navy-lt);transform:translateY(-1px);}
+.cta-p svg{width:16px;height:16px;}
+.cta-s{font-size:.8rem;color:rgba(255,255,255,.35);margin-top:8px;}
+.cta-s span{margin:0 5px;}
+
+/* PREVIEW — clinical clean */
+.pv-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.pv-head{background:linear-gradient(135deg,var(--navy),#1e5f8a);padding:16px 18px;}
+.pv-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:.65rem;font-weight:600;color:#7dd3fc;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.pv-ht{font-weight:700;font-size:.92rem;color:#fff;}
+.pv-hs{font-size:.7rem;color:rgba(255,255,255,.6);margin-top:2px;}
+.pv-prog{background:var(--sky-pale);border-bottom:1px solid var(--b);padding:9px 18px;display:flex;align-items:center;gap:10px;}
+.pv-track{flex:1;height:4px;background:var(--b);border-radius:2px;overflow:hidden;}
+.pv-fill{height:100%;background:var(--sky);border-radius:2px;transition:width .4s ease;}
+.pv-lbl{font-size:.7rem;font-weight:600;color:var(--ink-mute);white-space:nowrap;}
+.pv-body{padding:18px;min-height:180px;background:#fff;}
+.pv-q{font-weight:600;font-size:.9rem;color:var(--ink);margin-bottom:14px;line-height:1.45;}
+.scale-row{display:flex;gap:5px;}
+.scale-btn{flex:1;padding:10px 3px;border:1.5px solid var(--b-std);border-radius:6px;cursor:pointer;text-align:center;font-family:'Asap',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink-mute);background:#fff;transition:all .15s;}
+.scale-btn:hover{border-color:var(--sky);color:var(--sky);}
+.scale-btn.sel{border-color:var(--sky);background:var(--sky);color:#fff;}
+.scale-labels{display:flex;justify-content:space-between;font-size:.64rem;color:var(--ink-mute);margin-top:4px;}
+.yn-row{display:flex;gap:8px;}
+.yn-btn{flex:1;padding:12px;border:1.5px solid var(--b-std);border-radius:6px;cursor:pointer;text-align:center;font-family:'Asap',sans-serif;font-size:.9rem;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .15s;}
+.yn-btn:hover{border-color:var(--sky);color:var(--sky);}
+.yn-btn.sel{border-color:var(--sky);background:var(--sky);color:#fff;}
+.nps-row{display:flex;gap:3px;}
+.nps-btn{flex:1;padding:9px 2px;border:1.5px solid var(--b-std);border-radius:4px;cursor:pointer;text-align:center;font-family:'Asap',sans-serif;font-size:.72rem;font-weight:600;color:var(--ink-mute);background:#fff;transition:all .15s;}
+.nps-btn:hover{border-color:var(--sky);color:var(--sky);}
+.nps-btn.sel{border-color:var(--sky);background:var(--sky);color:#fff;}
+.nps-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--ink-mute);margin-top:4px;}
+.pv-ta{width:100%;border:1.5px solid var(--b-std);border-radius:6px;padding:10px 12px;resize:none;height:72px;font-family:'Asap',sans-serif;font-size:.86rem;color:var(--ink);outline:none;transition:border-color .15s;}
+.pv-ta:focus{border-color:var(--sky);}
+.pv-ta::placeholder{color:var(--ink-mute);}
+.pv-foot{border-top:1px solid var(--b-std);background:var(--sky-pale);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+.pv-live{font-size:.68rem;color:var(--ink-soft);display:flex;align-items:center;gap:4px;}
+.pv-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.pv-nav{display:flex;gap:6px;}
+.pv-btn{font-family:'Asap',sans-serif;font-size:.8rem;font-weight:700;padding:7px 14px;border-radius:5px;border:none;cursor:pointer;}
+.pv-bb{background:var(--b-std);color:var(--ink-soft);}
+.pv-nb{background:var(--sky);color:#fff;}
+.pv-nb:disabled{background:var(--b-std);color:var(--ink-mute);cursor:not-allowed;}
+
+/* TRUST */
+.trust-bar{background:var(--sky-pale);border-bottom:1px solid var(--b);padding:12px 24px;}
+.ti{max-width:1100px;margin:0 auto;display:flex;justify-content:center;gap:28px;flex-wrap:wrap;}
+.titem{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--ink-soft);font-weight:500;}
+.tck{color:var(--sky);font-weight:700;}
+
+/* CONTENT */
+.wrap{max-width:1100px;margin:0 auto;padding:56px 24px 0;display:grid;grid-template-columns:1fr 260px;gap:56px;align-items:start;}
+.sec{margin-bottom:48px;}
+.ey{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sky);margin-bottom:8px;}
+h2{font-size:1.42rem;font-weight:800;color:var(--ink);margin-bottom:14px;letter-spacing:-.01em;line-height:1.25;}
+p{font-size:.97rem;line-height:1.8;color:var(--ink-mid);margin-bottom:12px;}
+p strong{color:var(--ink);font-weight:700;}
+p:last-child{margin-bottom:0;}
+
+.ql{display:flex;flex-direction:column;gap:5px;}
+.qr{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:11px 14px;background:var(--sky-pale);border:1px solid var(--b);border-radius:7px;}
+.qn{font-size:.7rem;font-weight:700;color:var(--sky);}
+.qt{font-size:.9rem;color:var(--ink-mid);}
+.qb{font-size:.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 7px;white-space:nowrap;}
+.bs{background:#e0f2fe;color:#0369a1;}.bn{background:#eff6ff;color:#1d4ed8;}.by{background:#f0fdf4;color:#15803d;}.bo{background:#f5f3ff;color:#6C3CE1;}
+
+/* Care journey */
+.journey{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;}
+.jc{background:var(--sky-pale);border:1px solid var(--b);border-radius:8px;padding:14px;text-align:center;}
+.jc-icon{font-size:1.4rem;margin-bottom:6px;}
+.jc-t{font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.jc-d{font-size:.72rem;color:var(--ink-soft);line-height:1.5;}
+
+/* how */
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.hc{text-align:center;padding:18px 14px;background:var(--sky-pale);border:1px solid var(--b);border-radius:8px;}
+.hn{width:34px;height:34px;background:var(--navy);color:var(--sky);border-radius:50%;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.ht{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.hd{font-size:.78rem;color:var(--ink-soft);line-height:1.5;}
+
+/* results */
+.rc{background:var(--navy);border-radius:10px;overflow:hidden;}
+.rch{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;}
+.rch-t{font-weight:700;font-size:.87rem;color:#fff;}
+.rch-s{font-size:.72rem;color:rgba(255,255,255,.4);}
+.rc-scores{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.06);}
+.rg{background:var(--navy);padding:14px 10px;text-align:center;}
+.rg-n{font-size:1.5rem;font-weight:800;color:#7dd3fc;line-height:1;}
+.rg-l{font-size:.64rem;color:rgba(255,255,255,.45);margin-top:3px;line-height:1.4;}
+.rb-body{padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.rb-row{}
+.rb-lbl{display:flex;justify-content:space-between;font-size:.8rem;color:rgba(255,255,255,.6);margin-bottom:5px;font-weight:500;}
+.rb-lbl span{font-weight:700;color:#fff;}
+.rb-track{height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.rb-fill{height:100%;border-radius:4px;background:var(--sky);transition:width 1s ease;width:0;}
+
+/* faq */
+.faq-list{display:flex;flex-direction:column;gap:6px;}
+details.fq{background:var(--bg);border:1px solid var(--b-std);border-radius:7px;overflow:hidden;}
+details.fq[open]{border-color:var(--sky);}
+details.fq summary{padding:13px 16px;font-weight:700;font-size:.9rem;color:var(--ink);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;}
+details.fq summary::after{content:'+';font-size:1.1rem;color:var(--sky);flex-shrink:0;transition:transform .2s;}
+details.fq[open] summary::after{transform:rotate(45deg);}
+details.fq summary::-webkit-details-marker{display:none;}
+.fq-ans{padding:0 16px 14px;font-size:.9rem;line-height:1.72;color:var(--ink-mid);}
+.fq-ans a{color:var(--sky);text-decoration:none;}
+
+/* related */
+.rel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.rc2{border:1px solid var(--b-std);border-radius:7px;padding:14px;text-decoration:none;background:var(--bg);transition:all .15s;}
+.rc2:hover{border-color:var(--sky);}
+.rc2-cat{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sky);margin-bottom:5px;}
+.rc2-t{font-size:.85rem;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:3px;}
+.rc2-d{font-size:.76rem;color:var(--ink-soft);line-height:1.5;}
+
+/* bottom cta */
+.bcta{background:var(--navy);border-radius:10px;padding:40px 32px;text-align:center;margin:52px 0;position:relative;overflow:hidden;}
+.bcta::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--sky);}
+.bcta h2{font-size:1.55rem;font-weight:800;color:#fff;margin-bottom:8px;}
+.bcta p{font-size:.96rem;color:rgba(255,255,255,.65);margin-bottom:22px;}
+.bcta .cta-p{display:inline-flex;}
+.bcta .cta-s{color:rgba(255,255,255,.35);margin-top:10px;}
+
+/* sidebar */
+.sb{position:sticky;top:72px;}
+.sb-cta{background:var(--navy);border-radius:8px;padding:18px;text-align:center;margin-bottom:14px;border-bottom:3px solid var(--sky);}
+.sb-cta p{font-size:.83rem;color:rgba(255,255,255,.75);margin-bottom:12px;font-style:italic;line-height:1.5;}
+.sb-cta a{display:block;background:var(--sky);color:#fff;font-weight:700;font-size:.84rem;padding:10px;border-radius:6px;text-decoration:none;}
+.sb-cta a:hover{background:var(--navy-lt);}
+.sb-card{background:var(--sky-pale);border:1px solid var(--b);border-radius:8px;padding:16px;margin-bottom:14px;}
+.sb-head{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;}
+.sb-meta{display:flex;flex-direction:column;gap:7px;}
+.sb-r{display:flex;justify-content:space-between;font-size:.82rem;}
+.sb-rl{color:var(--ink-soft);}
+.sb-rv{font-weight:700;color:var(--ink);}
+.sb-links{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.sb-links a{font-size:.83rem;color:var(--sky);text-decoration:none;font-weight:600;}
+.sb-links a:hover{text-decoration:underline;}
+footer{background:var(--navy);padding:36px 24px;text-align:center;margin-top:80px;}
+footer .fl{font-weight:700;color:#fff;font-size:.92rem;margin-bottom:5px;}
+footer p{font-size:.8rem;color:rgba(255,255,255,.35);margin-bottom:10px;}
+footer ul{list-style:none;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+footer ul a{font-size:.76rem;color:rgba(255,255,255,.4);text-decoration:none;}
+footer ul a:hover{color:#fff;}
+#mc{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:#fff;border-top:1px solid var(--b-std);padding:12px 20px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
+#mc a{display:block;background:var(--sky);color:#fff;font-family:'Asap',sans-serif;font-weight:700;font-size:.97rem;text-align:center;padding:13px;border-radius:8px;text-decoration:none;}
+#mc-s{text-align:center;font-size:.7rem;color:var(--ink-mute);margin-top:5px;}
+@media(max-width:900px){.hero-inner,.wrap{grid-template-columns:1fr;}.sb{display:none;}.how,.rel,.journey,.rc-scores{grid-template-columns:repeat(2,1fr);}#mc{display:block;}}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mc"><a href="https://votegenerator.com/survey?template=patient-satisfaction">Use This Template — Free</a><div id="mc-s">No signup required · 8 questions · Anonymous</div></div>
+<nav class="nav">
+<a href="https://votegenerator.com" class="logo"><img src="/logo.svg" alt="VoteGenerator"><span class="nav-n">VoteGenerator</span></a>
+<span class="nav-sep">/</span>
+<span class="nav-cr"><a href="/templates/">Templates</a> / <a href="/templates/healthcare/">Healthcare</a> / Patient Satisfaction</span>
+<a href="https://votegenerator.com/survey?template=patient-satisfaction" class="nav-cta">Use This Template</a>
+</nav>
+
+<section class="hero" id="hero">
+<svg class="ekg-wrap" viewBox="0 0 1200 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+<polyline points="0,30 200,30 240,30 260,5 275,55 290,8 305,50 320,30 500,30 520,30 540,5 555,55 570,8 585,50 600,30 800,30 820,30 840,5 855,55 870,8 885,50 900,30 1200,30" fill="none" stroke="#38bdf8" stroke-width="2"/>
+</svg>
+<div class="hero-inner">
+<div>
+<div class="eyebrow"><span class="tag-a">Patient Survey Template</span><span class="tag-b">Free</span></div>
+<h1>Free Patient Satisfaction<br>Survey Template</h1>
+<p class="hero-sub">8 questions covering care quality, provider communication, wait times, and likelihood to recommend. Know how your patients truly feel — and fix what's quietly damaging your reputation.</p>
+<div style="margin-bottom:12px;">
+<a href="https://votegenerator.com/survey?template=patient-satisfaction" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template</a>
+<p class="cta-s">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:18px;">
+<div style="display:flex;">
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#bae6fd,#7dd3fc);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#0c4a6e;">GP</div>
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a5f3fc,#67e8f9);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#083344;margin-left:-7px">DX</div>
+<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ddd6fe,#c4b5fd);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#3730a3;margin-left:-7px">🏥</div>
+</div>
+<p style="font-size:.82rem;color:rgba(255,255,255,.55);">Built for <strong style="color:rgba(255,255,255,.8);">medical practices, clinics &amp; healthcare providers</strong></p>
+</div>
+</div>
+<div class="pv-card">
+<div class="pv-head">
+<div class="pv-badge">🏥 Patient Feedback</div>
+<div class="pv-ht">How was your visit with us today?</div>
+<div class="pv-hs">Anonymous · 8 questions · Under 3 minutes</div>
+</div>
+<div class="pv-prog"><div class="pv-track"><div class="pv-fill" id="pv-fill" style="width:12%"></div></div><span class="pv-lbl" id="pv-lbl">1 of 8</span></div>
+<div class="pv-body" id="pv-body"></div>
+<div class="pv-foot">
+<div class="pv-live"><span class="pv-dot"></span> Live demo</div>
+<div class="pv-nav">
+<button class="pv-btn pv-bb" id="pv-back" onclick="pvN(-1)" style="display:none">Back</button>
+<button class="pv-btn pv-nb" id="pv-next" onclick="pvN(1)" disabled>Next</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<div class="trust-bar"><div class="ti">
+<div class="titem"><span class="tck">✓</span> 100% anonymous</div>
+<div class="titem"><span class="tck">✓</span> No patient signup</div>
+<div class="titem"><span class="tck">✓</span> Share via QR or text</div>
+<div class="titem"><span class="tck">✓</span> Live results dashboard</div>
+<div class="titem"><span class="tck">✓</span> Up to 100 responses free</div>
+</div></div>
+
+<div class="wrap">
+<main style="min-width:0">
+
+<div class="sec" id="questions">
+<div class="ey">Template Questions</div>
+<h2>All 8 Patient Survey Questions</h2>
+<p>Eight questions map the complete patient care journey — from the moment they arrive to the moment they leave. <strong>Question 2</strong> (provider communication) is the single dimension most correlated with patient loyalty, online review scores, and word-of-mouth referrals. <strong>Question 3</strong> (wait time) is the dimension patients complain about most in open text — getting a score on it before they write a review gives you a chance to act.</p>
+<div class="ql">
+<div class="qr"><span class="qn">01</span><span class="qt">How would you rate your overall experience at our practice today?</span><span class="qb bs">Scale 1–5</span></div>
+<div class="qr"><span class="qn">02</span><span class="qt">How well did your doctor or provider communicate and listen to your concerns?</span><span class="qb bs">Scale 1–5</span></div>
+<div class="qr"><span class="qn">03</span><span class="qt">How satisfied were you with your wait time today?</span><span class="qb bs">Scale 1–5</span></div>
+<div class="qr"><span class="qn">04</span><span class="qt">How friendly and helpful was our staff?</span><span class="qb bs">Scale 1–5</span></div>
+<div class="qr"><span class="qn">05</span><span class="qt">How would you rate the cleanliness and comfort of our facility?</span><span class="qb bs">Scale 1–5</span></div>
+<div class="qr"><span class="qn">06</span><span class="qt">How likely are you to recommend our practice to a friend or family member? (0–10)</span><span class="qb bn">NPS Scale</span></div>
+<div class="qr"><span class="qn">07</span><span class="qt">Would you return to us for future care?</span><span class="qb by">Yes / No</span></div>
+<div class="qr"><span class="qn">08</span><span class="qt">Is there anything we could improve to make your next visit better?</span><span class="qb bo">Open Text</span></div>
+</div>
+</div>
+
+<div class="sec" id="journey">
+<div class="ey">The Care Journey</div>
+<h2>What Each Question Measures</h2>
+<p>Patient satisfaction isn't a single feeling — it's the sum of every touchpoint across the care journey. A patient who loved the doctor but waited 45 minutes and dealt with an unfriendly receptionist will not leave a 5-star review. This template covers all four stages of the experience your healthcare patient feedback needs to capture.</p>
+<div class="journey">
+<div class="jc"><div class="jc-icon">🚪</div><div class="jc-t">Arrival</div><div class="jc-d">Wait time and first impressions. Questions 3 and 4.</div></div>
+<div class="jc"><div class="jc-icon">🩺</div><div class="jc-t">Care</div><div class="jc-d">Provider communication and care quality. Questions 1 and 2.</div></div>
+<div class="jc"><div class="jc-icon">🏥</div><div class="jc-t">Environment</div><div class="jc-d">Facility cleanliness and comfort. Question 5.</div></div>
+<div class="jc"><div class="jc-icon">💬</div><div class="jc-t">Loyalty</div><div class="jc-d">NPS, return intent, and open feedback. Questions 6, 7, 8.</div></div>
+</div>
+<p>Patient loyalty is built in the first three stages but measured in the fourth. A practice with excellent clinical outcomes but poor wait time management and unfriendly front desk staff will see it in their NPS and their Google Reviews — usually at the same time. <strong>This patient satisfaction survey template gives you the data before it becomes a public problem.</strong></p>
+</div>
+
+<div class="sec" id="how">
+<div class="ey">How It Works</div>
+<h2>From Checkout to Insights in 3 Steps</h2>
+<div class="how">
+<div class="hc"><div class="hn">1</div><div class="ht">Use This Template</div><div class="hd">All 8 questions pre-loaded. Add your practice name before sharing.</div></div>
+<div class="hc"><div class="hn">2</div><div class="ht">Share post-visit</div><div class="hd">Text link, QR code at checkout, or post-visit email. No patient login needed.</div></div>
+<div class="hc"><div class="hn">3</div><div class="ht">Act before reviews</div><div class="hd">Low scores flag dissatisfied patients before they reach Google or Yelp. Address the gap early.</div></div>
+</div>
+</div>
+
+<div class="sec" id="results">
+<div class="ey">Sample Results</div>
+<h2>Your Patient Satisfaction Dashboard</h2>
+<p>After 94 patients responded over a four-week period, here's what the dashboard shows — the wait time gap is the clearest operational improvement to address immediately:</p>
+<div class="rc">
+<div class="rch"><span class="rch-t">Patient Satisfaction Survey · 94 responses</span><span class="rch-s">Rolling 4 weeks</span></div>
+<div class="rc-scores">
+<div class="rg"><div class="rg-n" id="rg1">—</div><div class="rg-l">Overall care rating</div></div>
+<div class="rg"><div class="rg-n" id="rg2">—</div><div class="rg-l">Net Promoter Score</div></div>
+<div class="rg"><div class="rg-n" id="rg3">—</div><div class="rg-l">Return for future care</div></div>
+</div>
+<div class="rb-body" id="results-body">
+<div class="rb-row"><div class="rb-lbl">Overall experience<span>4.4 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="88"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Provider communication<span>4.7 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="94"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Wait time<span>3.1 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="62" style="background:#f59e0b"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Staff friendliness<span>4.5 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="90"></div></div></div>
+<div class="rb-row"><div class="rb-lbl">Facility quality<span>4.3 / 5</span></div><div class="rb-track"><div class="rb-fill" data-w="86"></div></div></div>
+</div>
+<div style="position:relative;overflow:hidden;min-height:115px;">
+<div style="filter:blur(5px);opacity:0.6;pointer-events:none;user-select:none;"><svg viewBox="0 0 460 105" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#102840"><line x1="0" y1="25" x2="460" y2="25" stroke="#bae6fd" stroke-width="1" opacity="0.3"/><line x1="0" y1="45" x2="460" y2="45" stroke="#bae6fd" stroke-width="1" opacity="0.3"/><line x1="0" y1="65" x2="460" y2="65" stroke="#bae6fd" stroke-width="1" opacity="0.3"/><line x1="0" y1="85" x2="460" y2="85" stroke="#bae6fd" stroke-width="1" opacity="0.3"/><path d="M 20,63 L 77,58 L 135,61 L 192,51 L 250,46 L 307,51 L 365,40 L 422,35 L 422,88 L 20,88 Z" fill="rgba(14,165,233,0.25)"/><polyline points="20,63 77,58 135,61 192,51 250,46 307,51 365,40 422,35" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="63" r="4.5" fill="#0ea5e9"/><circle cx="77" cy="58" r="4.5" fill="#0ea5e9"/><circle cx="135" cy="61" r="4.5" fill="#0ea5e9"/><circle cx="192" cy="51" r="4.5" fill="#0ea5e9"/><circle cx="250" cy="46" r="4.5" fill="#0ea5e9"/><circle cx="307" cy="51" r="4.5" fill="#0ea5e9"/><circle cx="365" cy="40" r="4.5" fill="#0ea5e9"/><circle cx="422" cy="35" r="4.5" fill="#0ea5e9"/><text x="20" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 1</text><text x="77" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 2</text><text x="135" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 3</text><text x="192" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 4</text><text x="250" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 5</text><text x="307" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 6</text><text x="365" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 7</text><text x="422" y="100" text-anchor="middle" font-size="9" fill="#7dd3fc" font-family="sans-serif">Wk 8</text></svg></div>
+<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(10,20,40,0.88);z-index:10;gap:5px;padding:14px;">
+<div style="font-size:1.4rem;">🔒</div>
+<div style="font-size:.87rem;font-weight:700;color:#fff;text-align:center;">Track patient satisfaction trends over time</div>
+<div style="font-size:.75rem;color:rgba(255,255,255,.6);text-align:center;max-width:280px;line-height:1.5;">See whether scores improve after staffing changes, wait time initiatives, or facility upgrades.</div>
+<a href="https://votegenerator.com/pricing" style="margin-top:7px;background:#6C3CE1;color:#fff;font-size:.8rem;font-weight:700;padding:8px 22px;border-radius:6px;text-decoration:none;">Unlock with Pro — $19/month</a>
+</div>
+</div>
+</div>
+</div>
+
+<div class="sec" id="faq">
+<div class="ey">FAQ</div>
+<h2>Frequently Asked Questions</h2>
+<div class="faq-list">
+<details class="fq"><summary>Is this patient satisfaction survey template free?</summary><div class="fq-ans">Yes. Free forever with no signup from you or your patients. Up to 100 responses free. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows 10,000 responses — better for busy practices collecting patient feedback continuously.</div></details>
+<details class="fq"><summary>What questions should a patient satisfaction survey include?</summary><div class="fq-ans">The most valuable patient satisfaction survey questions cover: overall care experience, provider communication and listening, wait time satisfaction, staff friendliness, facility cleanliness, likelihood to recommend (NPS), return visit intent, and open feedback. This template covers all eight dimensions.</div></details>
+<details class="fq"><summary>When should I send a patient satisfaction survey?</summary><div class="fq-ans">Send within 24 hours of the appointment while the experience is fresh. Text or email surveys immediately post-visit achieve the highest response rates. Avoid sending more than 48 hours after — patient recall decreases and response rates drop significantly.</div></details>
+<details class="fq"><summary>Does this patient survey comply with HIPAA?</summary><div class="fq-ans">VoteGenerator collects survey responses anonymously — no names, email addresses, or patient identifiers are stored. However, practices should consult their compliance officer before implementing any patient communication tool to confirm it meets their specific HIPAA requirements.</div></details>
+<details class="fq"><summary>How do I share this survey with patients?</summary><div class="fq-ans">Share via text post-appointment, in your patient portal, on printed cards at checkout, via QR code in the waiting room, or in your post-visit email. No login required from patients — they click and respond immediately in their browser.</div></details>
+<details class="fq"><summary>Can I use this for dental or specialist practices?</summary><div class="fq-ans">Yes. Works for any healthcare setting — GP practices, dental offices, specialist clinics, physiotherapy, mental health, and urgent care. All 8 questions are editable. Replace "doctor" with "dentist" or "therapist" before sharing.</div></details>
+<details class="fq"><summary>How do I use patient feedback to improve care?</summary><div class="fq-ans">Focus on the gap between your highest and lowest dimension scores. If care quality scores 4.6 but wait time scores 2.8, wait time management is your operational priority. The open text question reveals specific patient concerns. Aggregate at least 20 responses before drawing conclusions to avoid outlier bias.</div></details>
+</div>
+</div>
+
+<div class="sec" id="related">
+<div class="ey">Related Templates</div>
+<h2>More Survey Templates</h2>
+<div class="rel">
+<a href="/templates/customer-satisfaction-survey" class="rc2"><div class="rc2-cat">Customer</div><div class="rc2-t">Customer Satisfaction (CSAT)</div><div class="rc2-d">NPS + satisfaction in one 5-question template.</div></a>
+<a href="/templates/restaurant-feedback-survey" class="rc2"><div class="rc2-cat">Hospitality</div><div class="rc2-t">Restaurant Feedback Survey</div><div class="rc2-d">8 questions on experience, service, and return intent.</div></a>
+<a href="/templates/event-feedback-survey" class="rc2"><div class="rc2-cat">Events</div><div class="rc2-t">Event Feedback Survey</div><div class="rc2-d">9 questions for conferences, workshops, and seminars.</div></a>
+</div>
+</div>
+
+<div class="bcta">
+<h2>Know how your patients feel — before they post online</h2>
+<p>8 questions. Anonymous. QR code and text friendly. No signup from anyone.</p>
+<a href="https://votegenerator.com/survey?template=patient-satisfaction" class="cta-p">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+Use This Template — Free</a>
+<p class="cta-s">No signup required · Free up to 100 responses · Pro from $19/month</p>
+</div>
+</main>
+<aside class="sb">
+<div class="sb-cta"><p>"Know how patients feel before they post a 1-star review."</p><a href="https://votegenerator.com/survey?template=patient-satisfaction">Use This Template →</a></div>
+<div class="sb-card"><div class="sb-head">Template Details</div><div class="sb-meta">
+<div class="sb-r"><span class="sb-rl">Questions</span><span class="sb-rv">8</span></div>
+<div class="sb-r"><span class="sb-rl">Settings</span><span class="sb-rv">Any healthcare</span></div>
+<div class="sb-r"><span class="sb-rl">Free responses</span><span class="sb-rv">100</span></div>
+<div class="sb-r"><span class="sb-rl">Share via</span><span class="sb-rv">Text, QR, email</span></div>
+<div class="sb-r"><span class="sb-rl">Anonymous</span><span class="sb-rv">Yes</span></div>
+</div></div>
+<div class="sb-card"><div class="sb-head">Related</div><ul class="sb-links">
+<li><a href="/templates/customer-satisfaction-survey">Customer Satisfaction</a></li>
+<li><a href="/templates/restaurant-feedback-survey">Restaurant Feedback</a></li>
+<li><a href="/templates/nps-survey">Quick NPS Survey</a></li>
+</ul></div>
+</aside>
+</div>
+<footer><div class="fl">VoteGenerator</div><p>Free patient satisfaction survey template. 8 questions. Anonymous. No signup. 100 responses free.</p><ul><li><a href="https://votegenerator.com">Home</a></li><li><a href="/templates/">Templates</a></li><li><a href="https://votegenerator.com/blog">Blog</a></li><li><a href="https://votegenerator.com/pricing">Pricing</a></li><li><a href="https://votegenerator.com/privacy">Privacy</a></li></ul><p>&copy; 2026 VoteGenerator. All rights reserved.</p></footer>
+<script>
+const Q=[
+{t:'scale',q:'How would you rate your overall experience at our practice today?',min:'Very poor',max:'Excellent'},
+{t:'scale',q:'How well did your doctor or provider communicate and listen to your concerns?',min:'Very poorly',max:'Excellently'},
+{t:'scale',q:'How satisfied were you with your wait time today?',min:'Very dissatisfied',max:'Very satisfied'},
+{t:'scale',q:'How friendly and helpful was our staff?',min:'Very poor',max:'Excellent'},
+{t:'nps',q:'How likely are you to recommend our practice to a friend or family member?'},
+{t:'yn',q:'Would you return to us for future care?'},
+{t:'open',q:'Is there anything we could improve to make your next visit better?'},
+];
+let cur=0,ans={};
+function render(){
+const q=Q[cur];
+document.getElementById('pv-fill').style.width=((cur+1)/8*100)+'%';
+document.getElementById('pv-lbl').textContent=(cur+1)+' of 8';
+let h=`<div class="pv-q">${q.q}</div>`;
+if(q.t==='scale'){
+h+='<div class="scale-row">';
+[1,2,3,4,5].forEach(v=>{const s=ans[cur]===v?'sel':'';h+=`<button class="scale-btn ${s}" onclick="psc(${v})">${v}</button>`;});
+h+=`</div><div class="scale-labels"><span>${q.min}</span><span>${q.max}</span></div>`;
+}else if(q.t==='nps'){
+h+='<div class="nps-row">';
+for(let i=0;i<=10;i++){const s=ans[cur]===i?'sel':'';h+=`<button class="nps-btn ${s}" onclick="pnps(${i})">${i}</button>`;}
+h+=`</div><div class="nps-labels"><span>Not likely</span><span>Extremely likely</span></div>`;
+}else if(q.t==='yn'){
+const ys=ans[cur]===1?'sel':'',ns=ans[cur]===0?'sel':'';
+h+=`<div class="yn-row"><button class="yn-btn ${ys}" onclick="pyn(1)">Yes ✓</button><button class="yn-btn ${ns}" onclick="pyn(0)">No ✗</button></div>`;
+}else{
+h+=`<textarea class="pv-ta" placeholder="Your feedback helps us improve care for every patient..." oninput="ptx(this.value)">${ans[cur]||''}</textarea>`;
+}
+document.getElementById('pv-body').innerHTML=h;
+const nx=document.getElementById('pv-next');
+nx.disabled=ans[cur]===undefined&&q.t!=='open';
+nx.textContent=cur>=Q.length-1?'Submit ✓':'Next';
+document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function psc(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function pnps(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function pyn(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;render();}
+function ptx(v){ans[cur]=v||' ';}
+function pvN(d){
+if(d===1&&cur>=Q.length-1){document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">🏥</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Thank you for your feedback!</div><div style="font-size:.83rem;color:var(--ink-soft);margin-bottom:14px">Your response helps us improve care for every patient.</div><a href="https://votegenerator.com/survey?template=patient-satisfaction" style="background:var(--sky);color:#fff;font-family:'Asap',sans-serif;font-weight:700;font-size:.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;
+document.getElementById('pv-fill').style.width='100%';document.getElementById('pv-lbl').textContent='Complete';document.getElementById('pv-next').style.display='none';document.getElementById('pv-back').style.display='block';return;}
+cur=Math.max(0,Math.min(Q.length-1,cur+d));
+if(d===1)document.getElementById('pv-next').style.display='block';
+render();}
+render();
+new IntersectionObserver(e=>{if(e[0].isIntersecting){document.querySelectorAll('.rb-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});const s=[['rg1','4.4/5'],['rg2','+48'],['rg3','91% Yes']];s.forEach(([id,v],i)=>setTimeout(()=>{document.getElementById(id).textContent=v;},i*180));}},{threshold:.3}).observe(document.getElementById('results'));
+const prog=document.getElementById('prog'),mc=document.getElementById('mc'),h=document.getElementById('hero');
+window.addEventListener('scroll',()=>{const d=document.documentElement;prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';if(window.innerWidth<=900)mc.style.display=h.getBoundingClientRect().bottom<0?'block':'none';},{passive:true});
+</script>
+</body>
+</html>

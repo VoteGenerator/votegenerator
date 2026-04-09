@@ -82,7 +82,7 @@
 
         /* ── HERO ── */
         .hero { padding:48px 24px 0; }
-        .hero-inner { max-width:1120px; margin:0 auto; display:grid; grid-template-columns:1fr 440px; gap:56px; align-items:start; }
+        .hero-inner { max-width:1120px; margin:0 auto; display:grid; grid-template-columns:1fr 440px;gap:56px; align-items:center; }
         .hero-left {}
         .hero-eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
         .hero-cat { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--vg); }
@@ -147,7 +147,7 @@
         .trust-icon { color:var(--green); }
 
         /* ── MAIN CONTENT ── */
-        .content { max-width:1120px; margin:0 auto; padding:60px 24px 0; display:grid; grid-template-columns:1fr 280px; gap:56px; align-items:start; }
+        .content { max-width:1120px; margin:0 auto; padding:60px 24px 0; display:grid; grid-template-columns:1fr 280px;gap:56px; align-items:center; }
         .article { min-width:0; }
         .sidebar { position:sticky; top:72px; }
 
@@ -169,7 +169,7 @@
         .qt-open { background:#f0fdf4; color:#15803d; }
 
         /* How it works */
-        .how-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:4px; }
+        .how-steps { display:grid; grid-template-columns:repeat(3,1fr);gap:16px; margin-top:4px; }
         .how-step { text-align:center; padding:20px 16px; background:var(--bg-soft); border:1px solid var(--border); border-radius:10px; }
         .how-n { width:36px; height:36px; background:var(--vg); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; margin:0 auto 10px; }
         .how-title { font-weight:700; font-size:0.88rem; color:var(--ink); margin-bottom:4px; }
@@ -207,7 +207,7 @@
         .fa a { color:var(--vg); text-decoration:none; }
 
         /* Related templates */
-        .related-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .related-grid { display:grid; grid-template-columns:repeat(3,1fr);gap:12px; }
         .related-card { border:1px solid var(--border); border-radius:8px; padding:16px; text-decoration:none; transition:all 0.15s; background:#fff; }
         .related-card:hover { border-color:var(--vg); box-shadow:0 2px 12px rgba(108,60,225,0.1); }
         .rc-cat { font-size:0.68rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--vg); margin-bottom:6px; }
@@ -270,7 +270,7 @@
 
 <!-- Mobile sticky CTA -->
 <div class="mobile-cta" id="mobile-cta" style="display:none">
-    <a href="https://votegenerator.com/survey?template=employee-engagement">Use This Template — Free</a>
+    <a href="https://votegenerator.com/create?template=employee-engagement">Use This Template — Free</a>
     <div class="mobile-cta-sub">No signup required · Ready in 60 seconds</div>
 </div>
 
@@ -281,7 +281,7 @@
     </a>
     <span class="nav-sep">/</span>
     <span class="nav-crumb"><a href="/templates/">Templates</a> / <a href="/templates/employee-surveys/">Employee</a> / Engagement Survey</span>
-    <a href="https://votegenerator.com/survey?template=employee-engagement" class="nav-cta">Use This Template</a>
+    <a href="https://votegenerator.com/create?template=employee-engagement" class="nav-cta">Use This Template</a>
 </nav>
 
 <!-- ── HERO ── -->
@@ -295,13 +295,20 @@
             <h1>Free Employee Engagement Survey Template</h1>
             <p class="hero-sub">10 Gallup-inspired questions. Anonymous responses. Live results in 60 seconds. No signup required from you or your team.</p>
             <div class="cta-group">
-                <a href="https://votegenerator.com/survey?template=employee-engagement" class="cta-primary">
+                <a href="https://votegenerator.com/create?template=employee-engagement" class="cta-primary">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     Use This Template
                 </a>
                 <p class="cta-sub">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
             </div>
-          
+            <div class="social-proof">
+                <div class="sp-avatars">
+                    <div class="sp-av">HR</div>
+                    <div class="sp-av">PO</div>
+                    <div class="sp-av">TL</div>
+                </div>
+                <p class="sp-text">Built for <strong>HR managers, People Ops teams &amp; team leads</strong></p>
+            </div>
         </div>
 
         <!-- Live interactive preview -->
@@ -401,10 +408,45 @@
                 <div class="result-row"><div class="result-label">Culture Alignment<span>4.4</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="88"></div></div></div>
                 <div class="result-row"><div class="result-label">Growth Opportunities<span>3.8</span></div><div class="result-bar-bg"><div class="result-bar-fill" data-w="76"></div></div></div>
             </div>
-            <div class="pro-teaser">
-                <span class="pro-badge">Pro</span>
-                <span class="pro-text">Track engagement <strong>over time</strong> with response timeline analytics, geographic breakdown, and CSV export for HR reporting. <a href="https://votegenerator.com/pricing">Upgrade to Pro from $19/month →</a></span>
+            <div style="margin:12px 0 0;border:1px solid rgba(108,60,225,.2);border-radius:8px;overflow:hidden;background:rgba(108,60,225,.03);">
+                <div style="padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(108,60,225,.1);">
+                    <span style="background:#6C3CE1;color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:2px 7px;">Pro</span>
+                    <span style="font-size:.82rem;font-weight:600;color:#1e293b;">Response Timeline Analytics</span>
+                </div>
+                <div style="position:relative;overflow:hidden;min-height:115px;">
+                    <div style="filter:blur(5px);opacity:0.55;pointer-events:none;user-select:none;"><svg viewBox="0 0 460 105" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;background:#ffffff">
+  <line x1="0" y1="25" x2="460" y2="25" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="45" x2="460" y2="45" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="65" x2="460" y2="65" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="0" y1="85" x2="460" y2="85" stroke="#e2e8f0" stroke-width="1"/>
+  <path d="M 20,63 L 77,58 L 135,61 L 192,51 L 250,46 L 307,51 L 365,40 L 422,35 L 422,88 L 20,88 Z" fill="rgba(108,60,225,0.08)"/>
+  <polyline points="20,63 77,58 135,61 192,51 250,46 307,51 365,40 422,35" fill="none" stroke="#6C3CE1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20" cy="63" r="4.5" fill="#6C3CE1"/>
+  <circle cx="77" cy="58" r="4.5" fill="#6C3CE1"/>
+  <circle cx="135" cy="61" r="4.5" fill="#6C3CE1"/>
+  <circle cx="192" cy="51" r="4.5" fill="#6C3CE1"/>
+  <circle cx="250" cy="46" r="4.5" fill="#6C3CE1"/>
+  <circle cx="307" cy="51" r="4.5" fill="#6C3CE1"/>
+  <circle cx="365" cy="40" r="4.5" fill="#6C3CE1"/>
+  <circle cx="422" cy="35" r="4.5" fill="#6C3CE1"/>
+  <text x="20" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 1</text>
+  <text x="77" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 2</text>
+  <text x="135" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 3</text>
+  <text x="192" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 4</text>
+  <text x="250" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 5</text>
+  <text x="307" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 6</text>
+  <text x="365" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 7</text>
+  <text x="422" y="100" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="sans-serif">Wk 8</text>
+</svg></div>
+                    <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.88);z-index:10;gap:5px;padding:14px;">
+                        <div style="font-size:1.4rem;">🔒</div>
+                        <div style="font-size:.87rem;font-weight:700;color:#1e293b;text-align:center;">Track trends across weeks and releases</div>
+                        <div style="font-size:.75rem;color:#64748b;text-align:center;max-width:280px;line-height:1.5;">See whether scores improve after changes. Available on Pro.</div>
+                        <a href="https://votegenerator.com/pricing" style="margin-top:7px;background:#6C3CE1;color:#fff;font-size:.8rem;font-weight:700;padding:8px 22px;border-radius:6px;text-decoration:none;">Unlock with Pro — $19/month</a>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -449,7 +491,7 @@
     <div class="bottom-cta">
         <h2>Ready to measure engagement?</h2>
         <p>Pre-filled questions, anonymous responses, instant charts. No signup required from anyone.</p>
-        <a href="https://votegenerator.com/survey?template=employee-engagement" class="cta-primary">
+        <a href="https://votegenerator.com/create?template=employee-engagement" class="cta-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             Use This Template — Free
         </a>
@@ -461,7 +503,7 @@
 <aside class="sidebar">
     <div class="sb-cta">
         <p>"Pre-filled questions, ready in 60 seconds."</p>
-        <a href="https://votegenerator.com/survey?template=employee-engagement">Use This Template →</a>
+        <a href="https://votegenerator.com/create?template=employee-engagement">Use This Template →</a>
     </div>
     <div class="sb-card">
         <div class="sb-head">Template Details</div>
@@ -556,7 +598,7 @@ function textAnswer(val) {
 function previewNav(dir) {
     const isLast = current >= PREVIEW_QS.length - 1;
     if (dir === 1 && isLast) {
-        document.getElementById('pc-body').innerHTML = `<div style="text-align:center;padding:24px 0"><div style="font-size:2rem;margin-bottom:8px">✓</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Thanks for the demo!</div><div style="font-size:0.85rem;color:var(--ink-soft)">Use the real template to collect actual responses from your team.</div><div style="margin-top:16px"><a href="https://votegenerator.com/survey?template=employee-engagement" style="background:var(--vg);color:#fff;font-family:Inter Tight,sans-serif;font-weight:700;font-size:0.88rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div></div>`;
+        document.getElementById('pc-body').innerHTML = `<div style="text-align:center;padding:24px 0"><div style="font-size:2rem;margin-bottom:8px">✓</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Thanks for the demo!</div><div style="font-size:0.85rem;color:var(--ink-soft)">Use the real template to collect actual responses from your team.</div><div style="margin-top:16px"><a href="https://votegenerator.com/create?template=employee-engagement" style="background:var(--vg);color:#fff;font-family:Inter Tight,sans-serif;font-weight:700;font-size:0.88rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div></div>`;
         document.getElementById('btn-back').style.display = 'block';
         document.getElementById('btn-next').style.display = 'none';
         document.getElementById('prog-fill').style.width = '100%';

@@ -1,6 +1,6 @@
 import { Users, Briefcase } from 'lucide-react';
 import { SurveyTemplate } from './_types';
- 
+
 // ============================================================================
 // EMPLOYEE ENGAGEMENT SURVEY
 // Keyword: employee engagement survey template (50,000/mo)
@@ -183,7 +183,7 @@ const EMPLOYEE_ENGAGEMENT_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
- 
+
 // ============================================================================
 // EMPLOYEE SATISFACTION SURVEY
 // Keyword: employee satisfaction survey template (5,000/mo)
@@ -308,10 +308,1597 @@ const EMPLOYEE_SATISFACTION_TEMPLATE: SurveyTemplate = {
         },
     ],
 };
- 
+
+// ============================================================================
+// EXIT INTERVIEW SURVEY
+// ============================================================================
+const EXIT_INTERVIEW_TEMPLATE: SurveyTemplate = {
+    id: 'exit-interview',
+    name: 'Exit Interview Survey',
+    emoji: '🚪',
+    color: 'text-amber-600',
+    description: 'Understand why employees really leave — 10 anonymous questions',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ei-reasons',
+            title: 'Reasons for Leaving',
+            description: 'Help us understand your decision',
+            questions: [
+                {
+                    id: 'ei-q1',
+                    type: 'multiple_choice',
+                    question: 'What is your primary reason for leaving?',
+                    options: [
+                        { id: 'compensation',  text: 'Better compensation elsewhere' },
+                        { id: 'growth',        text: 'Limited career growth opportunities' },
+                        { id: 'manager',       text: 'Issues with management or leadership' },
+                        { id: 'balance',       text: 'Work-life balance' },
+                        { id: 'culture',       text: 'Company culture or direction' },
+                        { id: 'relocation',    text: 'Relocation or personal reasons' },
+                        { id: 'role',          text: 'Role was not what I expected' },
+                        { id: 'other',         text: 'Other' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'ei-q2',
+                    type: 'textarea',
+                    question: 'What could we have done to retain you?',
+                    placeholder: 'Your honest answer helps us improve for others...',
+                },
+                {
+                    id: 'ei-q3',
+                    type: 'multiple_choice',
+                    question: 'How long did you consider leaving before making this decision?',
+                    options: [
+                        { id: 'recent',   text: 'Less than 1 month' },
+                        { id: 'few',      text: '1–3 months' },
+                        { id: 'several',  text: '3–6 months' },
+                        { id: 'long',     text: 'More than 6 months' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ei-experience',
+            title: 'Your Experience Here',
+            description: 'How satisfied were you during your time with us?',
+            questions: [
+                {
+                    id: 'ei-q4',
+                    type: 'scale',
+                    question: 'How satisfied were you with your role overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q5',
+                    type: 'scale',
+                    question: 'How satisfied were you with your manager?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q6',
+                    type: 'scale',
+                    question: 'How satisfied were you with your compensation?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'ei-q7',
+                    type: 'scale',
+                    question: 'How would you rate the overall company culture?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ei-final',
+            title: 'Final Thoughts',
+            description: 'Looking back on your time here',
+            questions: [
+                {
+                    id: 'ei-q8',
+                    type: 'yes_no',
+                    question: 'Would you recommend this company to a friend as a place to work?',
+                    required: true,
+                },
+                {
+                    id: 'ei-q9',
+                    type: 'textarea',
+                    question: 'What did you enjoy most about working here?',
+                    placeholder: 'Share what made a positive difference...',
+                },
+                {
+                    id: 'ei-q10',
+                    type: 'textarea',
+                    question: 'What is the one thing we could most improve for future employees?',
+                    placeholder: 'Your honest feedback helps us improve...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// WEEKLY PULSE SURVEY
+// ============================================================================
+const WEEKLY_PULSE_TEMPLATE: SurveyTemplate = {
+    id: 'weekly-pulse',
+    name: 'Weekly Pulse Survey',
+    emoji: '💚',
+    color: 'text-emerald-500',
+    description: '5 quick questions — morale, workload, blockers, and open feedback',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'wp-thisweek',
+            title: 'This Week',
+            description: 'How are things going right now?',
+            questions: [
+                {
+                    id: 'wp-q1',
+                    type: 'scale',
+                    question: 'How are you feeling about work this week?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very low',
+                    maxLabel: 'Very high',
+                    required: true,
+                },
+                {
+                    id: 'wp-q2',
+                    type: 'scale',
+                    question: 'How manageable is your current workload?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Overwhelming',
+                    maxLabel: 'Very manageable',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wp-support',
+            title: 'Support & Blockers',
+            description: 'Do you have what you need?',
+            questions: [
+                {
+                    id: 'wp-q3',
+                    type: 'yes_no',
+                    question: 'Do you have what you need to be successful this week?',
+                    required: true,
+                },
+                {
+                    id: 'wp-q4',
+                    type: 'yes_no',
+                    question: 'Is anything blocking your progress right now?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wp-open',
+            title: 'Open Feedback',
+            description: 'Share anything on your mind',
+            questions: [
+                {
+                    id: 'wp-q5',
+                    type: 'textarea',
+                    question: 'Anything you\'d like to share with your manager this week?',
+                    placeholder: 'Optional — share anything on your mind...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// ONBOARDING FEEDBACK SURVEY
+// ============================================================================
+const ONBOARDING_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'onboarding-feedback',
+    name: 'Employee Onboarding Survey',
+    emoji: '🌱',
+    color: 'text-cyan-600',
+    description: 'Check if new hires are set up for success at Day 30, 60, or 90',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ob-first',
+            title: 'First Impressions',
+            description: 'How did your first days feel?',
+            questions: [
+                {
+                    id: 'ob-q1',
+                    type: 'scale',
+                    question: 'How would you rate your onboarding experience overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'ob-q2',
+                    type: 'scale',
+                    question: 'How prepared did you feel for your role on Day 1?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all prepared',
+                    maxLabel: 'Fully prepared',
+                    required: true,
+                },
+                {
+                    id: 'ob-q3',
+                    type: 'scale',
+                    question: 'How welcoming was the team when you joined?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not welcoming',
+                    maxLabel: 'Very welcoming',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ob-support',
+            title: 'Support & Setup',
+            description: 'Did you have what you needed?',
+            questions: [
+                {
+                    id: 'ob-q4',
+                    type: 'yes_no',
+                    question: 'Did you have the tools and system access you needed from Day 1?',
+                    required: true,
+                },
+                {
+                    id: 'ob-q5',
+                    type: 'scale',
+                    question: 'How clearly were your role and responsibilities explained?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'ob-q6',
+                    type: 'scale',
+                    question: 'How effective has your manager or onboarding buddy been in supporting you?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not effective',
+                    maxLabel: 'Very effective',
+                    required: true,
+                },
+                {
+                    id: 'ob-q7',
+                    type: 'scale',
+                    question: 'How well do you understand the company culture and values?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very well',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ob-future',
+            title: 'Looking Ahead',
+            description: 'Your confidence and open feedback',
+            questions: [
+                {
+                    id: 'ob-q8',
+                    type: 'scale',
+                    question: 'How confident do you feel about succeeding in your role?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not confident',
+                    maxLabel: 'Very confident',
+                    required: true,
+                },
+                {
+                    id: 'ob-q9',
+                    type: 'textarea',
+                    question: 'What was the best part of your onboarding experience?',
+                    placeholder: 'Share what made a positive difference...',
+                },
+                {
+                    id: 'ob-q10',
+                    type: 'textarea',
+                    question: 'What one thing would have made your onboarding significantly better?',
+                    placeholder: 'Your honest answer helps us improve for the next person...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// 360 DEGREE FEEDBACK SURVEY
+// ============================================================================
+const THREE_SIXTY_TEMPLATE: SurveyTemplate = {
+    id: '360-feedback',
+    name: '360 Degree Feedback Survey',
+    emoji: '360°',
+    color: 'text-amber-600',
+    description: 'Anonymous multi-rater feedback on communication, collaboration, and development',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'ts-communication',
+            title: 'Leadership & Communication',
+            description: 'How does this person communicate and lead?',
+            questions: [
+                {
+                    id: 'ts-q1',
+                    type: 'scale',
+                    question: 'How clearly does this person communicate ideas and information?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'ts-q2',
+                    type: 'scale',
+                    question: 'How well does this person listen and incorporate others\' perspectives?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Rarely',
+                    maxLabel: 'Always',
+                    required: true,
+                },
+                {
+                    id: 'ts-q3',
+                    type: 'scale',
+                    question: 'How effectively does this person manage priorities and their workload?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Exceptionally',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ts-collaboration',
+            title: 'Collaboration & Impact',
+            description: 'How does this person work with and impact the team?',
+            questions: [
+                {
+                    id: 'ts-q4',
+                    type: 'scale',
+                    question: 'How reliably does this person follow through on their commitments?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Rarely',
+                    maxLabel: 'Always',
+                    required: true,
+                },
+                {
+                    id: 'ts-q5',
+                    type: 'scale',
+                    question: 'How well does this person collaborate with and support the team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Poorly',
+                    maxLabel: 'Exceptionally',
+                    required: true,
+                },
+                {
+                    id: 'ts-q6',
+                    type: 'scale',
+                    question: 'How would you rate this person\'s overall impact on team outcomes?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Minimal',
+                    maxLabel: 'Outstanding',
+                    required: true,
+                },
+                {
+                    id: 'ts-q7',
+                    type: 'multiple_choice',
+                    question: 'What is this person\'s greatest professional strength?',
+                    options: [
+                        { id: 'strategic',   text: 'Strategic thinking' },
+                        { id: 'comms',       text: 'Clear communication' },
+                        { id: 'collab',      text: 'Team collaboration' },
+                        { id: 'reliability', text: 'Reliability & follow-through' },
+                        { id: 'innovation',  text: 'Innovation & problem solving' },
+                        { id: 'coaching',    text: 'Coaching & developing others' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'ts-development',
+            title: 'Development',
+            description: 'What would help this person grow?',
+            questions: [
+                {
+                    id: 'ts-q8',
+                    type: 'multiple_choice',
+                    question: 'What area would most benefit this person\'s professional development?',
+                    options: [
+                        { id: 'strategy',     text: 'Strategic thinking' },
+                        { id: 'stakeholders', text: 'Stakeholder communication' },
+                        { id: 'delegation',   text: 'Delegation & empowerment' },
+                        { id: 'prioritise',   text: 'Prioritisation & focus' },
+                        { id: 'feedback',     text: 'Providing feedback to others' },
+                        { id: 'crossteam',    text: 'Cross-team collaboration' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'ts-q9',
+                    type: 'textarea',
+                    question: 'What would you most like this person to continue doing?',
+                    placeholder: 'Be specific — concrete examples are most useful...',
+                },
+                {
+                    id: 'ts-q10',
+                    type: 'textarea',
+                    question: 'What would you most like this person to change or start doing?',
+                    placeholder: 'Be specific — concrete examples are most useful...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// EMPLOYEE BENEFITS SURVEY
+// Keyword: employee benefits survey (5,000/mo)
+// ============================================================================
+const EMPLOYEE_BENEFITS_TEMPLATE: SurveyTemplate = {
+    id: 'employee-benefits',
+    name: 'Employee Benefits Survey',
+    emoji: '🎁',
+    color: 'text-purple-600',
+    description: 'Find out which benefits employees actually value — and which are being missed or underused',
+    category: 'employee',
+    targetKeyword: 'employee benefits survey',
+    priority: 'P2',
+    conversionHook: 'HR teams that survey benefits preferences before renewal cycles cut benefits spend waste by an average of 18%.',
+    planGate: 'free',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'eb-awareness',
+            title: 'Benefits Awareness',
+            description: 'What do employees know about their benefits?',
+            questions: [
+                {
+                    id: 'eb-q1',
+                    type: 'scale',
+                    question: 'How well do you feel you understand the full range of benefits available to you?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very well',
+                    required: true,
+                },
+                {
+                    id: 'eb-q2',
+                    type: 'yes_no',
+                    question: 'Have you actively used any company benefits in the past 12 months?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'eb-satisfaction',
+            title: 'Benefits Satisfaction',
+            description: 'How well do current benefits meet needs?',
+            questions: [
+                {
+                    id: 'eb-q3',
+                    type: 'scale',
+                    question: 'How satisfied are you with your health and medical insurance coverage?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'eb-q4',
+                    type: 'scale',
+                    question: 'How satisfied are you with annual leave, flexible working, and time-off policies?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'eb-q5',
+                    type: 'scale',
+                    question: 'How satisfied are you with learning, development, and training support?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'eb-q6',
+                    type: 'scale',
+                    question: 'How satisfied are you with wellness and mental health support offerings?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'eb-q7',
+                    type: 'scale',
+                    question: 'How satisfied are you with pension, retirement, or financial wellbeing benefits?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'eb-priorities',
+            title: 'Priorities & Gaps',
+            description: 'What matters most?',
+            questions: [
+                {
+                    id: 'eb-q8',
+                    type: 'scale',
+                    question: 'Overall, how well does your current benefits package meet your personal needs?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Extremely well',
+                    required: true,
+                },
+                {
+                    id: 'eb-q9',
+                    type: 'scale',
+                    question: 'How much does your benefits package influence your decision to stay with this organisation?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very strongly',
+                    required: true,
+                },
+                {
+                    id: 'eb-q10',
+                    type: 'textarea',
+                    question: 'Which benefit would make the biggest positive difference to you if we added or improved it?',
+                    placeholder: 'Be specific — your answer directly shapes our next benefits review...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// REMOTE WORK SURVEY
+// Keyword: remote work survey, hybrid working survey (10,000/mo)
+// ============================================================================
+const REMOTE_WORK_TEMPLATE: SurveyTemplate = {
+    id: 'remote-work',
+    name: 'Remote Work Survey',
+    emoji: '🏠',
+    color: 'text-indigo-600',
+    description: 'Understand how remote and hybrid working is actually going — productivity, wellbeing, connection, and what employees need to thrive',
+    category: 'employee',
+    targetKeyword: 'remote work survey',
+    priority: 'P1',
+    conversionHook: 'Teams that run quarterly remote work surveys report 31% better retention than those relying on annual all-hands feedback alone.',
+    planGate: 'free',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'rw-setup',
+            title: 'Home Setup & Tools',
+            description: 'Do you have what you need to work remotely?',
+            questions: [
+                {
+                    id: 'rw-q1',
+                    type: 'scale',
+                    question: 'How well equipped is your home working environment for day-to-day tasks?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Extremely well',
+                    required: true,
+                },
+                {
+                    id: 'rw-q2',
+                    type: 'scale',
+                    question: 'How reliable and effective are the tools and technology provided for remote work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'rw-productivity',
+            title: 'Productivity & Focus',
+            description: 'How does remote work affect your output?',
+            questions: [
+                {
+                    id: 'rw-q3',
+                    type: 'scale',
+                    question: 'How productive do you feel working remotely compared to working in the office?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Much less productive',
+                    maxLabel: 'Much more productive',
+                    required: true,
+                },
+                {
+                    id: 'rw-q4',
+                    type: 'scale',
+                    question: 'How well are you able to maintain focus and avoid distractions when working from home?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Very well',
+                    required: true,
+                },
+                {
+                    id: 'rw-q5',
+                    type: 'yes_no',
+                    question: 'Do you feel you can separate work time from personal time effectively when working remotely?',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'rw-connection',
+            title: 'Connection & Communication',
+            description: 'Staying connected with the team',
+            questions: [
+                {
+                    id: 'rw-q6',
+                    type: 'scale',
+                    question: 'How well does your team communicate and collaborate while working remotely?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Extremely well',
+                    required: true,
+                },
+                {
+                    id: 'rw-q7',
+                    type: 'scale',
+                    question: 'How supported do you feel by your manager when working remotely?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Extremely supported',
+                    required: true,
+                },
+                {
+                    id: 'rw-q8',
+                    type: 'scale',
+                    question: 'How connected do you feel to the wider company culture when working remotely?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very isolated',
+                    maxLabel: 'Very connected',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'rw-overall',
+            title: 'Overall & Preferences',
+            description: 'The big picture',
+            questions: [
+                {
+                    id: 'rw-q9',
+                    type: 'scale',
+                    question: 'Overall, how satisfied are you with your current remote or hybrid working arrangement?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'rw-q10',
+                    type: 'textarea',
+                    question: 'What one change would most improve your remote working experience?',
+                    placeholder: 'More in-office days, better equipment, async communication norms — anything goes...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// JOB SATISFACTION SURVEY
+// Keyword: job satisfaction survey (10,000/mo)
+// ============================================================================
+const JOB_SATISFACTION_TEMPLATE: SurveyTemplate = {
+    id: 'job-satisfaction',
+    name: 'Job Satisfaction Survey',
+    emoji: '💼',
+    color: 'text-amber-600',
+    description: '10 questions — know who\'s planning to leave before they hand in their notice',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'js-role',
+            title: 'Role & Manager',
+            description: 'Clarity, workload, and management quality',
+            questions: [
+                {
+                    id: 'js-q1',
+                    type: 'scale',
+                    question: 'How clearly do you understand what is expected of you in your role?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'js-q2',
+                    type: 'scale',
+                    question: 'How would you rate your relationship with your direct manager?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'js-q3',
+                    type: 'scale',
+                    question: 'How manageable is your current workload?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Overwhelming',
+                    maxLabel: 'Very manageable',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'js-growth',
+            title: 'Compensation & Growth',
+            description: 'Pay fairness and career development',
+            questions: [
+                {
+                    id: 'js-q4',
+                    type: 'scale',
+                    question: 'How fairly do you feel you are compensated for your work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unfairly',
+                    maxLabel: 'Very fairly',
+                    required: true,
+                },
+                {
+                    id: 'js-q5',
+                    type: 'scale',
+                    question: 'How satisfied are you with the career growth and development opportunities available to you?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'js-q6',
+                    type: 'scale',
+                    question: 'How recognised and appreciated do you feel for your contributions?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very much so',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'js-culture',
+            title: 'Culture & Retention',
+            description: 'Team, balance, safety, and intent to stay',
+            questions: [
+                {
+                    id: 'js-q7',
+                    type: 'scale',
+                    question: 'How well are you able to maintain a healthy work-life balance in your current role?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+                {
+                    id: 'js-q8',
+                    type: 'scale',
+                    question: 'How much do you enjoy working with your immediate team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very much',
+                    required: true,
+                },
+                {
+                    id: 'js-q9',
+                    type: 'scale',
+                    question: 'How comfortable do you feel voicing concerns or ideas at work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not comfortable',
+                    maxLabel: 'Very comfortable',
+                    required: true,
+                },
+                {
+                    id: 'js-q10',
+                    type: 'multiple_choice',
+                    question: 'How likely are you to still be working here in 12 months?',
+                    options: [
+                        { id: 'definitely',  text: 'Definitely — I see my long-term future here' },
+                        { id: 'probably',    text: 'Probably — I\'m happy but keeping options open' },
+                        { id: 'unsure',      text: 'Unsure — not actively looking but not committed' },
+                        { id: 'unlikely',    text: 'Unlikely — I\'m considering other opportunities' },
+                        { id: 'no',          text: 'No — I\'m actively looking for a new role' },
+                    ],
+                    required: true,
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// DIVERSITY & INCLUSION SURVEY
+// Keyword: diversity and inclusion survey, DEI survey (5,000/mo)
+// ============================================================================
+const DIVERSITY_INCLUSION_TEMPLATE: SurveyTemplate = {
+    id: 'diversity-inclusion',
+    name: 'Diversity & Inclusion Survey',
+    emoji: '💜',
+    color: 'text-violet-600',
+    description: 'Belonging, psychological safety, inclusive leadership, and equity — 10 questions',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'di-belonging',
+            title: 'Belonging & Safety',
+            description: 'Do you feel welcome and safe to be yourself?',
+            questions: [
+                {
+                    id: 'di-q1',
+                    type: 'scale',
+                    question: 'I feel a genuine sense of belonging at this organisation.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'di-q2',
+                    type: 'scale',
+                    question: 'I feel safe to speak up, disagree, or be myself at work without fear of consequences.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'di-leadership',
+            title: 'Inclusive Leadership',
+            description: 'Do leaders and managers champion inclusion?',
+            questions: [
+                {
+                    id: 'di-q3',
+                    type: 'scale',
+                    question: 'My manager actively creates an inclusive environment for everyone on the team.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'di-q4',
+                    type: 'scale',
+                    question: 'Senior leaders in this organisation visibly and authentically champion diversity and inclusion.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'di-equity',
+            title: 'Equity & Representation',
+            description: 'Is opportunity truly equal here?',
+            questions: [
+                {
+                    id: 'di-q5',
+                    type: 'scale',
+                    question: 'Opportunities for growth and advancement are available equally to everyone here, regardless of their background.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'di-q6',
+                    type: 'scale',
+                    question: 'I see people like me represented in leadership roles at this organisation.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'di-q7',
+                    type: 'scale',
+                    question: 'This organisation\'s DEI programmes and initiatives feel genuine, not performative.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+                {
+                    id: 'di-q8',
+                    type: 'scale',
+                    question: 'My colleagues actively support and act as allies to people from all backgrounds.',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Strongly disagree',
+                    maxLabel: 'Strongly agree',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'di-safety',
+            title: 'Accountability & Feedback',
+            description: 'Reporting and open feedback',
+            questions: [
+                {
+                    id: 'di-q9',
+                    type: 'yes_no',
+                    question: 'I would feel comfortable reporting discrimination or exclusionary behaviour if I experienced or witnessed it.',
+                    required: true,
+                },
+                {
+                    id: 'di-q10',
+                    type: 'textarea',
+                    question: 'What is the most important thing this organisation could do to improve diversity, equity, and inclusion?',
+                    placeholder: 'Your honest feedback helps create real change...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// EMPLOYEE WELLBEING SURVEY
+// Keyword: employee wellbeing survey, burnout survey (5,000/mo)
+// ============================================================================
+const EMPLOYEE_WELLBEING_TEMPLATE: SurveyTemplate = {
+    id: 'employee-wellbeing',
+    name: 'Employee Wellbeing Survey',
+    emoji: '🌿',
+    color: 'text-teal-700',
+    description: 'Know how your people really feel — burnout early warning before it shows in absence data',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'wb-energy',
+            title: 'Energy & Stress',
+            description: 'Workload and daily energy — the earliest burnout indicators',
+            questions: [
+                {
+                    id: 'wb-q1',
+                    type: 'scale',
+                    question: 'How manageable does your workload feel right now?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Completely overwhelming',
+                    maxLabel: 'Very manageable',
+                    required: true,
+                },
+                {
+                    id: 'wb-q2',
+                    type: 'scale',
+                    question: 'How would you rate your energy levels during a typical working day?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Completely drained',
+                    maxLabel: 'Full of energy',
+                    required: true,
+                },
+                {
+                    id: 'wb-q3',
+                    type: 'scale',
+                    question: 'How well are you able to switch off from work outside of working hours?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Never can switch off',
+                    maxLabel: 'Easily switch off',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wb-connection',
+            title: 'Connection & Support',
+            description: 'Belonging, manager support, and resources',
+            questions: [
+                {
+                    id: 'wb-q4',
+                    type: 'scale',
+                    question: 'How connected do you feel to your colleagues and team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very isolated',
+                    maxLabel: 'Very connected',
+                    required: true,
+                },
+                {
+                    id: 'wb-q5',
+                    type: 'scale',
+                    question: 'How supported do you feel by your manager in maintaining your wellbeing?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not supported at all',
+                    maxLabel: 'Fully supported',
+                    required: true,
+                },
+                {
+                    id: 'wb-q6',
+                    type: 'scale',
+                    question: 'How satisfied are you with the wellbeing support and resources available at work?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'wb-q7',
+                    type: 'scale',
+                    question: 'How recognised and valued do you feel for the work you do?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Very much',
+                    required: true,
+                },
+                {
+                    id: 'wb-q8',
+                    type: 'scale',
+                    question: 'How comfortable do you feel talking to your manager about how you\'re doing?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not comfortable',
+                    maxLabel: 'Very comfortable',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'wb-overall',
+            title: 'Overall & Feedback',
+            description: 'Overall wellbeing rating and open feedback',
+            questions: [
+                {
+                    id: 'wb-q9',
+                    type: 'scale',
+                    question: 'Overall, how would you rate your wellbeing at work right now?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'wb-q10',
+                    type: 'textarea',
+                    question: 'What one thing could the organisation do to better support your wellbeing?',
+                    placeholder: 'Your honest feedback shapes what we do next...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// INTERNSHIP FEEDBACK SURVEY
+// Keyword: internship feedback survey (1k-5k/mo)
+// ============================================================================
+const INTERNSHIP_FEEDBACK_TEMPLATE: SurveyTemplate = {
+    id: 'internship-feedback',
+    name: 'Internship Feedback Survey',
+    emoji: '🎓',
+    color: 'text-indigo-600',
+    description: '10 questions — know if your internship programme converts talent before the cohort walks out',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'if-learning',
+            title: 'Learning & Mentorship',
+            description: 'Development quality and mentor effectiveness',
+            questions: [
+                {
+                    id: 'if-q1',
+                    type: 'scale',
+                    question: 'How would you rate the quality of learning and development during your internship?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'if-q2',
+                    type: 'scale',
+                    question: 'How effective and supportive was your mentor or manager throughout the internship?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Exceptionally',
+                    required: true,
+                },
+                {
+                    id: 'if-q3',
+                    type: 'scale',
+                    question: 'How much exposure did you get to real, meaningful work — not just admin or busywork?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Mostly admin',
+                    maxLabel: 'Fully real work',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'if-culture',
+            title: 'Culture & Structure',
+            description: 'Inclusion, goal clarity, and programme organisation',
+            questions: [
+                {
+                    id: 'if-q4',
+                    type: 'scale',
+                    question: 'How included and welcomed did you feel as part of the team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very excluded',
+                    maxLabel: 'Fully included',
+                    required: true,
+                },
+                {
+                    id: 'if-q5',
+                    type: 'scale',
+                    question: 'How clearly were your goals and expectations communicated at the start?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unclear',
+                    maxLabel: 'Very clear',
+                    required: true,
+                },
+                {
+                    id: 'if-q6',
+                    type: 'scale',
+                    question: 'How well was the internship programme structured and organised?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'if-conversion',
+            title: 'Satisfaction & Offer Intent',
+            description: 'Overall satisfaction and the commercial conversion metric',
+            questions: [
+                {
+                    id: 'if-q7',
+                    type: 'scale',
+                    question: 'How satisfied are you with your internship experience overall?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'if-q8',
+                    type: 'scale',
+                    question: 'How likely are you to recommend this internship programme to a friend or peer?',
+                    minValue: 0,
+                    maxValue: 10,
+                    minLabel: 'Not likely',
+                    maxLabel: 'Extremely likely',
+                    required: true,
+                },
+                {
+                    id: 'if-q9',
+                    type: 'multiple_choice',
+                    question: 'If offered a graduate or full-time role, how likely would you be to accept?',
+                    options: [
+                        { id: 'definitely',  text: 'Definitely — I would accept immediately' },
+                        { id: 'very-likely', text: 'Very likely — I would seriously consider it' },
+                        { id: 'unsure',      text: 'Unsure — depends on the role and package' },
+                        { id: 'unlikely',    text: 'Unlikely — I\'m exploring other options' },
+                        { id: 'no',          text: 'No — I\'d prefer to go elsewhere' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'if-q10',
+                    type: 'textarea',
+                    question: 'What one change would make this internship programme significantly better?',
+                    placeholder: 'Be specific — what would make the biggest difference?',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// EMPLOYEE RECOGNITION SURVEY
+// Keyword: employee recognition survey (1k-5k/mo)
+// ============================================================================
+const EMPLOYEE_RECOGNITION_TEMPLATE: SurveyTemplate = {
+    id: 'employee-recognition',
+    name: 'Employee Recognition Survey',
+    emoji: '⭐',
+    color: 'text-orange-600',
+    description: 'Find out what your team really thinks about recognition before they stop trying — 9 questions',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'er-frequency',
+            title: 'Recognition Frequency & Quality',
+            description: 'How often and how well recognition happens',
+            questions: [
+                {
+                    id: 'er-q1',
+                    type: 'scale',
+                    question: 'How often do you feel recognised for the work you do?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Rarely or never',
+                    maxLabel: 'Regularly',
+                    required: true,
+                },
+                {
+                    id: 'er-q2',
+                    type: 'scale',
+                    question: 'How well does your manager acknowledge and appreciate your contributions?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Not at all',
+                    maxLabel: 'Consistently well',
+                    required: true,
+                },
+                {
+                    id: 'er-q3',
+                    type: 'scale',
+                    question: 'How strong is the culture of peer recognition and appreciation on your team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Practically non-existent',
+                    maxLabel: 'Very strong',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'er-fairness',
+            title: 'Fairness & Meaning',
+            description: 'Whether recognition is fair and feels genuine',
+            questions: [
+                {
+                    id: 'er-q4',
+                    type: 'scale',
+                    question: 'How fairly is recognition distributed across the team?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very unfairly',
+                    maxLabel: 'Very fairly',
+                    required: true,
+                },
+                {
+                    id: 'er-q5',
+                    type: 'scale',
+                    question: 'When you are recognised, how genuine and meaningful does it feel?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Hollow and tokenistic',
+                    maxLabel: 'Genuine and meaningful',
+                    required: true,
+                },
+                {
+                    id: 'er-q6',
+                    type: 'scale',
+                    question: 'How much does being recognised motivate you to keep going and put in your best effort?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'No effect',
+                    maxLabel: 'Very motivating',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'er-preference',
+            title: 'Preferences & Overall',
+            description: 'What type of recognition works and overall programme satisfaction',
+            questions: [
+                {
+                    id: 'er-q7',
+                    type: 'multiple_choice',
+                    question: 'What type of recognition would mean the most to you personally?',
+                    options: [
+                        { id: 'public',      text: 'Public recognition in a team or company setting' },
+                        { id: 'private',     text: 'A personal note or private thanks from my manager' },
+                        { id: 'development', text: 'More responsibility or a development opportunity' },
+                        { id: 'reward',      text: 'A financial reward, voucher, or tangible gift' },
+                        { id: 'time',        text: 'Extra time off or flexible working' },
+                        { id: 'peer',        text: 'Recognition from peers and colleagues' },
+                    ],
+                    required: true,
+                },
+                {
+                    id: 'er-q8',
+                    type: 'scale',
+                    question: 'How satisfied are you with the overall recognition culture at this organisation?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'er-q9',
+                    type: 'textarea',
+                    question: 'What would you change about how recognition works here?',
+                    placeholder: 'Be honest: what would genuinely improve things?',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// CANTEEN & WORKPLACE FOOD SURVEY
+// Keyword: workplace canteen survey (1k/mo)
+// ============================================================================
+const CANTEEN_FOOD_TEMPLATE: SurveyTemplate = {
+    id: 'canteen-food-service',
+    name: 'Canteen and Workplace Food Survey',
+    emoji: '🍽',
+    color: 'text-amber-600',
+    description: 'Find out what staff really think before they stop using the canteen — 9 questions',
+    category: 'employee',
+    recommendedSettings: {
+        anonymousMode: true,
+        showProgress: true,
+        allowBack: true,
+    },
+    sections: [
+        {
+            id: 'cf-food',
+            title: 'Food Quality and Choice',
+            description: 'Quality, freshness, variety, and dietary provision',
+            questions: [
+                {
+                    id: 'cf-q1',
+                    type: 'scale',
+                    question: 'How would you rate the quality and freshness of the food available?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'cf-q2',
+                    type: 'scale',
+                    question: 'How satisfied are you with the variety and choice on the menu?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'cf-q3',
+                    type: 'scale',
+                    question: 'How good is the value for money compared to what you pay?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor value',
+                    maxLabel: 'Excellent value',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'cf-service',
+            title: 'Service, Hygiene and Inclusion',
+            description: 'Speed, cleanliness, and dietary requirements',
+            questions: [
+                {
+                    id: 'cf-q4',
+                    type: 'scale',
+                    question: 'How satisfied are you with the speed of service and how queuing is managed?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'cf-q5',
+                    type: 'scale',
+                    question: 'How would you rate the cleanliness and hygiene of the canteen?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poor',
+                    maxLabel: 'Excellent',
+                    required: true,
+                },
+                {
+                    id: 'cf-q6',
+                    type: 'scale',
+                    question: 'How well does the canteen cater for dietary requirements such as vegan, vegetarian, or allergen needs?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very poorly',
+                    maxLabel: 'Excellently',
+                    required: true,
+                },
+            ],
+        },
+        {
+            id: 'cf-overall',
+            title: 'Overall Satisfaction',
+            description: 'Would staff use it more and what would they change',
+            questions: [
+                {
+                    id: 'cf-q7',
+                    type: 'scale',
+                    question: 'Overall, how satisfied are you with the canteen?',
+                    minValue: 1,
+                    maxValue: 5,
+                    minLabel: 'Very dissatisfied',
+                    maxLabel: 'Very satisfied',
+                    required: true,
+                },
+                {
+                    id: 'cf-q8',
+                    type: 'yes_no',
+                    question: 'Would you use the canteen more often if improvements were made?',
+                    required: true,
+                },
+                {
+                    id: 'cf-q9',
+                    type: 'textarea',
+                    question: 'What one change would make the biggest difference to your canteen experience?',
+                    placeholder: 'Be specific about what would genuinely change your mind...',
+                },
+            ],
+        },
+    ],
+};
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
     EMPLOYEE_ENGAGEMENT_TEMPLATE,
     EMPLOYEE_SATISFACTION_TEMPLATE,
-    // Add future employee templates here: pulse survey, exit interview, manager feedback, etc.
+    ONBOARDING_FEEDBACK_TEMPLATE,
+    WEEKLY_PULSE_TEMPLATE,
+    EXIT_INTERVIEW_TEMPLATE,
+    THREE_SIXTY_TEMPLATE,
+    EMPLOYEE_BENEFITS_TEMPLATE,
+    REMOTE_WORK_TEMPLATE,
+    JOB_SATISFACTION_TEMPLATE,
+    DIVERSITY_INCLUSION_TEMPLATE,
+    EMPLOYEE_WELLBEING_TEMPLATE,
+    INTERNSHIP_FEEDBACK_TEMPLATE,
+    EMPLOYEE_RECOGNITION_TEMPLATE,
+    CANTEEN_FOOD_TEMPLATE,
 ];
- 

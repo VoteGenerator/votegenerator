@@ -1,22 +1,28 @@
 import React from 'react';
 import { SurveySection } from '../../types';
- 
+
 // ============================================================================
 // CATEGORY REGISTRY — add new categories here as you expand
 // ============================================================================
 export const TEMPLATE_CATEGORIES = {
-    employee:   { label: 'Employee & HR',        emoji: '👥' },
-    customer:   { label: 'Customer Feedback',    emoji: '⭐' },
-    events:     { label: 'Events & Planning',    emoji: '🎉' },
-    education:  { label: 'Education',            emoji: '📚' },
-    product:    { label: 'Product & Business',   emoji: '🚀' },
-    healthcare: { label: 'Healthcare',           emoji: '🏥' },
-    community:  { label: 'Community',            emoji: '🤝' },
-    fun:        { label: 'Fun & Social',         emoji: '🎮' },
+    employee:    { label: 'Employee & HR',        emoji: '👥' },
+    customer:    { label: 'Customer Feedback',    emoji: '⭐' },
+    events:      { label: 'Events & Planning',    emoji: '🎉' },
+    education:   { label: 'Education',            emoji: '📚' },
+    product:     { label: 'Product & Business',   emoji: '🚀' },
+    healthcare:  { label: 'Healthcare',           emoji: '🏥' },
+    community:   { label: 'Community',            emoji: '🤝' },
+    civic:       { label: 'Civic & Nonprofit',    emoji: '🏘️' },
+    fun:         { label: 'Fun & Social',         emoji: '🎮' },
+    hospitality: { label: 'Hospitality',          emoji: '🏨' },
+    membership:  { label: 'Membership & Clubs',   emoji: '🏅' },
+    procurement: { label: 'Procurement',          emoji: '📋' },
+    property:    { label: 'Property & Housing',   emoji: '🏠' },
+    marketing:   { label: 'Marketing & Brand',    emoji: '🎯' },
 } as const;
- 
+
 export type TemplateCategory = keyof typeof TEMPLATE_CATEGORIES;
- 
+
 // ============================================================================
 // SURVEY TEMPLATE INTERFACE
 // ============================================================================

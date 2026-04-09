@@ -756,6 +756,188 @@ export const SCHOOL_PARENT_TEMPLATE: SurveyTemplate = {
   ],
 };
 
+// ─────────────────────────────────────────────
+// 1. childcare-parent-survey → education.ts
+// ─────────────────────────────────────────────
+export const CHILDCARE_PARENT_TEMPLATE = {
+  id: "childcare-parent-survey",
+  slug: "childcare-parent-survey",
+  title: "Childcare Parent Survey",
+  description:
+    "9 questions covering child safety, staff warmth, key person bond, settling-in, learning activities, communication, meals, NPS, and open feedback. Strong Ofsted parent voice evidence.",
+  category: "education",
+  tags: ["childcare", "nursery", "daycare", "preschool", "parent", "ofsted"],
+  sectionPrefix: "cp-",
+  pollType: "rating",
+  questions: [
+    {
+      id: "cp-01",
+      text: "Overall, how satisfied are you with the care your child receives at our setting?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-02",
+      text: "How safe and well cared for does your child feel in our setting?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-03",
+      text: "How warm, attentive, and nurturing do you find our staff with your child?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-04",
+      text: "How well supported was your child during settling-in and how strong is their bond with their key person?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-05",
+      text: "How satisfied are you with the range and quality of learning activities and play provided?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-06",
+      text: "How well does the setting keep you informed about your child's day and development?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-07",
+      text: "How satisfied are you with the meals, snacks, and nutrition provided?",
+      type: "rating",
+      scale: 5,
+    },
+    {
+      id: "cp-08",
+      text: "How likely are you to recommend our setting to another parent? (0–10)",
+      type: "nps",
+      scale: 10,
+    },
+    {
+      id: "cp-09",
+      text: "What is the one thing we could do to better support you and your child?",
+      type: "open",
+    },
+  ],
+  meta: {
+    sendTiming: "October and February each year",
+    anonymous: true,
+    audience: ["nursery managers", "room leaders", "childminders"],
+    keyChurnSignal: "cp-04",
+    keyReferralSignal: "cp-08",
+  },
+  landingPage: "/templates/childcare-parent-survey",
+  prefillUrl:
+    "https://votegenerator.com/create?template=childcare-parent-survey",
+};
+
+// ─────────────────────────────────────────────
+// 5. online-course-feedback-survey → education.ts
+// ─────────────────────────────────────────────
+export const ONLINE_COURSE_TEMPLATE = {
+  id: "online-course-feedback-survey",
+  slug: "online-course-feedback-survey",
+  title: "Online Course Feedback Survey",
+  description:
+    "9 questions for course creators, EdTech platforms, and L&D teams. Covers overall satisfaction, content quality, instructor style, pacing, platform experience, learning objectives met, value, NPS, and open feedback.",
+  category: "education",
+  tags: [
+    "online course",
+    "e-learning",
+    "course creator",
+    "EdTech",
+    "LMS",
+    "learning",
+  ],
+  sectionPrefix: "oc-",
+  pollType: "rating",
+  questions: [
+    {
+      id: "oc-01",
+      text: "Overall, how satisfied are you with this course?",
+      type: "scale",
+      scale: 5,
+      min: "Very dissatisfied",
+      max: "Very satisfied",
+    },
+    {
+      id: "oc-02",
+      text: "How would you rate the quality, depth, and accuracy of the course content?",
+      type: "scale",
+      scale: 5,
+      min: "Very poor",
+      max: "Excellent",
+    },
+    {
+      id: "oc-03",
+      text: "How engaging and effective was the instructor's teaching style?",
+      type: "scale",
+      scale: 5,
+      min: "Not engaging",
+      max: "Very engaging",
+    },
+    {
+      id: "oc-04",
+      text: "How well was the course paced and structured across lessons and modules?",
+      type: "scale",
+      scale: 5,
+      min: "Very poor",
+      max: "Excellent",
+    },
+    {
+      id: "oc-05",
+      text: "How smooth was your experience with the course platform and technical delivery?",
+      type: "scale",
+      scale: 5,
+      min: "Very difficult",
+      max: "Completely smooth",
+    },
+    {
+      id: "oc-06",
+      text: "How well did the course help you achieve the learning objectives or outcomes it promised?",
+      type: "scale",
+      scale: 5,
+      min: "Did not achieve them",
+      max: "Fully achieved them",
+    },
+    {
+      id: "oc-07",
+      text: "How well did this course represent value for the price you paid?",
+      type: "scale",
+      scale: 5,
+      min: "Poor value",
+      max: "Excellent value",
+    },
+    {
+      id: "oc-08",
+      text: "How likely are you to recommend this course to someone with similar learning goals? (0–10)",
+      type: "nps",
+      scale: 10,
+    },
+    {
+      id: "oc-09",
+      text: "What is the one thing that would have made this course more valuable to you?",
+      type: "open",
+    },
+  ],
+  meta: {
+    sendTiming: "Within 24–48 hours of course completion",
+    anonymous: true,
+    platforms: ["Udemy", "Teachable", "Kajabi", "Thinkific", "Podia", "any LMS"],
+    audience: ["course creators", "EdTech platforms", "corporate L&D teams"],
+    keyChurnSignal: "oc-06",
+    keyReferralSignal: "oc-08",
+    note: "Q6 (learning objectives) gap vs Q8 (NPS) = sales copy or course structure mismatch. Most common refund driver.",
+  },
+  landingPage: "/templates/online-course-feedback-survey",
+  prefillUrl:
+    "https://votegenerator.com/create?template=online-course-feedback-survey",
+};
 
 // ============================================================================
 // EXPORT
@@ -767,4 +949,8 @@ export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     SCHOOL_SATISFACTION_TEMPLATE,
     ALUMNI_TEMPLATE,
     SCHOOL_PARENT_TEMPLATE,
+    CHILDCARE_PARENT_TEMPLATE,          // new
+    ONLINE_COURSE_TEMPLATE,             // new
+
+
 ];

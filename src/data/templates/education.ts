@@ -939,6 +939,194 @@ export const ONLINE_COURSE_TEMPLATE = {
     "https://votegenerator.com/create?template=online-course-feedback-survey",
 };
 
+export const CHILDCARE_PARENT_TEMPLATE: SurveyTemplate = {
+  id: 'childcare-parent-survey',
+  name: 'Childcare Parent Survey',
+  emoji: '🌟',
+  color: 'text-sky-600',
+  description: '9 questions for nurseries, daycares, and childminders. Child safety, staff warmth, key person bond, settling-in, learning activities, communication, meals, NPS, and open feedback. Strong Ofsted parent voice evidence.',
+  category: 'education',
+  targetKeyword: 'childcare parent survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'cp-care',
+      title: 'Care & Staff',
+      description: 'Safety, warmth, and key person relationships',
+      questions: [
+        {
+          id: 'cp-q1',
+          type: 'rating',
+          question: 'Overall, how satisfied are you with the care your child receives at our setting?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q2',
+          type: 'rating',
+          question: 'How safe and well cared for does your child feel in our setting?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q3',
+          type: 'rating',
+          question: 'How warm, attentive, and nurturing do you find our staff with your child?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q4',
+          type: 'rating',
+          question: "How well supported was your child during settling-in and how strong is their bond with their key person?",
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'cp-learning',
+      title: 'Learning & Communication',
+      description: 'Activities, meals, and keeping families informed',
+      questions: [
+        {
+          id: 'cp-q5',
+          type: 'rating',
+          question: 'How satisfied are you with the range and quality of learning activities and play provided?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q6',
+          type: 'rating',
+          question: "How well does the setting keep you informed about your child's day and development?",
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q7',
+          type: 'rating',
+          question: 'How satisfied are you with the meals, snacks, and nutrition provided?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend our setting to another parent?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'cp-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could do to better support you and your child?',
+          placeholder: 'Your feedback helps us improve the care we provide for every child...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const ONLINE_COURSE_TEMPLATE: SurveyTemplate = {
+  id: 'online-course-feedback-survey',
+  name: 'Online Course Feedback Survey',
+  emoji: '🎓',
+  color: 'text-lime-700',
+  description: '9 questions for course creators, EdTech platforms, and L&D teams. Content quality, instructor style, pacing, platform experience, learning objectives met, value, NPS, and open feedback.',
+  category: 'education',
+  targetKeyword: 'online course feedback survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'oc-content',
+      title: 'Content & Delivery',
+      description: 'Quality, pacing, and instructor effectiveness',
+      questions: [
+        {
+          id: 'oc-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with this course?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'oc-q2',
+          type: 'scale',
+          question: 'How would you rate the quality, depth, and accuracy of the course content?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very poor', maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'oc-q3',
+          type: 'scale',
+          question: "How engaging and effective was the instructor's teaching style?",
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not engaging', maxLabel: 'Very engaging',
+          required: true,
+        },
+        {
+          id: 'oc-q4',
+          type: 'scale',
+          question: 'How well was the course paced and structured across lessons and modules?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very poor', maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'oc-q5',
+          type: 'scale',
+          question: 'How smooth was your experience with the course platform and technical delivery?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very difficult', maxLabel: 'Completely smooth',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'oc-outcomes',
+      title: 'Outcomes & Value',
+      description: 'Whether the course delivered on its promises',
+      questions: [
+        {
+          id: 'oc-q6',
+          type: 'scale',
+          question: 'How well did the course help you achieve the learning objectives or outcomes it promised?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Did not achieve them', maxLabel: 'Fully achieved them',
+          required: true,
+        },
+        {
+          id: 'oc-q7',
+          type: 'scale',
+          question: 'How well did this course represent value for the price you paid?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor value', maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'oc-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this course to someone with similar learning goals?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'oc-q9',
+          type: 'textarea',
+          question: 'What is the one thing that would have made this course more valuable to you?',
+          placeholder: 'Your feedback is reviewed by the course creator and helps improve the next version...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
 // ============================================================================
 // EXPORT
 // ============================================================================

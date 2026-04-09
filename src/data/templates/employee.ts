@@ -2228,6 +2228,200 @@ export const TEAM_BUILDING_TEMPLATE = {
 };
 
 
+export const CANDIDATE_EXPERIENCE_TEMPLATE: SurveyTemplate = {
+  id: 'candidate-experience-survey',
+  name: 'Candidate Experience Survey',
+  emoji: '🎯',
+  color: 'text-sky-700',
+  description: '9 questions for HR and talent acquisition teams. Job description clarity, application ease, recruiter communication, interview quality, perceived fairness, decision speed, employer brand impression, NPS, and open feedback.',
+  category: 'employee',
+  targetKeyword: 'candidate experience survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'ce-process',
+      title: 'Application & Interview',
+      description: 'How the hiring process felt from the candidate side',
+      questions: [
+        {
+          id: 'ce-q1',
+          type: 'scale',
+          question: 'How clear and accurate was the job description in setting expectations for the role?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very unclear', maxLabel: 'Very clear',
+          required: true,
+        },
+        {
+          id: 'ce-q2',
+          type: 'scale',
+          question: 'How easy and straightforward was the application process?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very difficult', maxLabel: 'Very easy',
+          required: true,
+        },
+        {
+          id: 'ce-q3',
+          type: 'scale',
+          question: 'How well did the recruiter or hiring team communicate with you throughout the process?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor communication', maxLabel: 'Excellent communication',
+          required: true,
+        },
+        {
+          id: 'ce-q4',
+          type: 'scale',
+          question: 'How well organised and professionally run were your interviews?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poorly organised', maxLabel: 'Very professional',
+          required: true,
+        },
+        {
+          id: 'ce-q5',
+          type: 'scale',
+          question: 'How fair and objective did the assessment and interview process feel?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Felt unfair', maxLabel: 'Very fair',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ce-brand',
+      title: 'Decision & Employer Brand',
+      description: 'Speed, outcome communication, and overall impression',
+      questions: [
+        {
+          id: 'ce-q6',
+          type: 'scale',
+          question: 'How satisfied were you with the speed of the hiring decision and communication of the outcome?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very slow', maxLabel: 'Very timely',
+          required: true,
+        },
+        {
+          id: 'ce-q7',
+          type: 'scale',
+          question: 'How positive an impression do you have of this organisation as a place to work, based on your experience?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very negative', maxLabel: 'Very positive',
+          required: true,
+        },
+        {
+          id: 'ce-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend applying to this organisation to someone in your network?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'ce-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could change to make the hiring process better for future candidates?',
+          placeholder: 'Specific feedback helps us improve the process for every candidate who applies...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const TEAM_BUILDING_TEMPLATE: SurveyTemplate = {
+  id: 'team-building-survey',
+  name: 'Team Building Event Survey',
+  emoji: '🌿',
+  color: 'text-emerald-700',
+  description: '9 anonymous questions for HR teams and people managers. Activity enjoyment, team connection, inclusion, facilitation quality, logistics, budget value, repeat interest, NPS, and open feedback.',
+  category: 'employee',
+  targetKeyword: 'team building survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'tb-activity',
+      title: 'Activity & Connection',
+      description: 'Enjoyment, inclusion, and team bonding',
+      questions: [
+        {
+          id: 'tb-q1',
+          type: 'scale',
+          question: "Overall, how much did you enjoy today's team activity?",
+          minValue: 1, maxValue: 5,
+          minLabel: 'Did not enjoy', maxLabel: 'Loved it',
+          required: true,
+        },
+        {
+          id: 'tb-q2',
+          type: 'scale',
+          question: 'How well did the activity help you connect with and get to know your colleagues better?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not at all', maxLabel: 'Very well',
+          required: true,
+        },
+        {
+          id: 'tb-q3',
+          type: 'scale',
+          question: 'How inclusive and accessible was the activity for all team members?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very exclusionary', maxLabel: 'Fully inclusive',
+          required: true,
+        },
+        {
+          id: 'tb-q4',
+          type: 'scale',
+          question: 'How well was the activity facilitated and organised?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poorly', maxLabel: 'Excellently',
+          required: true,
+        },
+        {
+          id: 'tb-q5',
+          type: 'scale',
+          question: 'How smoothly did the logistics run — venue, timing, instructions, and communication?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Lots of issues', maxLabel: 'Ran perfectly',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'tb-value',
+      title: 'Value & Repeat Intent',
+      description: 'Budget justification and whether to run it again',
+      questions: [
+        {
+          id: 'tb-q6',
+          type: 'scale',
+          question: 'How well did this activity represent a good use of company time and budget?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor use', maxLabel: 'Excellent use',
+          required: true,
+        },
+        {
+          id: 'tb-q7',
+          type: 'scale',
+          question: 'How interested would you be in doing a similar type of activity again?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not at all', maxLabel: 'Definitely yes',
+          required: true,
+        },
+        {
+          id: 'tb-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this type of activity to another team in the company?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'tb-q9',
+          type: 'textarea',
+          question: "What is one thing that would have made today's activity better or more enjoyable for you?",
+          placeholder: 'Your anonymous feedback shapes the next team activity...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
 // ============================================================================
 // EXPORT
 // ============================================================================

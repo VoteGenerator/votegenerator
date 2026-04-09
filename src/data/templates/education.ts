@@ -493,6 +493,146 @@ const SCHOOL_SATISFACTION_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 6. ALUMNI SURVEY → education.ts
+// Target keyword: alumni survey template, university alumni survey (1k/mo)
+// Conversion hook: track how career preparedness scores, NPS, and giving intent
+//   change across cohorts and survey years — CSV export for IR reports
+// ============================================================================
+export const ALUMNI_TEMPLATE: SurveyTemplate = {
+  id: 'alumni-survey',
+  name: 'Alumni Survey',
+  emoji: '🎓',
+  color: 'text-red-900',
+  description: '9 questions for university and college alumni relations teams. Education quality, career preparedness, career outcomes, institutional pride, alumni programme satisfaction, NPS, giving intent, and open feedback.',
+  category: 'education',
+  targetKeyword: 'alumni survey template',
+  priority: 'P2',
+  conversionHook: 'Track how career preparedness scores, NPS, and giving intent change across graduation cohorts and survey years. CSV export for IR reports.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: false,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'al-education',
+      title: 'Education Quality',
+      description: 'How was the education you received?',
+      questions: [
+        {
+          id: 'al-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with the education you received from this institution?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'al-q2',
+          type: 'scale',
+          question: 'How would you rate the quality of teaching, faculty, and academic curriculum during your studies?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-career',
+      title: 'Career Outcomes',
+      description: 'Career preparedness and outcomes since graduating',
+      questions: [
+        {
+          id: 'al-q3',
+          type: 'scale',
+          question: 'How well did your education prepare you for your career and professional life?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not at all',
+          maxLabel: 'Exceptionally well',
+          required: true,
+        },
+        {
+          id: 'al-q4',
+          type: 'scale',
+          question: 'How satisfied are you with the career outcomes you have achieved since graduating?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-connection',
+      title: 'Pride & Engagement',
+      description: 'Connection to the institution today',
+      questions: [
+        {
+          id: 'al-q5',
+          type: 'scale',
+          question: 'How strong is your sense of pride and connection to this institution today?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'No connection',
+          maxLabel: 'Very strong pride',
+          required: true,
+        },
+        {
+          id: 'al-q6',
+          type: 'scale',
+          question: 'How satisfied are you with the alumni programmes, events, and engagement opportunities available to you?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-advocacy',
+      title: 'Advocacy & Giving',
+      description: 'Referral intent, NPS, and giving likelihood',
+      questions: [
+        {
+          id: 'al-q7',
+          type: 'nps',
+          question: 'How likely are you to recommend this institution to a prospective student?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'al-q8',
+          type: 'scale',
+          question: 'How likely are you to support this institution financially through giving or donations in the next 12 months?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not likely',
+          maxLabel: 'Very likely',
+          required: true,
+        },
+        {
+          id: 'al-q9',
+          type: 'textarea',
+          question: 'What is the one thing this institution could most improve to better serve its alumni and students?',
+          placeholder: 'Your feedback is reviewed by our alumni relations team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+ 
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
@@ -500,4 +640,5 @@ export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     TRAINING_FEEDBACK_TEMPLATE,
     STUDENT_SATISFACTION_TEMPLATE,
     SCHOOL_SATISFACTION_TEMPLATE,
+    ALUMNI_TEMPLATE,
 ];

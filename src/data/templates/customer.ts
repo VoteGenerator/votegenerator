@@ -1208,6 +1208,125 @@ const GYM_FITNESS_CLASS_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 4. RETAIL CUSTOMER SURVEY → customer.ts
+// Target keyword: retail customer survey, in-store customer feedback (1k-5k/mo)
+// Conversion hook: track whether NPS, staff scores, and checkout ratings improve
+//   week by week or across store locations
+// ============================================================================
+export const RETAIL_CUSTOMER_TEMPLATE: SurveyTemplate = {
+  id: 'retail-customer-survey',
+  name: 'Retail Customer Survey',
+  emoji: '🛍️',
+  color: 'text-orange-700',
+  description: '9 questions for retail stores and ecommerce brands. Shopping experience, product range, findability, staff, checkout, atmosphere, value, NPS, and open feedback. QR code friendly.',
+  category: 'customer',
+  targetKeyword: 'retail customer survey',
+  priority: 'P2',
+  conversionHook: 'Track whether NPS, staff scores, and checkout ratings improve week by week or across store locations.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'rc-experience',
+      title: 'Shopping Experience',
+      description: 'How was your visit today?',
+      questions: [
+        {
+          id: 'rc-q1',
+          type: 'rating',
+          question: 'How would you rate your overall shopping experience today?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q2',
+          type: 'rating',
+          question: 'How satisfied were you with the range and availability of products?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q3',
+          type: 'rating',
+          question: 'How easy was it to find what you were looking for?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'rc-service',
+      title: 'Staff & Checkout',
+      description: 'Team and transaction experience',
+      questions: [
+        {
+          id: 'rc-q4',
+          type: 'rating',
+          question: 'How helpful and knowledgeable was our staff during your visit?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q5',
+          type: 'rating',
+          question: 'How smooth and quick was the checkout or payment process?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q6',
+          type: 'rating',
+          question: 'How would you rate the store atmosphere, presentation, and cleanliness?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'rc-value',
+      title: 'Value & Recommendation',
+      description: 'Price perception, NPS, and open feedback',
+      questions: [
+        {
+          id: 'rc-q7',
+          type: 'rating',
+          question: 'How would you rate the value for money of the products you purchased?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend us to a friend or family member?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'rc-q9',
+          type: 'textarea',
+          question: 'Is there anything specific we could do to improve your experience next time?',
+          placeholder: 'Your feedback helps us improve every customer\'s experience...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+ 
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
@@ -1216,6 +1335,7 @@ export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
     POST_PURCHASE_TEMPLATE,
     RESTAURANT_FEEDBACK_TEMPLATE,
     CUSTOMER_CHURN_TEMPLATE,
+    RETAIL_CUSTOMER_TEMPLATE,
     SALES_FEEDBACK_TEMPLATE,
     REAL_ESTATE_AGENT_TEMPLATE,
     INSURANCE_SATISFACTION_TEMPLATE,

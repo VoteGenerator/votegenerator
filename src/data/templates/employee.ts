@@ -1884,6 +1884,149 @@ const CANTEEN_FOOD_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 1. EMPLOYEE MENTAL HEALTH SURVEY → employee.ts
+// Target keyword: employee mental health survey (5k/mo)
+// Conversion hook: tracks whether psychological safety + stress scores improve
+//   quarter over quarter after interventions — Pro response timeline
+// ============================================================================
+export const EMPLOYEE_MENTAL_HEALTH_TEMPLATE: SurveyTemplate = {
+  id: 'employee-mental-health-survey',
+  name: 'Employee Mental Health Survey',
+  emoji: '🌿',
+  color: 'text-teal-700',
+  description: '9 anonymous questions on stress, psychological safety, manager trust, help-seeking comfort, and overall mental wellbeing at work. Designed to run separately from engagement surveys.',
+  category: 'employee',
+  targetKeyword: 'employee mental health survey',
+  priority: 'P1',
+  conversionHook: 'Track whether psychological safety and stress scores are improving quarter over quarter after each intervention.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'mh-wellbeing',
+      title: 'Wellbeing & Stress',
+      description: 'How are you feeling right now at work?',
+      questions: [
+        {
+          id: 'mh-q1',
+          type: 'scale',
+          question: 'Overall, how would you rate your mental wellbeing at work right now?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'mh-q2',
+          type: 'scale',
+          question: 'How manageable does your stress level feel on a typical working day?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Unmanageable',
+          maxLabel: 'Completely fine',
+          required: true,
+        },
+        {
+          id: 'mh-q3',
+          type: 'scale',
+          question: 'How well are you able to switch off from work outside of working hours?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Never can switch off',
+          maxLabel: 'Easily switch off',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-safety',
+      title: 'Psychological Safety & Support',
+      description: 'Do you feel safe and supported at work?',
+      questions: [
+        {
+          id: 'mh-q4',
+          type: 'scale',
+          question: 'Do you feel psychologically safe to speak up or raise concerns at work?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not at all safe',
+          maxLabel: 'Completely safe',
+          required: true,
+        },
+        {
+          id: 'mh-q5',
+          type: 'scale',
+          question: 'How supported do you feel by your manager when you are struggling?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not supported',
+          maxLabel: 'Fully supported',
+          required: true,
+        },
+        {
+          id: 'mh-q6',
+          type: 'scale',
+          question: 'How comfortable would you feel asking for support with your mental health at work?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not comfortable',
+          maxLabel: 'Very comfortable',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-resources',
+      title: 'Resources & Connection',
+      description: 'Support available and sense of connection',
+      questions: [
+        {
+          id: 'mh-q7',
+          type: 'scale',
+          question: 'How satisfied are you with the mental health support your organisation provides?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'mh-q8',
+          type: 'scale',
+          question: 'How connected do you feel to your team and colleagues right now?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very isolated',
+          maxLabel: 'Very connected',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-open',
+      title: 'Open Feedback',
+      description: 'Your anonymous suggestion',
+      questions: [
+        {
+          id: 'mh-q9',
+          type: 'textarea',
+          question: 'What is the one thing your organisation could do to better support your mental health?',
+          placeholder: 'Your anonymous feedback shapes what we do next...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [

@@ -1325,6 +1325,138 @@ export const RETAIL_CUSTOMER_TEMPLATE: SurveyTemplate = {
   ],
 };
  
+// ============================================================================
+// 3. SUBSCRIPTION SERVICE SURVEY → customer.ts
+// Target keyword: subscription service survey, SaaS customer satisfaction survey (1k-5k/mo)
+// Conversion hook: track how satisfaction and renewal intent change across
+//   subscriber cohorts — identify churn risk before the renewal decision
+// ============================================================================
+export const SUBSCRIPTION_SERVICE_TEMPLATE: SurveyTemplate = {
+  id: 'subscription-service-survey',
+  name: 'Subscription Service Survey',
+  emoji: '🔁',
+  color: 'text-violet-700',
+  description: '9 questions for SaaS companies and subscription businesses. Overall satisfaction, value for money, feature satisfaction, onboarding, support quality, ease of use, renewal intent, NPS, and open feedback. Identifies churn risk before the renewal decision.',
+  category: 'customer',
+  targetKeyword: 'subscription service survey',
+  priority: 'P2',
+  conversionHook: 'Track how satisfaction and renewal intent change across subscriber cohorts and after product updates. Identify churn risk before the renewal decision.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: false,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'ss-satisfaction',
+      title: 'Overall Satisfaction',
+      description: 'How satisfied are you with the product?',
+      questions: [
+        {
+          id: 'ss-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with our product or service?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'ss-q2',
+          type: 'scale',
+          question: 'How well does your subscription represent value for the price you pay?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Poor value',
+          maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'ss-q3',
+          type: 'scale',
+          question: 'How satisfied are you with the features or content included in your plan?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ss-experience',
+      title: 'Experience & Support',
+      description: 'Onboarding, support, and day-to-day ease of use',
+      questions: [
+        {
+          id: 'ss-q4',
+          type: 'scale',
+          question: 'How smooth was the experience of getting started and set up?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very difficult',
+          maxLabel: 'Very smooth',
+          required: true,
+        },
+        {
+          id: 'ss-q5',
+          type: 'scale',
+          question: 'How satisfied are you with the quality of support when you need help?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'ss-q6',
+          type: 'scale',
+          question: 'How easy is the product to use day to day?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very difficult',
+          maxLabel: 'Very easy',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ss-renewal',
+      title: 'Renewal Intent & Advocacy',
+      description: 'Churn risk indicators and open feedback',
+      questions: [
+        {
+          id: 'ss-q7',
+          type: 'scale',
+          question: 'How likely are you to renew your subscription when it next comes up?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Definitely cancel',
+          maxLabel: 'Definitely renew',
+          required: true,
+        },
+        {
+          id: 'ss-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend us to a friend or colleague?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'ss-q9',
+          type: 'textarea',
+          question: 'What is the one thing that would most improve your experience as a subscriber?',
+          placeholder: 'Be specific — your feedback goes directly to the product team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
 
 // ============================================================================
 // EXPORT
@@ -1342,4 +1474,5 @@ export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
     SPA_WELLNESS_FEEDBACK_TEMPLATE,
     FOOD_DELIVERY_TEMPLATE,
     GYM_FITNESS_CLASS_TEMPLATE,
+    SUBSCRIPTION_SERVICE_TEMPLATE,
 ];

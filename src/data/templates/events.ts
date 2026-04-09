@@ -53,6 +53,126 @@ const WEDDING_RSVP_TEMPLATE: SurveyTemplate = {
     ],
 };
  
+// ============================================================================
+// 2. SPEAKER EVALUATION SURVEY → events.ts
+// Target keyword: speaker evaluation survey, conference speaker feedback (1k-5k/mo)
+// Conversion hook: compare speaker scores side by side across all sessions,
+//   identify where engagement dropped, export for speaker debrief reports
+// ============================================================================
+export const SPEAKER_EVALUATION_TEMPLATE: SurveyTemplate = {
+  id: 'speaker-evaluation-survey',
+  name: 'Speaker Evaluation Survey',
+  emoji: '🎤',
+  color: 'text-teal-600',
+  description: '8 questions for conference organisers and event teams. Overall presentation rating, content relevance, delivery style, audience engagement, pacing, key message clarity, NPS, and open feedback. Display QR code on the speaker\'s final slide.',
+  category: 'events',
+  targetKeyword: 'speaker evaluation survey',
+  priority: 'P2',
+  conversionHook: 'Compare speaker scores side by side across all sessions and export speaker debrief reports.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'se-content',
+      title: 'Content & Delivery',
+      description: 'How was the presentation itself?',
+      questions: [
+        {
+          id: 'se-q1',
+          type: 'scale',
+          question: 'How would you rate this presentation overall?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'se-q2',
+          type: 'scale',
+          question: 'How relevant and valuable was the content to you personally?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not relevant',
+          maxLabel: 'Highly relevant',
+          required: true,
+        },
+        {
+          id: 'se-q3',
+          type: 'scale',
+          question: 'How engaging and confident was the speaker\'s delivery style?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not engaging',
+          maxLabel: 'Very engaging',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'se-delivery',
+      title: 'Engagement & Pacing',
+      description: 'How well did the session land?',
+      questions: [
+        {
+          id: 'se-q4',
+          type: 'scale',
+          question: 'How well did the speaker engage and interact with the audience?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not at all',
+          maxLabel: 'Very well',
+          required: true,
+        },
+        {
+          id: 'se-q5',
+          type: 'scale',
+          question: 'How well did the pacing and structure of the presentation work?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'se-q6',
+          type: 'yes_no',
+          question: 'Did the speaker\'s key message or takeaway come through clearly?',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'se-recommend',
+      title: 'Recommendation & Feedback',
+      description: 'Would you recommend this speaker?',
+      questions: [
+        {
+          id: 'se-q7',
+          type: 'nps',
+          question: 'How likely are you to recommend this speaker to a colleague or event organiser?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'se-q8',
+          type: 'textarea',
+          question: 'What is the one thing that would have made this presentation more valuable to you?',
+          placeholder: 'Be specific — this feedback helps the speaker improve for future events...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+ 
+
+
 const TEAM_FEEDBACK_TEMPLATE: SurveyTemplate = {
     id: 'team-feedback',
     name: 'Team Feedback',
@@ -522,6 +642,7 @@ export const EVENTS_TEMPLATES: SurveyTemplate[] = [
     TEAM_FEEDBACK_TEMPLATE,
     PARTY_TEMPLATE,
     BABY_SHOWER_TEMPLATE,
+    SPEAKER_EVALUATION_TEMPLATE,
     // Add future event templates here: conference feedback, workshop eval, etc.
 ];
  

@@ -631,6 +631,131 @@ export const ALUMNI_TEMPLATE: SurveyTemplate = {
   ],
 };
  
+// ============================================================================
+// 1. SCHOOL PARENT SURVEY → education.ts
+// Target keyword: school parent survey, parent satisfaction survey school (1k-5k/mo)
+// Conversion hook: track whether communication and satisfaction scores improve
+//   year on year after each initiative
+// ============================================================================
+export const SCHOOL_PARENT_TEMPLATE: SurveyTemplate = {
+  id: 'school-parent-survey',
+  name: 'School Parent Survey',
+  emoji: '🏫',
+  color: 'text-orange-800',
+  description: '9 anonymous questions for school leaders and head teachers. Teaching quality, school communication, student safety, extracurricular opportunities, individual support, leadership confidence, NPS, and open feedback.',
+  category: 'education',
+  targetKeyword: 'school parent survey',
+  priority: 'P2',
+  conversionHook: 'Track whether parent communication and satisfaction scores are improving year on year after each school initiative.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'sp-satisfaction',
+      title: 'Overall Satisfaction',
+      description: 'How satisfied are you with your child\'s school?',
+      questions: [
+        {
+          id: 'sp-q1',
+          type: 'rating',
+          question: 'Overall, how satisfied are you with your child\'s school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q2',
+          type: 'rating',
+          question: 'How would you rate the quality of teaching your child receives?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-communication',
+      title: 'Communication & Safety',
+      description: 'School-home communication and student wellbeing',
+      questions: [
+        {
+          id: 'sp-q3',
+          type: 'rating',
+          question: 'How well does the school keep you informed and communicate with parents?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q4',
+          type: 'rating',
+          question: 'How safe and well cared for does your child feel at school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q5',
+          type: 'rating',
+          question: 'How satisfied are you with the range of extracurricular and enrichment activities on offer?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-support',
+      title: 'Individual Support & Leadership',
+      description: 'Personalised support and confidence in leadership',
+      questions: [
+        {
+          id: 'sp-q6',
+          type: 'rating',
+          question: 'How well does the school support your child\'s individual needs and development?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q7',
+          type: 'rating',
+          question: 'How confident are you in the leadership and direction of the school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-recommend',
+      title: 'Recommendation & Feedback',
+      description: 'NPS and open feedback for improvement',
+      questions: [
+        {
+          id: 'sp-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this school to other parents?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'sp-q9',
+          type: 'textarea',
+          question: 'What is the one thing the school could do to most improve your child\'s experience?',
+          placeholder: 'Your feedback helps the school improve for every family...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
 
 // ============================================================================
 // EXPORT
@@ -641,4 +766,5 @@ export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     STUDENT_SATISFACTION_TEMPLATE,
     SCHOOL_SATISFACTION_TEMPLATE,
     ALUMNI_TEMPLATE,
+    SCHOOL_PARENT_TEMPLATE,
 ];

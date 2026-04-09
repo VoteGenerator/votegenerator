@@ -721,7 +721,7 @@ const SurveyPage: React.FC = () => {
                             <img 
                                 src="/logo.svg" 
                                 alt="VoteGenerator" 
-                                className="w-8 h-8 sm:w-9 sm:h-9 brightness-0 invert"
+                                className="w-8 h-8 sm:w-9 sm:h-9"
                                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                             />
                             <span className="font-bold text-lg sm:text-xl text-white">

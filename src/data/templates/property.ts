@@ -383,10 +383,134 @@ export const HOA_RESIDENT_TEMPLATE: SurveyTemplate = {
   ],
 };
 
+export const STUDENT_HOUSING_TEMPLATE: SurveyTemplate = {
+  id: 'student-housing-survey',
+  name: 'Student Housing Survey',
+  emoji: '🎓',
+  color: 'text-blue-700',
+  description:
+    '9 questions for student accommodation providers and university housing offices. Room quality, maintenance, internet, safety, value for rent, staff responsiveness, renewal intent, NPS, and open feedback.',
+  category: 'property',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'sh-room',
+      title: 'Room & Facilities',
+      description: 'Physical quality and essential infrastructure',
+      questions: [
+        {
+          id: 'sh-q1',
+          type: 'scale',
+          question: 'How satisfied are you with the overall quality and condition of your room or accommodation?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'sh-q2',
+          type: 'scale',
+          question: 'How reliable and fast is the internet and Wi-Fi in your accommodation?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very unreliable',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'sh-q3',
+          type: 'scale',
+          question: 'How satisfied are you with the shared kitchens, bathrooms, or communal spaces?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sh-service',
+      title: 'Management & Safety',
+      description: 'How staff perform and how safe residents feel',
+      questions: [
+        {
+          id: 'sh-q4',
+          type: 'scale',
+          question: 'How quickly and effectively are maintenance and repair requests handled?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poorly',
+          maxLabel: 'Excellently',
+          required: true,
+        },
+        {
+          id: 'sh-q5',
+          type: 'scale',
+          question: 'How helpful and responsive is the accommodation management team?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not helpful',
+          maxLabel: 'Very helpful',
+          required: true,
+        },
+        {
+          id: 'sh-q6',
+          type: 'scale',
+          question: 'How safe and secure do you feel in your accommodation?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very unsafe',
+          maxLabel: 'Very safe',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sh-value',
+      title: 'Value & Renewal',
+      description: 'Rent value and whether residents would return',
+      questions: [
+        {
+          id: 'sh-q7',
+          type: 'scale',
+          question: 'How well does your accommodation represent value for the rent you pay?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Poor value',
+          maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'sh-q8',
+          type: 'nps',
+          question:
+            'How likely are you to recommend this accommodation to a fellow student? (0–10)',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'sh-q9',
+          type: 'textarea',
+          question:
+            'What is the one thing that would most improve your experience living here?',
+          placeholder:
+            'Your anonymous feedback helps us improve the accommodation for all residents...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
 
 export const PROPERTY_TEMPLATES: SurveyTemplate[] = [
-    TENANT_SATISFACTION_TEMPLATE,
-    TENANT_SATISFACTION_TEMPLATE,
+  TENANT_SATISFACTION_TEMPLATE,
   STUDENT_HOUSING_TEMPLATE,
   VACATION_RENTAL_GUEST_TEMPLATE,
   HOA_RESIDENT_TEMPLATE,

@@ -113,10 +113,13 @@ const VoteGeneratorApp: React.FC = () => {
     }, []);
 
     // Helper: Check if poll should show voter ad-wall (free tier, non-admin)
-    const shouldShowVoterAdWall = (poll: Poll, isAdmin: boolean): boolean => {
-        const pollTier = (poll as any).tier || 'free';
-        return pollTier === 'free' && !isAdmin;
-    };
+    // ADD these two instead
+const shouldShowVoterAdWallBefore = (): boolean => false;
+
+const shouldShowVoterAdWallAfter = (poll: Poll, isAdmin: boolean): boolean => {
+    const pollTier = (poll as any).tier || 'free';
+    return pollTier === 'free' && !isAdmin;
+};
 
     const loadView = useCallback(async (silent = false) => {
         const { specialRoute, pollId, adminKey, resultsId, shareKey, surveyId } = parseHash();
@@ -157,7 +160,7 @@ const VoteGeneratorApp: React.FC = () => {
                     if (allowMultiple) {
                         // Allow multiple responses - go directly to survey form
                         const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
-                        if (shouldShowVoterAdWall(survey, isAdmin) && !adWallShown) {
+                        if (shouldShowVoterAdWallBefore() && !adWallShown) {
                             setViewState({ type: 'survey-ad-wall-before', poll: survey });
                         } else {
                             setViewState({ type: 'survey-vote', poll: survey });
@@ -248,7 +251,7 @@ const VoteGeneratorApp: React.FC = () => {
                     // Show survey - check for ad-wall
                     const adWallShown = localStorage.getItem(`vg_adwall_before_${surveyId}`);
                     
-                    if (shouldShowVoterAdWall(survey, isAdmin) && !adWallShown) {
+                    if (shouldShowVoterAdWallBefore() && !adWallShown) {
                         setViewState({ type: 'survey-ad-wall-before', poll: survey });
                     } else {
                         setViewState({ type: 'survey-vote', poll: survey });
@@ -409,7 +412,7 @@ const VoteGeneratorApp: React.FC = () => {
             
             // Check if we need to show ad-wall after voting (free tier only)
             const isAdmin = !!adminKey;
-            if (shouldShowVoterAdWall(viewState.poll, isAdmin)) {
+            if (shouldShowVoterAdWallAfter(viewState.poll, isAdmin)) {
                 setViewState({ type: 'ad-wall-after', poll: viewState.poll });
                 return;
             }
@@ -911,7 +914,7 @@ const VoteGeneratorApp: React.FC = () => {
                                     
                                     // Check if we need to show ad-wall after
                                     const isAdmin = !!adminKey;
-                                    if (shouldShowVoterAdWall(viewState.poll, isAdmin)) {
+                                    if (shouldShowVoterAdWallAfter(viewState.poll, isAdmin)) {
                                         setViewState({ type: 'survey-ad-wall-after', poll: viewState.poll });
                                         return;
                                     }

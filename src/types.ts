@@ -19,7 +19,8 @@ export type QuestionType =
     | 'dropdown'          // Dropdown select
     | 'ranking'           // Drag to rank options
     | 'yes_no'            // Simple yes/no
-    | 'matrix';           // Grid/matrix question
+    | 'matrix'           // Grid/matrix question
+     | 'nps';              // Net Promoter Score (0-10 scale)
 // Individual question within a section
 export interface SurveyQuestion {
     id: string;

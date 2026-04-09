@@ -1208,6 +1208,549 @@ const GYM_FITNESS_CLASS_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 4. RETAIL CUSTOMER SURVEY → customer.ts
+// Target keyword: retail customer survey, in-store customer feedback (1k-5k/mo)
+// Conversion hook: track whether NPS, staff scores, and checkout ratings improve
+//   week by week or across store locations
+// ============================================================================
+export const RETAIL_CUSTOMER_TEMPLATE: SurveyTemplate = {
+  id: 'retail-customer-survey',
+  name: 'Retail Customer Survey',
+  emoji: '🛍️',
+  color: 'text-orange-700',
+  description: '9 questions for retail stores and ecommerce brands. Shopping experience, product range, findability, staff, checkout, atmosphere, value, NPS, and open feedback. QR code friendly.',
+  category: 'customer',
+  targetKeyword: 'retail customer survey',
+  priority: 'P2',
+  conversionHook: 'Track whether NPS, staff scores, and checkout ratings improve week by week or across store locations.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'rc-experience',
+      title: 'Shopping Experience',
+      description: 'How was your visit today?',
+      questions: [
+        {
+          id: 'rc-q1',
+          type: 'rating',
+          question: 'How would you rate your overall shopping experience today?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q2',
+          type: 'rating',
+          question: 'How satisfied were you with the range and availability of products?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q3',
+          type: 'rating',
+          question: 'How easy was it to find what you were looking for?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'rc-service',
+      title: 'Staff & Checkout',
+      description: 'Team and transaction experience',
+      questions: [
+        {
+          id: 'rc-q4',
+          type: 'rating',
+          question: 'How helpful and knowledgeable was our staff during your visit?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q5',
+          type: 'rating',
+          question: 'How smooth and quick was the checkout or payment process?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q6',
+          type: 'rating',
+          question: 'How would you rate the store atmosphere, presentation, and cleanliness?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'rc-value',
+      title: 'Value & Recommendation',
+      description: 'Price perception, NPS, and open feedback',
+      questions: [
+        {
+          id: 'rc-q7',
+          type: 'rating',
+          question: 'How would you rate the value for money of the products you purchased?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'rc-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend us to a friend or family member?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'rc-q9',
+          type: 'textarea',
+          question: 'Is there anything specific we could do to improve your experience next time?',
+          placeholder: 'Your feedback helps us improve every customer\'s experience...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+ 
+// ============================================================================
+// 3. SUBSCRIPTION SERVICE SURVEY → customer.ts
+// Target keyword: subscription service survey, SaaS customer satisfaction survey (1k-5k/mo)
+// Conversion hook: track how satisfaction and renewal intent change across
+//   subscriber cohorts — identify churn risk before the renewal decision
+// ============================================================================
+export const SUBSCRIPTION_SERVICE_TEMPLATE: SurveyTemplate = {
+  id: 'subscription-service-survey',
+  name: 'Subscription Service Survey',
+  emoji: '🔁',
+  color: 'text-violet-700',
+  description: '9 questions for SaaS companies and subscription businesses. Overall satisfaction, value for money, feature satisfaction, onboarding, support quality, ease of use, renewal intent, NPS, and open feedback. Identifies churn risk before the renewal decision.',
+  category: 'customer',
+  targetKeyword: 'subscription service survey',
+  priority: 'P2',
+  conversionHook: 'Track how satisfaction and renewal intent change across subscriber cohorts and after product updates. Identify churn risk before the renewal decision.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: false,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'ss-satisfaction',
+      title: 'Overall Satisfaction',
+      description: 'How satisfied are you with the product?',
+      questions: [
+        {
+          id: 'ss-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with our product or service?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'ss-q2',
+          type: 'scale',
+          question: 'How well does your subscription represent value for the price you pay?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Poor value',
+          maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'ss-q3',
+          type: 'scale',
+          question: 'How satisfied are you with the features or content included in your plan?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ss-experience',
+      title: 'Experience & Support',
+      description: 'Onboarding, support, and day-to-day ease of use',
+      questions: [
+        {
+          id: 'ss-q4',
+          type: 'scale',
+          question: 'How smooth was the experience of getting started and set up?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very difficult',
+          maxLabel: 'Very smooth',
+          required: true,
+        },
+        {
+          id: 'ss-q5',
+          type: 'scale',
+          question: 'How satisfied are you with the quality of support when you need help?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'ss-q6',
+          type: 'scale',
+          question: 'How easy is the product to use day to day?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very difficult',
+          maxLabel: 'Very easy',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ss-renewal',
+      title: 'Renewal Intent & Advocacy',
+      description: 'Churn risk indicators and open feedback',
+      questions: [
+        {
+          id: 'ss-q7',
+          type: 'scale',
+          question: 'How likely are you to renew your subscription when it next comes up?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Definitely cancel',
+          maxLabel: 'Definitely renew',
+          required: true,
+        },
+        {
+          id: 'ss-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend us to a friend or colleague?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'ss-q9',
+          type: 'textarea',
+          question: 'What is the one thing that would most improve your experience as a subscriber?',
+          placeholder: 'Be specific — your feedback goes directly to the product team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const CLIENT_SATISFACTION_TEMPLATE: SurveyTemplate = {
+  id: 'client-satisfaction-survey',
+  name: 'Client Satisfaction Survey',
+  emoji: '🤝',
+  color: 'text-amber-700',
+  description: '9 questions for agencies, consultants, and freelancers. Delivery quality, communication, expertise, responsiveness, value, renewal intent, NPS, and open feedback.',
+  category: 'customer',
+  targetKeyword: 'client satisfaction survey',
+  recommendedSettings: { anonymousMode: false, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'cs-delivery',
+      title: 'Delivery & Expertise',
+      description: 'Quality of work and professional knowledge',
+      questions: [
+        {
+          id: 'cs-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with the quality of work we have delivered for you?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'cs-q2',
+          type: 'scale',
+          question: 'How well did we meet the agreed scope, timelines, and deliverables?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not at all', maxLabel: 'Exceeded expectations',
+          required: true,
+        },
+        {
+          id: 'cs-q3',
+          type: 'scale',
+          question: 'How would you rate the quality of communication and updates throughout our work together?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor', maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'cs-q4',
+          type: 'scale',
+          question: 'How confident are you in the expertise and knowledge our team brought to your project?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not confident', maxLabel: 'Very confident',
+          required: true,
+        },
+        {
+          id: 'cs-q5',
+          type: 'scale',
+          question: 'How responsive were we when you needed input, changes, or had questions?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very slow', maxLabel: 'Immediately responsive',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'cs-value',
+      title: 'Value & Renewal',
+      description: 'Investment return and likelihood to continue',
+      questions: [
+        {
+          id: 'cs-q6',
+          type: 'scale',
+          question: 'How well did our work represent value for the investment you made?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor value', maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'cs-q7',
+          type: 'scale',
+          question: 'How likely are you to work with us again on a future project or retainer?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Definitely not', maxLabel: 'Definitely yes',
+          required: true,
+        },
+        {
+          id: 'cs-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend us to a colleague or business in your network?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'cs-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could have done differently to make this engagement more valuable for you?',
+          placeholder: 'Your honest perspective is genuinely valued and read by our senior team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const PERSONAL_TRAINER_TEMPLATE: SurveyTemplate = {
+  id: 'personal-trainer-feedback-survey',
+  name: 'Personal Trainer Feedback Survey',
+  emoji: '💪',
+  color: 'text-orange-600',
+  description: '9 questions for PTs and fitness coaches. Session quality, programme design, motivation, progression, goal clarity, between-session support, value, NPS, and open feedback.',
+  category: 'customer',
+  targetKeyword: 'personal trainer feedback survey',
+  recommendedSettings: { anonymousMode: false, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'pt-sessions',
+      title: 'Sessions & Programme',
+      description: 'Quality and design of your training',
+      questions: [
+        {
+          id: 'pt-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with the quality of your sessions?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'pt-q2',
+          type: 'scale',
+          question: 'How well designed and structured do you find your training programme?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Needs improvement', maxLabel: 'Excellent structure',
+          required: true,
+        },
+        {
+          id: 'pt-q3',
+          type: 'scale',
+          question: 'How motivated and supported do you feel during our sessions?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not motivated', maxLabel: 'Highly motivated',
+          required: true,
+        },
+        {
+          id: 'pt-q4',
+          type: 'scale',
+          question: 'How well do you feel your programme is progressing toward your goals?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'No progress', maxLabel: 'Great progress',
+          required: true,
+        },
+        {
+          id: 'pt-q5',
+          type: 'scale',
+          question: 'How clearly defined and understood are your training goals?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very unclear', maxLabel: 'Crystal clear',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'pt-value',
+      title: 'Support & Value',
+      description: 'Between-session communication and overall value',
+      questions: [
+        {
+          id: 'pt-q6',
+          type: 'scale',
+          question: 'How satisfied are you with communication and support between sessions?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'pt-q7',
+          type: 'scale',
+          question: 'How well do the sessions represent value for money?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor value', maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'pt-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend me to a friend or colleague?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'pt-q9',
+          type: 'textarea',
+          question: 'What is one thing I could do differently to make our sessions more effective for you?',
+          placeholder: 'Be honest — this feedback helps me coach you better...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const COWORKING_SPACE_TEMPLATE: SurveyTemplate = {
+  id: 'coworking-space-survey',
+  name: 'Coworking Space Member Survey',
+  emoji: '🏢',
+  color: 'text-indigo-700',
+  description: '9 questions for coworking operators. Workspace quality, internet reliability, community value, events, staff, amenities, membership value, renewal intent, and open feedback.',
+  category: 'customer',
+  targetKeyword: 'coworking space member survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'cw-space',
+      title: 'Workspace & Infrastructure',
+      description: 'Physical environment and technical reliability',
+      questions: [
+        {
+          id: 'cw-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with your membership at this space?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'cw-q2',
+          type: 'scale',
+          question: 'How reliable and fast is the internet and technical infrastructure?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Unreliable', maxLabel: 'Rock solid',
+          required: true,
+        },
+        {
+          id: 'cw-q3',
+          type: 'scale',
+          question: 'How valuable is the sense of community and networking at this space?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'No value', maxLabel: 'Extremely valuable',
+          required: true,
+        },
+        {
+          id: 'cw-q4',
+          type: 'scale',
+          question: 'How satisfied are you with the events and member programming on offer?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'cw-q5',
+          type: 'scale',
+          question: 'How responsive and helpful are the staff when you need something?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not responsive', maxLabel: 'Excellent',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'cw-value',
+      title: 'Amenities & Renewal',
+      description: 'Facilities, value, and membership intent',
+      questions: [
+        {
+          id: 'cw-q6',
+          type: 'scale',
+          question: 'How satisfied are you with the amenities, meeting rooms, and shared facilities?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'cw-q7',
+          type: 'scale',
+          question: 'How well does your membership represent value for what you pay?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor value', maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'cw-q8',
+          type: 'scale',
+          question: 'How likely are you to renew your membership when it next comes up?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Will not renew', maxLabel: 'Definitely renewing',
+          required: true,
+        },
+        {
+          id: 'cw-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could do to make this space significantly better for you?',
+          placeholder: 'Your feedback goes directly to the community management team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
@@ -1216,10 +1759,15 @@ export const CUSTOMER_TEMPLATES: SurveyTemplate[] = [
     POST_PURCHASE_TEMPLATE,
     RESTAURANT_FEEDBACK_TEMPLATE,
     CUSTOMER_CHURN_TEMPLATE,
+    RETAIL_CUSTOMER_TEMPLATE,
     SALES_FEEDBACK_TEMPLATE,
     REAL_ESTATE_AGENT_TEMPLATE,
     INSURANCE_SATISFACTION_TEMPLATE,
     SPA_WELLNESS_FEEDBACK_TEMPLATE,
     FOOD_DELIVERY_TEMPLATE,
     GYM_FITNESS_CLASS_TEMPLATE,
+    SUBSCRIPTION_SERVICE_TEMPLATE,
+    CLIENT_SATISFACTION_TEMPLATE,       // new
+    PERSONAL_TRAINER_TEMPLATE,          // new
+    COWORKING_SPACE_TEMPLATE,           // new
 ];

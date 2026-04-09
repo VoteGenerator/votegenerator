@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Weekly Pulse Survey Template | VoteGenerator</title>
+    <meta name="description" content="Free 5-question weekly pulse survey template. Takes employees under 3 minutes. Track team morale week over week. No signup required. Instant results.">
+    <link rel="canonical" href="https://votegenerator.com/templates/weekly-pulse-survey">
+    <meta property="og:title" content="Free Weekly Pulse Survey Template | VoteGenerator">
+    <meta property="og:description" content="5 questions. Under 3 minutes. Track morale every week. No signup required from anyone.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://votegenerator.com/templates/weekly-pulse-survey">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Weekly Pulse Survey Template",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Free 5-question weekly pulse survey template. Track team morale week over week. Ready in 60 seconds, takes employees under 3 minutes to complete.",
+        "url": "https://votegenerator.com/templates/weekly-pulse-survey",
+        "provider": { "@type": "Organization", "name": "VoteGenerator", "url": "https://votegenerator.com" }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            { "@type": "Question", "name": "Is this pulse survey template free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. No signup required from you or your team. The free plan allows up to 100 responses per survey. Pro ($19/month) allows up to 10,000 responses — better suited for larger teams running weekly surveys." } },
+            { "@type": "Question", "name": "What is a pulse survey?", "acceptedAnswer": { "@type": "Answer", "text": "A pulse survey is a short, frequent employee check-in — typically 3 to 7 questions, sent weekly or monthly. Unlike annual engagement surveys, pulse surveys catch morale changes as they happen, giving managers time to act before small issues become serious ones." } },
+            { "@type": "Question", "name": "How often should I run a pulse survey?", "acceptedAnswer": { "@type": "Answer", "text": "Weekly is ideal for active monitoring. Monthly works well if weekly feels too frequent for your team. The key is consistency — irregular pulse surveys produce trend data that is hard to act on." } },
+            { "@type": "Question", "name": "How do I reuse the same survey each week?", "acceptedAnswer": { "@type": "Answer", "text": "Free accounts create a new survey each week using this template. Pro accounts ($19/month) include a Duplicate Poll feature — clone last week's survey in one click, keeping all settings and questions while starting fresh response data." } },
+            { "@type": "Question", "name": "Are responses anonymous?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. VoteGenerator stores no names or email addresses. No login is required from respondents. Anonymous responses are essential for honest pulse data — employees need to feel safe to answer honestly every week." } },
+            { "@type": "Question", "name": "How long does the pulse survey take to complete?", "acceptedAnswer": { "@type": "Answer", "text": "Under 3 minutes. The template has 5 short questions — two rating scales, two yes/no questions, and one optional open text. This brevity is intentional: completion rates stay high when the survey takes under 3 minutes." } }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --green:     #059669;
+            --green-lt:  #10b981;
+            --green-dim: rgba(5,150,105,0.08);
+            --green-pale:#f0fdf4;
+            --ink:       #0a1a0f;
+            --ink-mid:   #1a3326;
+            --ink-soft:  #4b7c62;
+            --ink-mute:  #8fb3a0;
+            --bg:        #ffffff;
+            --bg-soft:   #f7fdf9;
+            --border:    #d1fae5;
+            --border-std:#e2e8f0;
+            --pro:       #6C3CE1;
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Be Vietnam Pro',sans-serif; background:var(--bg); color:var(--ink); overflow-x:hidden; padding-bottom:80px; }
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--green),var(--green-lt)); z-index:2000; transition:width 0.1s; }
+
+        /* NAV */
+        .nav { position:sticky; top:0; z-index:100; background:rgba(255,255,255,0.96); backdrop-filter:blur(10px); border-bottom:1px solid var(--border-std); height:56px; display:flex; align-items:center; padding:0 24px; gap:8px; }
+        .nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+        .nav-logo img { width:22px; height:22px; }
+        .nav-logo-text { font-weight:800; font-size:0.88rem; color:var(--ink); }
+        .nav-sep { color:var(--border-std); }
+        .nav-crumb { font-size:0.78rem; color:var(--ink-soft); }
+        .nav-crumb a { color:var(--ink-soft); text-decoration:none; }
+        .nav-crumb a:hover { color:var(--green); }
+        .nav-cta { margin-left:auto; background:var(--green); color:#fff; font-size:0.82rem; font-weight:700; padding:8px 18px; border-radius:6px; text-decoration:none; }
+        .nav-cta:hover { background:var(--green-lt); }
+
+        /* HERO */
+        .hero { background:linear-gradient(160deg, #f0fdf4 0%, #ffffff 60%); padding:52px 24px 0; border-bottom:1px solid var(--border); }
+        .hero-inner { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 400px; gap:60px; align-items:start; }
+
+        .hero-badge { display:inline-flex; align-items:center; gap:6px; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); margin-bottom:14px; }
+        .hero-badge-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse-dot 1.8s infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+
+        .hero h1 { font-size:clamp(1.9rem,4vw,2.7rem); font-weight:800; line-height:1.12; letter-spacing:-0.02em; color:var(--ink); margin-bottom:14px; }
+        .hero h1 em { font-style:normal; color:var(--green); }
+        .hero-sub { font-size:1.04rem; color:var(--ink-soft); line-height:1.68; max-width:460px; margin-bottom:28px; font-weight:400; }
+
+        .cta-wrap { margin-bottom:12px; }
+        .cta-primary { display:inline-flex; align-items:center; gap:8px; background:var(--green); color:#fff; font-family:'Be Vietnam Pro',sans-serif; font-weight:700; font-size:1.05rem; padding:15px 32px; border-radius:8px; text-decoration:none; transition:all 0.15s; box-shadow:0 4px 16px rgba(5,150,105,0.25); }
+        .cta-primary:hover { background:var(--green-lt); transform:translateY(-1px); }
+        .cta-primary svg { width:16px; height:16px; flex-shrink:0; }
+        .cta-sub { font-size:0.8rem; color:var(--ink-mute); margin-top:8px; }
+        .cta-sub span { margin:0 5px; }
+
+        /* PREVIEW CARD */
+        .preview-card { background:#fff; border:1.5px solid var(--border); border-radius:14px; overflow:hidden; box-shadow:0 6px 32px rgba(5,150,105,0.1),0 1px 4px rgba(0,0,0,0.04); }
+        .pc-head { background:var(--green); padding:14px 18px; }
+        .pc-head-title { font-weight:700; font-size:0.88rem; color:#fff; }
+        .pc-head-sub { font-size:0.7rem; color:rgba(255,255,255,0.65); margin-top:1px; }
+        .pc-prog { background:var(--green-pale); border-bottom:1px solid var(--border); padding:9px 18px; display:flex; align-items:center; gap:10px; }
+        .pc-prog-track { flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+        .pc-prog-fill { height:100%; background:var(--green); border-radius:2px; transition:width 0.4s ease; }
+        .pc-prog-label { font-size:0.7rem; font-weight:700; color:var(--ink-mute); white-space:nowrap; }
+        .pc-body { padding:18px; min-height:175px; }
+        .pc-q { font-weight:600; font-size:0.9rem; color:var(--ink); margin-bottom:14px; line-height:1.45; }
+
+        .scale-row { display:flex; gap:6px; }
+        .scale-btn { flex:1; padding:10px 4px; border:1.5px solid var(--border-std); border-radius:6px; cursor:pointer; text-align:center; font-family:'Be Vietnam Pro',sans-serif; font-size:0.82rem; font-weight:600; color:var(--ink-soft); background:#fff; transition:all 0.15s; }
+        .scale-btn:hover { border-color:var(--green); color:var(--green); background:var(--green-pale); }
+        .scale-btn.sel { border-color:var(--green); background:var(--green); color:#fff; }
+        .scale-labels { display:flex; justify-content:space-between; font-size:0.66rem; color:var(--ink-mute); margin-top:5px; }
+
+        .yn-row { display:flex; gap:8px; }
+        .yn-btn { flex:1; padding:11px; border:1.5px solid var(--border-std); border-radius:7px; cursor:pointer; text-align:center; font-family:'Be Vietnam Pro',sans-serif; font-size:0.9rem; font-weight:600; color:var(--ink-soft); background:#fff; transition:all 0.15s; }
+        .yn-btn:hover { border-color:var(--green); color:var(--green); }
+        .yn-btn.sel { border-color:var(--green); background:var(--green); color:#fff; }
+
+        .pc-textarea { width:100%; border:1.5px solid var(--border-std); border-radius:6px; padding:10px 12px; resize:none; height:72px; font-family:'Be Vietnam Pro',sans-serif; font-size:0.86rem; color:var(--ink); outline:none; transition:border-color 0.15s; }
+        .pc-textarea:focus { border-color:var(--green); }
+        .pc-textarea::placeholder { color:var(--ink-mute); }
+
+        .pc-foot { border-top:1px solid var(--border); background:var(--green-pale); padding:10px 18px; display:flex; align-items:center; justify-content:space-between; }
+        .pc-live { font-size:0.68rem; color:var(--ink-soft); display:flex; align-items:center; gap:4px; }
+        .pc-live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse-dot 1.8s infinite; }
+        .pc-nav { display:flex; gap:6px; }
+        .pc-btn { font-family:'Be Vietnam Pro',sans-serif; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:5px; border:none; cursor:pointer; }
+        .pc-btn-back { background:var(--border-std); color:var(--ink-soft); }
+        .pc-btn-next { background:var(--green); color:#fff; }
+        .pc-btn-next:disabled { background:var(--border-std); color:var(--ink-mute); cursor:not-allowed; }
+
+        /* TRUST BAR */
+        .trust-bar { background:var(--green-pale); border-bottom:1px solid var(--border); padding:12px 24px; }
+        .trust-inner { max-width:1100px; margin:0 auto; display:flex; justify-content:center; gap:28px; flex-wrap:wrap; }
+        .trust-item { display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--ink-soft); font-weight:500; }
+        .trust-check { color:var(--green); font-weight:700; }
+
+        /* CONTENT */
+        .content { max-width:1100px; margin:0 auto; padding:56px 24px 0; display:grid; grid-template-columns:1fr 260px; gap:56px; align-items:start; }
+        .article { min-width:0; }
+        .sec { margin-bottom:48px; }
+        .sec-eyebrow { font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+        .sec h2 { font-size:1.42rem; font-weight:800; color:var(--ink); margin-bottom:14px; letter-spacing:-0.01em; line-height:1.25; }
+        .sec p { font-size:0.97rem; line-height:1.78; color:var(--ink-mid); margin-bottom:12px; }
+        .sec p strong { color:var(--ink); font-weight:700; }
+        .sec p:last-child { margin-bottom:0; }
+
+        /* QUESTIONS */
+        .q-list { display:flex; flex-direction:column; gap:5px; }
+        .q-row { display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:10px; padding:11px 14px; background:var(--green-pale); border:1px solid var(--border); border-radius:7px; }
+        .q-n { font-size:0.7rem; font-weight:700; color:var(--green); }
+        .q-t { font-size:0.9rem; color:var(--ink-mid); }
+        .q-badge { font-size:0.65rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-radius:4px; padding:2px 7px; white-space:nowrap; }
+        .badge-scale { background:#d1fae5; color:#065f46; }
+        .badge-yn    { background:#fef3c7; color:#92400e; }
+        .badge-open  { background:#e0e7ff; color:#3730a3; }
+
+        /* FREQUENCY CALLOUT */
+        .freq-box { background:var(--green); border-radius:10px; padding:20px 24px; display:flex; align-items:center; gap:18px; margin:20px 0; }
+        .freq-icon { font-size:2rem; flex-shrink:0; }
+        .freq-text h4 { font-weight:800; font-size:1rem; color:#fff; margin-bottom:3px; }
+        .freq-text p { font-size:0.86rem; color:rgba(255,255,255,0.75); line-height:1.5; margin:0; }
+
+        /* HOW IT WORKS */
+        .how-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .how-card { text-align:center; padding:18px 14px; background:var(--green-pale); border:1px solid var(--border); border-radius:8px; }
+        .how-n { width:34px; height:34px; background:var(--green); color:#fff; border-radius:50%; font-size:0.82rem; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+        .how-title { font-size:0.85rem; font-weight:700; color:var(--ink); margin-bottom:4px; }
+        .how-text { font-size:0.78rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* RESULTS */
+        .results-card { background:var(--green-pale); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+        .rc-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .rc-head-title { font-weight:700; font-size:0.87rem; color:var(--ink); }
+        .rc-week { font-size:0.72rem; color:var(--ink-soft); }
+        .rc-body { padding:14px 18px; }
+        .rc-morale { text-align:center; padding:12px; margin-bottom:14px; background:#fff; border-radius:8px; border:1px solid var(--border); }
+        .rc-morale-score { font-size:2.5rem; font-weight:800; color:var(--green); line-height:1; }
+        .rc-morale-label { font-size:0.78rem; color:var(--ink-soft); margin-top:3px; }
+        .rc-rows { display:flex; flex-direction:column; gap:10px; }
+        .rc-row { }
+        .rc-label { display:flex; justify-content:space-between; font-size:0.8rem; color:var(--ink-mid); margin-bottom:5px; font-weight:500; }
+        .rc-label span { font-weight:700; color:var(--ink); }
+        .rc-track { height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+        .rc-fill { height:100%; border-radius:4px; background:var(--green); transition:width 1s ease; width:0; }
+        .pro-hook { margin:14px 18px; padding:12px 14px; background:rgba(108,60,225,0.06); border:1px solid rgba(108,60,225,0.2); border-radius:7px; display:flex; align-items:flex-start; gap:10px; }
+        .pro-badge { background:var(--pro); color:#fff; font-size:0.62rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; border-radius:3px; padding:3px 7px; flex-shrink:0; margin-top:1px; }
+        .pro-hook-text { font-size:0.82rem; color:var(--ink-mid); line-height:1.6; }
+        .pro-hook-text a { color:var(--pro); font-weight:600; text-decoration:none; }
+        .pro-hook-text a:hover { text-decoration:underline; }
+
+        /* FAQ */
+        .faq-list { display:flex; flex-direction:column; gap:6px; }
+        details.faq { background:#fff; border:1px solid var(--border-std); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--green); }
+        details.faq summary { padding:13px 16px; font-weight:600; font-size:0.9rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.1rem; color:var(--green); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .faq-ans { padding:0 16px 14px; font-size:0.9rem; line-height:1.72; color:var(--ink-mid); }
+        .faq-ans a { color:var(--green); text-decoration:none; }
+
+        /* RELATED */
+        .rel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .rel-card { border:1px solid var(--border-std); border-radius:7px; padding:14px; text-decoration:none; background:#fff; transition:all 0.15s; }
+        .rel-card:hover { border-color:var(--green); box-shadow:0 2px 10px rgba(5,150,105,0.1); }
+        .rel-cat { font-size:0.66rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--green); margin-bottom:5px; }
+        .rel-title { font-size:0.85rem; font-weight:700; color:var(--ink); line-height:1.4; margin-bottom:3px; }
+        .rel-desc { font-size:0.76rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* BOTTOM CTA */
+        .bottom-cta { background:var(--green); border-radius:10px; padding:40px 32px; text-align:center; margin:52px 0; }
+        .bottom-cta h2 { font-size:1.55rem; font-weight:800; color:#fff; margin-bottom:8px; letter-spacing:-0.01em; }
+        .bottom-cta p { font-size:0.96rem; color:rgba(255,255,255,0.75); margin-bottom:22px; }
+        .bottom-cta .cta-primary { background:#fff; color:var(--green); box-shadow:none; display:inline-flex; }
+        .bottom-cta .cta-primary:hover { background:var(--green-pale); }
+        .bottom-cta .cta-sub { color:rgba(255,255,255,0.5); margin-top:10px; }
+
+        /* SIDEBAR */
+        .sidebar { position:sticky; top:72px; }
+        .sb-cta-card { background:var(--green); border-radius:8px; padding:18px; text-align:center; margin-bottom:14px; }
+        .sb-cta-card p { font-size:0.83rem; color:rgba(255,255,255,0.8); margin-bottom:12px; font-style:italic; line-height:1.5; }
+        .sb-cta-card a { display:block; background:#fff; color:var(--green); font-weight:700; font-size:0.84rem; padding:10px; border-radius:6px; text-decoration:none; }
+        .sb-cta-card a:hover { background:var(--green-pale); }
+        .sb-card { background:var(--green-pale); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:14px; }
+        .sb-head { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; }
+        .sb-meta { display:flex; flex-direction:column; gap:7px; }
+        .sb-meta-row { display:flex; justify-content:space-between; font-size:0.82rem; }
+        .sb-meta-label { color:var(--ink-soft); }
+        .sb-meta-val { font-weight:700; color:var(--ink); }
+        .sb-links { list-style:none; display:flex; flex-direction:column; gap:7px; }
+        .sb-links a { font-size:0.83rem; color:var(--green); text-decoration:none; font-weight:500; }
+        .sb-links a:hover { text-decoration:underline; }
+
+        /* FOOTER */
+        .footer { background:var(--ink); padding:36px 24px; text-align:center; margin-top:80px; }
+        .footer-logo { font-weight:800; color:#fff; font-size:0.92rem; margin-bottom:5px; }
+        .footer p { font-size:0.8rem; color:rgba(255,255,255,0.38); margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:14px; }
+        .footer-links a { font-size:0.76rem; color:rgba(255,255,255,0.42); text-decoration:none; }
+        .footer-links a:hover { color:#fff; }
+
+        /* MOBILE STICKY CTA */
+        #mobile-cta { display:none; position:fixed; bottom:0; left:0; right:0; z-index:500; background:#fff; border-top:1px solid var(--border-std); padding:12px 20px 16px; box-shadow:0 -4px 20px rgba(0,0,0,0.08); }
+        #mobile-cta a { display:block; background:var(--green); color:#fff; font-family:'Be Vietnam Pro',sans-serif; font-weight:700; font-size:0.97rem; text-align:center; padding:13px; border-radius:8px; text-decoration:none; }
+        #mobile-cta-sub { text-align:center; font-size:0.7rem; color:var(--ink-mute); margin-top:5px; }
+
+        @media(max-width:900px) {
+            .hero-inner { grid-template-columns:1fr; }
+            .content { grid-template-columns:1fr; }
+            .sidebar { display:none; }
+            .how-grid { grid-template-columns:1fr; }
+            .rel-grid { grid-template-columns:1fr; }
+            #mobile-cta { display:block; }
+        }
+    </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HG140X6CQ6"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-HG140X6CQ6');</script>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mobile-cta">
+    <a href="https://votegenerator.com/survey?template=weekly-pulse">Use This Template — Free</a>
+    <div id="mobile-cta-sub">No signup required · 5 questions · Under 3 minutes</div>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <span class="nav-sep">/</span>
+    <span class="nav-crumb"><a href="/templates/">Templates</a> / <a href="/templates/employee-surveys/">Employee</a> / Pulse Survey</span>
+    <a href="https://votegenerator.com/survey?template=weekly-pulse" class="nav-cta">Use This Template</a>
+</nav>
+
+<section class="hero" id="hero">
+    <div class="hero-inner">
+        <div class="hero-left">
+            <div class="hero-badge"><span class="hero-badge-dot"></span> Employee Survey Template · Free</div>
+            <h1>Free Weekly Pulse<br>Survey Template</h1>
+            <p class="hero-sub">5 questions. Under 3 minutes. Track your team's morale every single week — and catch problems before they become resignations.</p>
+            <div class="cta-wrap">
+                <a href="https://votegenerator.com/survey?template=weekly-pulse" class="cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Use This Template
+                </a>
+                <p class="cta-sub">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+            </div>
+        </div>
+        <div class="preview-card">
+            <div class="pc-head">
+                <div class="pc-head-title">Weekly Pulse — Week of Apr 18</div>
+                <div class="pc-head-sub">Anonymous · 5 questions · ~2 minutes</div>
+            </div>
+            <div class="pc-prog">
+                <div class="pc-prog-track"><div class="pc-prog-fill" id="pv-fill" style="width:20%"></div></div>
+                <span class="pc-prog-label" id="pv-label">1 of 5</span>
+            </div>
+            <div class="pc-body" id="pv-body"></div>
+            <div class="pc-foot">
+                <div class="pc-live"><span class="pc-live-dot"></span> Live demo</div>
+                <div class="pc-nav">
+                    <button class="pc-btn pc-btn-back" id="pv-back" onclick="pvNav(-1)" style="display:none">Back</button>
+                    <button class="pc-btn pc-btn-next" id="pv-next" onclick="pvNav(1)" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="trust-bar">
+    <div class="trust-inner">
+        <div class="trust-item"><span class="trust-check">✓</span> 100% free</div>
+        <div class="trust-item"><span class="trust-check">✓</span> No signup from respondents</div>
+        <div class="trust-item"><span class="trust-check">✓</span> Anonymous responses</div>
+        <div class="trust-item"><span class="trust-check">✓</span> Results update live</div>
+        <div class="trust-item"><span class="trust-check">✓</span> Up to 100 responses free</div>
+    </div>
+</div>
+
+<div class="content">
+<main class="article">
+
+    <div class="sec" id="questions">
+        <div class="sec-eyebrow">Template Questions</div>
+        <h2>All 5 Pulse Survey Questions</h2>
+        <p>Five questions is the maximum for a weekly survey. Research consistently shows completion rates drop sharply beyond 5 questions for recurring surveys. These 5 cover morale, workload, blockers, and open feedback — everything you need to act on.</p>
+        <div class="q-list">
+            <div class="q-row"><span class="q-n">01</span><span class="q-t">How are you feeling about work this week?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">02</span><span class="q-t">How manageable is your current workload?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">03</span><span class="q-t">Do you have what you need to be successful this week?</span><span class="q-badge badge-yn">Yes / No</span></div>
+            <div class="q-row"><span class="q-n">04</span><span class="q-t">Is anything blocking your progress right now?</span><span class="q-badge badge-yn">Yes / No</span></div>
+            <div class="q-row"><span class="q-n">05</span><span class="q-t">Anything you'd like to share with your manager this week?</span><span class="q-badge badge-open">Open Text</span></div>
+        </div>
+        <div class="freq-box" style="margin-top:20px">
+            <span class="freq-icon">📅</span>
+            <div class="freq-text">
+                <h4>Send every Friday. Review every Monday.</h4>
+                <p>Consistent timing is the key to pulse surveys. Friday sends catch the week's experience fresh. Monday review gives you data before the new week begins.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="sec" id="why">
+        <div class="sec-eyebrow">Why Pulse Surveys</div>
+        <h2>Why Weekly Beats Annual</h2>
+        <p>Annual engagement surveys tell you what happened. Pulse surveys tell you what's happening. By the time an annual survey flags a problem, several employees may already have one foot out the door.</p>
+        <p>A weekly pulse catches the signal early. A team's morale score dropping from 4.1 to 3.4 over three weeks is a warning sign. The same drop on an annual survey is a post-mortem. <strong>The difference is whether you have time to act.</strong></p>
+        <p>The 5-question format is intentional. Surveys that take under 3 minutes see 70%+ weekly completion rates. Longer surveys drop to 30% or less after week two — employees stop filling them out, and you lose the trend data that makes pulse surveys valuable.</p>
+    </div>
+
+    <div class="sec" id="how">
+        <div class="sec-eyebrow">How It Works</div>
+        <h2>Set Up Once. Run Every Week.</h2>
+        <div class="how-grid">
+            <div class="how-card"><div class="how-n">1</div><div class="how-title">Click "Use This Template"</div><div class="how-text">All 5 questions load instantly. Edit any question before you share.</div></div>
+            <div class="how-card"><div class="how-n">2</div><div class="how-title">Share Friday afternoon</div><div class="how-text">Paste the link into Slack or email. No login needed from anyone.</div></div>
+            <div class="how-card"><div class="how-n">3</div><div class="how-title">Review Monday morning</div><div class="how-text">Live dashboard shows morale scores, workload ratings, and open comments.</div></div>
+        </div>
+    </div>
+
+    <div class="sec" id="results">
+        <div class="sec-eyebrow">Sample Results</div>
+        <h2>What Your Weekly Dashboard Looks Like</h2>
+        <p>Results update live as responses come in. Here's what a typical Friday pulse looks like by end of day — with 34 of 38 team members responding:</p>
+        <div class="results-card">
+            <div class="rc-head">
+                <span class="rc-head-title">Weekly Pulse — Week 16 · 34 responses</span>
+                <span class="rc-week">Friday Apr 18, 2026</span>
+            </div>
+            <div class="rc-body">
+                <div class="rc-morale">
+                    <div class="rc-morale-score" id="morale-score">—</div>
+                    <div class="rc-morale-label">Team morale score this week</div>
+                </div>
+                <div class="rc-rows" id="results-body">
+                    <div class="rc-row"><div class="rc-label">Morale this week<span>4.1 / 5</span></div><div class="rc-track"><div class="rc-fill" data-w="82"></div></div></div>
+                    <div class="rc-row"><div class="rc-label">Workload manageability<span>3.6 / 5</span></div><div class="rc-track"><div class="rc-fill" data-w="72"></div></div></div>
+                    <div class="rc-row"><div class="rc-label">Have what they need<span>82%</span></div><div class="rc-track"><div class="rc-fill" data-w="82"></div></div></div>
+                    <div class="rc-row"><div class="rc-label">Reporting blockers<span>24%</span></div><div class="rc-track"><div class="rc-fill" data-w="24" style="background:#f59e0b"></div></div></div>
+                </div>
+            </div>
+            <div class="pro-hook">
+                <span class="pro-badge">Pro</span>
+                <span class="pro-hook-text"><strong>Duplicate this survey in one click</strong> every week — keeping all questions and settings while starting fresh response data. Plus response timeline to see morale trends week over week. <a href="https://votegenerator.com/pricing">Upgrade to Pro from $19/month →</a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sec" id="faq">
+        <div class="sec-eyebrow">FAQ</div>
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <details class="faq"><summary>Is this pulse survey template free?</summary><div class="faq-ans">Yes, completely free. No signup required from you or your team. The free plan allows up to 100 responses per survey. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows up to 10,000 — better for larger teams running weekly surveys.</div></details>
+            <details class="faq"><summary>What is a pulse survey?</summary><div class="faq-ans">A pulse survey is a short, frequent employee check-in — typically 3 to 7 questions, sent weekly or monthly. Unlike annual engagement surveys, pulse surveys catch morale changes as they happen, giving managers time to act before small issues become serious ones.</div></details>
+            <details class="faq"><summary>How often should I run a pulse survey?</summary><div class="faq-ans">Weekly is ideal for active monitoring. Monthly works if weekly feels too frequent. The key is consistency — irregular pulse surveys produce trend data that is hard to act on meaningfully.</div></details>
+            <details class="faq"><summary>How do I reuse the same survey each week?</summary><div class="faq-ans">Free accounts create a fresh survey each week using this template. <a href="https://votegenerator.com/pricing">Pro accounts ($19/month)</a> include a Duplicate Poll feature — clone last week's survey in one click, keeping all settings while starting fresh response data.</div></details>
+            <details class="faq"><summary>Are responses anonymous?</summary><div class="faq-ans">Yes. VoteGenerator stores no names or email addresses. No login is required from respondents. Anonymity is essential for honest pulse data — employees need to feel safe to answer honestly every single week.</div></details>
+            <details class="faq"><summary>How long does the pulse survey take to complete?</summary><div class="faq-ans">Under 3 minutes. Two rating scales, two yes/no questions, and one optional open text. This brevity is intentional — completion rates stay above 70% week after week when the survey takes under 3 minutes.</div></details>
+        </div>
+    </div>
+
+    <div class="sec" id="related">
+        <div class="sec-eyebrow">Related Templates</div>
+        <h2>More Employee Survey Templates</h2>
+        <div class="rel-grid">
+            <a href="/templates/employee-engagement-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Employee Engagement Survey</div><div class="rel-desc">10 Gallup-inspired questions for your quarterly deep-dive.</div></a>
+            <a href="/templates/employee-satisfaction-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Employee Satisfaction Survey</div><div class="rel-desc">8 questions on pay, balance, management, and culture.</div></a>
+            <a href="/templates/exit-interview-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Exit Interview Survey</div><div class="rel-desc">Understand the real reasons employees leave your company.</div></a>
+        </div>
+    </div>
+
+    <div class="bottom-cta">
+        <h2>Start your first pulse this Friday</h2>
+        <p>5 questions. Under 3 minutes. Anonymous. No signup from anyone.</p>
+        <a href="https://votegenerator.com/survey?template=weekly-pulse" class="cta-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Use This Template — Free
+        </a>
+        <p class="cta-sub">No signup required · Free up to 100 responses · Pro from $19/month</p>
+    </div>
+
+</main>
+<aside class="sidebar">
+    <div class="sb-cta-card">
+        <p>"5 questions. Under 3 minutes. Start this Friday."</p>
+        <a href="https://votegenerator.com/survey?template=weekly-pulse">Use This Template →</a>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Template Details</div>
+        <div class="sb-meta">
+            <div class="sb-meta-row"><span class="sb-meta-label">Questions</span><span class="sb-meta-val">5</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Types</span><span class="sb-meta-val">Scale, Yes/No, Open</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Free responses</span><span class="sb-meta-val">100</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Completion time</span><span class="sb-meta-val">&lt;3 minutes</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Frequency</span><span class="sb-meta-val">Weekly</span></div>
+        </div>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Related Templates</div>
+        <ul class="sb-links">
+            <li><a href="/templates/employee-engagement-survey">Employee Engagement Survey</a></li>
+            <li><a href="/templates/employee-satisfaction-survey">Employee Satisfaction Survey</a></li>
+            <li><a href="/templates/exit-interview-survey">Exit Interview Survey</a></li>
+            <li><a href="/templates/manager-effectiveness-survey">Manager Effectiveness Survey</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Free weekly pulse survey template. Anonymous. No signup. Up to 100 responses free.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="/templates/">Templates</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const PV_QS = [
+    { q:'How are you feeling about work this week?', type:'scale', min:'Very low', max:'Very high' },
+    { q:'How manageable is your current workload?',  type:'scale', min:'Overwhelming', max:'Very manageable' },
+    { q:'Do you have what you need to be successful this week?', type:'yn' },
+    { q:'Is anything blocking your progress right now?', type:'yn' },
+    { q:'Anything you\'d like to share with your manager this week?', type:'open' },
+];
+let cur=0, ans={};
+
+function pvRender() {
+    const q=PV_QS[cur];
+    document.getElementById('pv-fill').style.width=((cur+1)/5*100)+'%';
+    document.getElementById('pv-label').textContent=(cur+1)+' of 5';
+    let h=`<div class="pc-q">${q.q}</div>`;
+    if(q.type==='scale'){
+        h+='<div class="scale-row">';
+        [1,2,3,4,5].forEach(v=>{
+            const s=ans[cur]===v?'sel':'';
+            h+=`<button class="scale-btn ${s}" onclick="pvScale(${v})">${v}</button>`;
+        });
+        h+=`</div><div class="scale-labels"><span>${q.min}</span><span>${q.max}</span></div>`;
+    } else if(q.type==='yn'){
+        const yS=ans[cur]===1?'sel':'', nS=ans[cur]===0?'sel':'';
+        h+=`<div class="yn-row"><button class="yn-btn ${yS}" onclick="pvYN(1)">Yes ✓</button><button class="yn-btn ${nS}" onclick="pvYN(0)">No ✗</button></div>`;
+    } else {
+        h+=`<textarea class="pc-textarea" placeholder="Optional — share anything on your mind..." oninput="pvText(this.value)">${ans[cur]||''}</textarea>`;
+    }
+    document.getElementById('pv-body').innerHTML=h;
+    const nx=document.getElementById('pv-next');
+    const last=cur>=PV_QS.length-1;
+    nx.disabled=ans[cur]===undefined&&q.type!=='open';
+    nx.textContent=last?'Submit ✓':'Next';
+    document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function pvScale(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvYN(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvText(v){ans[cur]=v||' ';}
+function pvNav(dir){
+    const last=cur>=PV_QS.length-1;
+    if(dir===1&&last){
+        document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">✓</div><div style="font-weight:700;color:var(--ink);margin-bottom:4px">Done in under 2 minutes!</div><div style="font-size:0.83rem;color:var(--ink-soft);margin-bottom:14px">That's how fast your team's pulse survey will be.</div><a href="https://votegenerator.com/survey?template=weekly-pulse" style="background:var(--green);color:#fff;font-family:'Be Vietnam Pro',sans-serif;font-weight:700;font-size:0.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;
+        document.getElementById('pv-fill').style.width='100%';
+        document.getElementById('pv-label').textContent='Complete';
+        document.getElementById('pv-next').style.display='none';
+        document.getElementById('pv-back').style.display='block';
+        return;
+    }
+    cur=Math.max(0,Math.min(PV_QS.length-1,cur+dir));
+    if(dir===1)document.getElementById('pv-next').style.display='block';
+    pvRender();
+}
+pvRender();
+
+// Animate results + morale score
+new IntersectionObserver(entries=>{
+    if(entries[0].isIntersecting){
+        document.querySelectorAll('.rc-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});
+        let n=0;
+        const el=document.getElementById('morale-score');
+        const t=setInterval(()=>{n+=0.1;el.textContent=n.toFixed(1);if(n>=4.1){el.textContent='4.1';clearInterval(t);}},30);
+    }
+},{threshold:0.3}).observe(document.getElementById('results'));
+
+const prog=document.getElementById('prog');
+const mobileCta=document.getElementById('mobile-cta');
+const heroEl=document.getElementById('hero');
+window.addEventListener('scroll',()=>{
+    const d=document.documentElement;
+    prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';
+    if(window.innerWidth<=900)mobileCta.style.display=heroEl.getBoundingClientRect().bottom<0?'block':'none';
+},{passive:true});
+</script>
+</body>
+</html>

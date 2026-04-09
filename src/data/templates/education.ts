@@ -493,6 +493,459 @@ const SCHOOL_SATISFACTION_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 6. ALUMNI SURVEY → education.ts
+// Target keyword: alumni survey template, university alumni survey (1k/mo)
+// Conversion hook: track how career preparedness scores, NPS, and giving intent
+//   change across cohorts and survey years — CSV export for IR reports
+// ============================================================================
+export const ALUMNI_TEMPLATE: SurveyTemplate = {
+  id: 'alumni-survey',
+  name: 'Alumni Survey',
+  emoji: '🎓',
+  color: 'text-red-900',
+  description: '9 questions for university and college alumni relations teams. Education quality, career preparedness, career outcomes, institutional pride, alumni programme satisfaction, NPS, giving intent, and open feedback.',
+  category: 'education',
+  targetKeyword: 'alumni survey template',
+  priority: 'P2',
+  conversionHook: 'Track how career preparedness scores, NPS, and giving intent change across graduation cohorts and survey years. CSV export for IR reports.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: false,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'al-education',
+      title: 'Education Quality',
+      description: 'How was the education you received?',
+      questions: [
+        {
+          id: 'al-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with the education you received from this institution?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'al-q2',
+          type: 'scale',
+          question: 'How would you rate the quality of teaching, faculty, and academic curriculum during your studies?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-career',
+      title: 'Career Outcomes',
+      description: 'Career preparedness and outcomes since graduating',
+      questions: [
+        {
+          id: 'al-q3',
+          type: 'scale',
+          question: 'How well did your education prepare you for your career and professional life?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not at all',
+          maxLabel: 'Exceptionally well',
+          required: true,
+        },
+        {
+          id: 'al-q4',
+          type: 'scale',
+          question: 'How satisfied are you with the career outcomes you have achieved since graduating?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-connection',
+      title: 'Pride & Engagement',
+      description: 'Connection to the institution today',
+      questions: [
+        {
+          id: 'al-q5',
+          type: 'scale',
+          question: 'How strong is your sense of pride and connection to this institution today?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'No connection',
+          maxLabel: 'Very strong pride',
+          required: true,
+        },
+        {
+          id: 'al-q6',
+          type: 'scale',
+          question: 'How satisfied are you with the alumni programmes, events, and engagement opportunities available to you?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'al-advocacy',
+      title: 'Advocacy & Giving',
+      description: 'Referral intent, NPS, and giving likelihood',
+      questions: [
+        {
+          id: 'al-q7',
+          type: 'nps',
+          question: 'How likely are you to recommend this institution to a prospective student?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'al-q8',
+          type: 'scale',
+          question: 'How likely are you to support this institution financially through giving or donations in the next 12 months?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not likely',
+          maxLabel: 'Very likely',
+          required: true,
+        },
+        {
+          id: 'al-q9',
+          type: 'textarea',
+          question: 'What is the one thing this institution could most improve to better serve its alumni and students?',
+          placeholder: 'Your feedback is reviewed by our alumni relations team...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+ 
+// ============================================================================
+// 1. SCHOOL PARENT SURVEY → education.ts
+// Target keyword: school parent survey, parent satisfaction survey school (1k-5k/mo)
+// Conversion hook: track whether communication and satisfaction scores improve
+//   year on year after each initiative
+// ============================================================================
+export const SCHOOL_PARENT_TEMPLATE: SurveyTemplate = {
+  id: 'school-parent-survey',
+  name: 'School Parent Survey',
+  emoji: '🏫',
+  color: 'text-orange-800',
+  description: '9 anonymous questions for school leaders and head teachers. Teaching quality, school communication, student safety, extracurricular opportunities, individual support, leadership confidence, NPS, and open feedback.',
+  category: 'education',
+  targetKeyword: 'school parent survey',
+  priority: 'P2',
+  conversionHook: 'Track whether parent communication and satisfaction scores are improving year on year after each school initiative.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'sp-satisfaction',
+      title: 'Overall Satisfaction',
+      description: 'How satisfied are you with your child\'s school?',
+      questions: [
+        {
+          id: 'sp-q1',
+          type: 'rating',
+          question: 'Overall, how satisfied are you with your child\'s school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q2',
+          type: 'rating',
+          question: 'How would you rate the quality of teaching your child receives?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-communication',
+      title: 'Communication & Safety',
+      description: 'School-home communication and student wellbeing',
+      questions: [
+        {
+          id: 'sp-q3',
+          type: 'rating',
+          question: 'How well does the school keep you informed and communicate with parents?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q4',
+          type: 'rating',
+          question: 'How safe and well cared for does your child feel at school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q5',
+          type: 'rating',
+          question: 'How satisfied are you with the range of extracurricular and enrichment activities on offer?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-support',
+      title: 'Individual Support & Leadership',
+      description: 'Personalised support and confidence in leadership',
+      questions: [
+        {
+          id: 'sp-q6',
+          type: 'rating',
+          question: 'How well does the school support your child\'s individual needs and development?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'sp-q7',
+          type: 'rating',
+          question: 'How confident are you in the leadership and direction of the school?',
+          minValue: 1,
+          maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'sp-recommend',
+      title: 'Recommendation & Feedback',
+      description: 'NPS and open feedback for improvement',
+      questions: [
+        {
+          id: 'sp-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this school to other parents?',
+          minValue: 0,
+          maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'sp-q9',
+          type: 'textarea',
+          question: 'What is the one thing the school could do to most improve your child\'s experience?',
+          placeholder: 'Your feedback helps the school improve for every family...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
+export const CHILDCARE_PARENT_TEMPLATE: SurveyTemplate = {
+  id: 'childcare-parent-survey',
+  name: 'Childcare Parent Survey',
+  emoji: '🌟',
+  color: 'text-sky-600',
+  description: '9 questions for nurseries, daycares, and childminders. Child safety, staff warmth, key person bond, settling-in, learning activities, communication, meals, NPS, and open feedback. Strong Ofsted parent voice evidence.',
+  category: 'education',
+  targetKeyword: 'childcare parent survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'cp-care',
+      title: 'Care & Staff',
+      description: 'Safety, warmth, and key person relationships',
+      questions: [
+        {
+          id: 'cp-q1',
+          type: 'rating',
+          question: 'Overall, how satisfied are you with the care your child receives at our setting?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q2',
+          type: 'rating',
+          question: 'How safe and well cared for does your child feel in our setting?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q3',
+          type: 'rating',
+          question: 'How warm, attentive, and nurturing do you find our staff with your child?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q4',
+          type: 'rating',
+          question: "How well supported was your child during settling-in and how strong is their bond with their key person?",
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'cp-learning',
+      title: 'Learning & Communication',
+      description: 'Activities, meals, and keeping families informed',
+      questions: [
+        {
+          id: 'cp-q5',
+          type: 'rating',
+          question: 'How satisfied are you with the range and quality of learning activities and play provided?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q6',
+          type: 'rating',
+          question: "How well does the setting keep you informed about your child's day and development?",
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q7',
+          type: 'rating',
+          question: 'How satisfied are you with the meals, snacks, and nutrition provided?',
+          minValue: 1, maxValue: 5,
+          required: true,
+        },
+        {
+          id: 'cp-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend our setting to another parent?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'cp-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could do to better support you and your child?',
+          placeholder: 'Your feedback helps us improve the care we provide for every child...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const ONLINE_COURSE_TEMPLATE: SurveyTemplate = {
+  id: 'online-course-feedback-survey',
+  name: 'Online Course Feedback Survey',
+  emoji: '🎓',
+  color: 'text-lime-700',
+  description: '9 questions for course creators, EdTech platforms, and L&D teams. Content quality, instructor style, pacing, platform experience, learning objectives met, value, NPS, and open feedback.',
+  category: 'education',
+  targetKeyword: 'online course feedback survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'oc-content',
+      title: 'Content & Delivery',
+      description: 'Quality, pacing, and instructor effectiveness',
+      questions: [
+        {
+          id: 'oc-q1',
+          type: 'scale',
+          question: 'Overall, how satisfied are you with this course?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'oc-q2',
+          type: 'scale',
+          question: 'How would you rate the quality, depth, and accuracy of the course content?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very poor', maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'oc-q3',
+          type: 'scale',
+          question: "How engaging and effective was the instructor's teaching style?",
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not engaging', maxLabel: 'Very engaging',
+          required: true,
+        },
+        {
+          id: 'oc-q4',
+          type: 'scale',
+          question: 'How well was the course paced and structured across lessons and modules?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very poor', maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'oc-q5',
+          type: 'scale',
+          question: 'How smooth was your experience with the course platform and technical delivery?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very difficult', maxLabel: 'Completely smooth',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'oc-outcomes',
+      title: 'Outcomes & Value',
+      description: 'Whether the course delivered on its promises',
+      questions: [
+        {
+          id: 'oc-q6',
+          type: 'scale',
+          question: 'How well did the course help you achieve the learning objectives or outcomes it promised?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Did not achieve them', maxLabel: 'Fully achieved them',
+          required: true,
+        },
+        {
+          id: 'oc-q7',
+          type: 'scale',
+          question: 'How well did this course represent value for the price you paid?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor value', maxLabel: 'Excellent value',
+          required: true,
+        },
+        {
+          id: 'oc-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this course to someone with similar learning goals?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'oc-q9',
+          type: 'textarea',
+          question: 'What is the one thing that would have made this course more valuable to you?',
+          placeholder: 'Your feedback is reviewed by the course creator and helps improve the next version...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
@@ -500,4 +953,10 @@ export const EDUCATION_TEMPLATES: SurveyTemplate[] = [
     TRAINING_FEEDBACK_TEMPLATE,
     STUDENT_SATISFACTION_TEMPLATE,
     SCHOOL_SATISFACTION_TEMPLATE,
+    ALUMNI_TEMPLATE,
+    SCHOOL_PARENT_TEMPLATE,
+    CHILDCARE_PARENT_TEMPLATE,          // new
+    ONLINE_COURSE_TEMPLATE,             // new
+
+
 ];

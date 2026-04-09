@@ -1884,6 +1884,390 @@ const CANTEEN_FOOD_TEMPLATE: SurveyTemplate = {
 };
 
 // ============================================================================
+// 1. EMPLOYEE MENTAL HEALTH SURVEY → employee.ts
+// Target keyword: employee mental health survey (5k/mo)
+// Conversion hook: tracks whether psychological safety + stress scores improve
+//   quarter over quarter after interventions — Pro response timeline
+// ============================================================================
+export const EMPLOYEE_MENTAL_HEALTH_TEMPLATE: SurveyTemplate = {
+  id: 'employee-mental-health-survey',
+  name: 'Employee Mental Health Survey',
+  emoji: '🌿',
+  color: 'text-teal-700',
+  description: '9 anonymous questions on stress, psychological safety, manager trust, help-seeking comfort, and overall mental wellbeing at work. Designed to run separately from engagement surveys.',
+  category: 'employee',
+  targetKeyword: 'employee mental health survey',
+  priority: 'P1',
+  conversionHook: 'Track whether psychological safety and stress scores are improving quarter over quarter after each intervention.',
+  planGate: 'free',
+  recommendedSettings: {
+    anonymousMode: true,
+    showProgress: true,
+    allowBack: true,
+  },
+  sections: [
+    {
+      id: 'mh-wellbeing',
+      title: 'Wellbeing & Stress',
+      description: 'How are you feeling right now at work?',
+      questions: [
+        {
+          id: 'mh-q1',
+          type: 'scale',
+          question: 'Overall, how would you rate your mental wellbeing at work right now?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very poor',
+          maxLabel: 'Excellent',
+          required: true,
+        },
+        {
+          id: 'mh-q2',
+          type: 'scale',
+          question: 'How manageable does your stress level feel on a typical working day?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Unmanageable',
+          maxLabel: 'Completely fine',
+          required: true,
+        },
+        {
+          id: 'mh-q3',
+          type: 'scale',
+          question: 'How well are you able to switch off from work outside of working hours?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Never can switch off',
+          maxLabel: 'Easily switch off',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-safety',
+      title: 'Psychological Safety & Support',
+      description: 'Do you feel safe and supported at work?',
+      questions: [
+        {
+          id: 'mh-q4',
+          type: 'scale',
+          question: 'Do you feel psychologically safe to speak up or raise concerns at work?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not at all safe',
+          maxLabel: 'Completely safe',
+          required: true,
+        },
+        {
+          id: 'mh-q5',
+          type: 'scale',
+          question: 'How supported do you feel by your manager when you are struggling?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not supported',
+          maxLabel: 'Fully supported',
+          required: true,
+        },
+        {
+          id: 'mh-q6',
+          type: 'scale',
+          question: 'How comfortable would you feel asking for support with your mental health at work?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Not comfortable',
+          maxLabel: 'Very comfortable',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-resources',
+      title: 'Resources & Connection',
+      description: 'Support available and sense of connection',
+      questions: [
+        {
+          id: 'mh-q7',
+          type: 'scale',
+          question: 'How satisfied are you with the mental health support your organisation provides?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very dissatisfied',
+          maxLabel: 'Very satisfied',
+          required: true,
+        },
+        {
+          id: 'mh-q8',
+          type: 'scale',
+          question: 'How connected do you feel to your team and colleagues right now?',
+          minValue: 1,
+          maxValue: 5,
+          minLabel: 'Very isolated',
+          maxLabel: 'Very connected',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'mh-open',
+      title: 'Open Feedback',
+      description: 'Your anonymous suggestion',
+      questions: [
+        {
+          id: 'mh-q9',
+          type: 'textarea',
+          question: 'What is the one thing your organisation could do to better support your mental health?',
+          placeholder: 'Your anonymous feedback shapes what we do next...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const CANDIDATE_EXPERIENCE_TEMPLATE: SurveyTemplate = {
+  id: 'candidate-experience-survey',
+  name: 'Candidate Experience Survey',
+  emoji: '🎯',
+  color: 'text-sky-700',
+  description: '9 questions for HR and talent acquisition teams. Job description clarity, application ease, recruiter communication, interview quality, perceived fairness, decision speed, employer brand impression, NPS, and open feedback.',
+  category: 'employee',
+  targetKeyword: 'candidate experience survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'ce-process',
+      title: 'Application & Interview',
+      description: 'How the hiring process felt from the candidate side',
+      questions: [
+        {
+          id: 'ce-q1',
+          type: 'scale',
+          question: 'How clear and accurate was the job description in setting expectations for the role?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very unclear', maxLabel: 'Very clear',
+          required: true,
+        },
+        {
+          id: 'ce-q2',
+          type: 'scale',
+          question: 'How easy and straightforward was the application process?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very difficult', maxLabel: 'Very easy',
+          required: true,
+        },
+        {
+          id: 'ce-q3',
+          type: 'scale',
+          question: 'How well did the recruiter or hiring team communicate with you throughout the process?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor communication', maxLabel: 'Excellent communication',
+          required: true,
+        },
+        {
+          id: 'ce-q4',
+          type: 'scale',
+          question: 'How well organised and professionally run were your interviews?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poorly organised', maxLabel: 'Very professional',
+          required: true,
+        },
+        {
+          id: 'ce-q5',
+          type: 'scale',
+          question: 'How fair and objective did the assessment and interview process feel?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Felt unfair', maxLabel: 'Very fair',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'ce-brand',
+      title: 'Decision & Employer Brand',
+      description: 'Speed, outcome communication, and overall impression',
+      questions: [
+        {
+          id: 'ce-q6',
+          type: 'scale',
+          question: 'How satisfied were you with the speed of the hiring decision and communication of the outcome?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very slow', maxLabel: 'Very timely',
+          required: true,
+        },
+        {
+          id: 'ce-q7',
+          type: 'scale',
+          question: 'How positive an impression do you have of this organisation as a place to work, based on your experience?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very negative', maxLabel: 'Very positive',
+          required: true,
+        },
+        {
+          id: 'ce-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend applying to this organisation to someone in your network?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'ce-q9',
+          type: 'textarea',
+          question: 'What is the one thing we could change to make the hiring process better for future candidates?',
+          placeholder: 'Specific feedback helps us improve the process for every candidate who applies...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+export const TEAM_BUILDING_TEMPLATE: SurveyTemplate = {
+  id: 'team-building-survey',
+  name: 'Team Building Event Survey',
+  emoji: '🌿',
+  color: 'text-emerald-700',
+  description: '9 anonymous questions for HR teams and people managers. Activity enjoyment, team connection, inclusion, facilitation quality, logistics, budget value, repeat interest, NPS, and open feedback.',
+  category: 'employee',
+  targetKeyword: 'team building survey',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'tb-activity',
+      title: 'Activity & Connection',
+      description: 'Enjoyment, inclusion, and team bonding',
+      questions: [
+        {
+          id: 'tb-q1',
+          type: 'scale',
+          question: "Overall, how much did you enjoy today's team activity?",
+          minValue: 1, maxValue: 5,
+          minLabel: 'Did not enjoy', maxLabel: 'Loved it',
+          required: true,
+        },
+        {
+          id: 'tb-q2',
+          type: 'scale',
+          question: 'How well did the activity help you connect with and get to know your colleagues better?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not at all', maxLabel: 'Very well',
+          required: true,
+        },
+        {
+          id: 'tb-q3',
+          type: 'scale',
+          question: 'How inclusive and accessible was the activity for all team members?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Very exclusionary', maxLabel: 'Fully inclusive',
+          required: true,
+        },
+        {
+          id: 'tb-q4',
+          type: 'scale',
+          question: 'How well was the activity facilitated and organised?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poorly', maxLabel: 'Excellently',
+          required: true,
+        },
+        {
+          id: 'tb-q5',
+          type: 'scale',
+          question: 'How smoothly did the logistics run — venue, timing, instructions, and communication?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Lots of issues', maxLabel: 'Ran perfectly',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'tb-value',
+      title: 'Value & Repeat Intent',
+      description: 'Budget justification and whether to run it again',
+      questions: [
+        {
+          id: 'tb-q6',
+          type: 'scale',
+          question: 'How well did this activity represent a good use of company time and budget?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Poor use', maxLabel: 'Excellent use',
+          required: true,
+        },
+        {
+          id: 'tb-q7',
+          type: 'scale',
+          question: 'How interested would you be in doing a similar type of activity again?',
+          minValue: 1, maxValue: 5,
+          minLabel: 'Not at all', maxLabel: 'Definitely yes',
+          required: true,
+        },
+        {
+          id: 'tb-q8',
+          type: 'nps',
+          question: 'How likely are you to recommend this type of activity to another team in the company?',
+          minValue: 0, maxValue: 10,
+          required: true,
+        },
+        {
+          id: 'tb-q9',
+          type: 'textarea',
+          question: "What is one thing that would have made today's activity better or more enjoyable for you?",
+          placeholder: 'Your anonymous feedback shapes the next team activity...',
+          required: false,
+        },
+      ],
+    },
+  ],
+};
+
+
+
+// new-hire-30-60-90-survey → employee.ts
+export const NEW_HIRE_30_60_90_TEMPLATE: SurveyTemplate = {
+  id: 'new-hire-30-60-90-survey',
+  name: 'New Hire 30-60-90 Day Survey',
+  emoji: '📅',
+  color: 'text-indigo-700',
+  description: 'Onboarding clarity, role confidence, culture fit, and manager support at 30, 60, and 90 days.',
+  category: 'employee',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'nh-clarity',
+      title: 'Role and Onboarding Clarity',
+      description: 'How clear is your role and what success looks like?',
+      questions: [
+        { id: 'nh-q1', type: 'scale', question: 'How clear are you on your role, responsibilities, and what success looks like?', minValue: 1, maxValue: 5, minLabel: 'Very unclear', maxLabel: 'Very clear', required: true },
+        { id: 'nh-q2', type: 'scale', question: 'How well organised and thorough was your onboarding experience?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+        { id: 'nh-q3', type: 'scale', question: 'How effective was the training and guidance you received to do your job?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+      ],
+    },
+    {
+      id: 'nh-support',
+      title: 'Support and Culture',
+      description: 'Manager, team, and culture experience',
+      questions: [
+        { id: 'nh-q4', type: 'scale', question: 'How well supported have you felt by your manager so far?', minValue: 1, maxValue: 5, minLabel: 'Not supported', maxLabel: 'Very supported', required: true },
+        { id: 'nh-q5', type: 'scale', question: 'How welcomed have you felt by your team and colleagues?', minValue: 1, maxValue: 5, minLabel: 'Not welcomed', maxLabel: 'Very welcomed', required: true },
+        { id: 'nh-q6', type: 'scale', question: 'How well do you have the tools, access, and resources needed to do your job?', minValue: 1, maxValue: 5, minLabel: 'Major gaps', maxLabel: 'Everything I need', required: true },
+        { id: 'nh-q7', type: 'scale', question: 'How well does the company culture match what you expected when you joined?', minValue: 1, maxValue: 5, minLabel: 'Very different', maxLabel: 'Exactly as expected', required: true },
+      ],
+    },
+    {
+      id: 'nh-confidence',
+      title: 'Confidence and Feedback',
+      description: 'How confident are you feeling?',
+      questions: [
+        { id: 'nh-q8', type: 'scale', question: 'How confident do you feel in your ability to perform well in your role?', minValue: 1, maxValue: 5, minLabel: 'Not confident', maxLabel: 'Very confident', required: true },
+        { id: 'nh-q9', type: 'nps', question: 'How likely are you to recommend this company as a great place to work to someone in your network?', minValue: 0, maxValue: 10, required: true },
+        { id: 'nh-q10', type: 'textarea', question: 'What is the one thing we could have done better to support your start here?', placeholder: 'Your honest feedback helps us improve onboarding for future new starters...', required: false },
+      ],
+    },
+  ],
+};
+
+
+
+
+// ============================================================================
 // EXPORT
 // ============================================================================
 export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
@@ -1901,4 +2285,7 @@ export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
     INTERNSHIP_FEEDBACK_TEMPLATE,
     EMPLOYEE_RECOGNITION_TEMPLATE,
     CANTEEN_FOOD_TEMPLATE,
+    CANDIDATE_EXPERIENCE_TEMPLATE,      // new
+    TEAM_BUILDING_TEMPLATE,             // new
+    NEW_HIRE_30_60_90_TEMPLATE,
 ];

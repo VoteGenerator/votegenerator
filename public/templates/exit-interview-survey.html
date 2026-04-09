@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Exit Interview Survey Template | VoteGenerator</title>
+    <meta name="description" content="Free exit interview survey template. 10 structured questions to understand why employees really leave. Anonymous, instant results, no signup required.">
+    <link rel="canonical" href="https://votegenerator.com/templates/exit-interview-survey">
+    <meta property="og:title" content="Free Exit Interview Survey Template | VoteGenerator">
+    <meta property="og:description" content="10 structured questions. Find out why people really leave. Anonymous. No signup required. Free.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://votegenerator.com/templates/exit-interview-survey">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Exit Interview Survey Template",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Free 10-question exit interview survey template. Understand why employees leave with structured, anonymous questions covering reasons for leaving, role satisfaction, management, culture, and retention insights.",
+        "url": "https://votegenerator.com/templates/exit-interview-survey",
+        "provider": { "@type": "Organization", "name": "VoteGenerator", "url": "https://votegenerator.com" }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            { "@type": "Question", "name": "Is this exit interview survey template free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Free with no signup required from you or the departing employee. The free plan allows up to 100 responses. For HR departments processing multiple exits, Pro ($19/month) allows up to 10,000 responses and includes CSV export for HR records." } },
+            { "@type": "Question", "name": "Should exit interviews be anonymous?", "acceptedAnswer": { "@type": "Answer", "text": "Ideally yes. Exit surveys get significantly more honest answers than in-person exit interviews because departing employees fear burning bridges. An anonymous survey removes that fear — they can say what they actually think. VoteGenerator stores no names or email addresses by default." } },
+            { "@type": "Question", "name": "What questions should an exit interview cover?", "acceptedAnswer": { "@type": "Answer", "text": "Research shows the most valuable exit interview questions cover: primary reason for leaving, what would have retained them, satisfaction with their role, manager effectiveness, compensation, company culture, and whether they'd recommend the company as an employer. This template covers all six areas." } },
+            { "@type": "Question", "name": "How do I get departing employees to complete it?", "acceptedAnswer": { "@type": "Answer", "text": "Send the survey link on their last week — not their last day. Emphasise it is completely anonymous and their feedback genuinely influences improvements. Keep it under 10 minutes. Completion rates are typically 60–80% when surveys are short, anonymous, and sent with enough time." } },
+            { "@type": "Question", "name": "How do I export exit interview data for HR records?", "acceptedAnswer": { "@type": "Answer", "text": "Free accounts can download a PNG screenshot of results. Pro accounts ($19/month) include CSV and Excel export — giving you a structured data file suitable for HR reporting, pattern analysis across multiple exits, and sharing with senior leadership." } },
+            { "@type": "Question", "name": "Can I add more questions to this template?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The template has 10 questions — the maximum on the free tier. Pro accounts ($19/month) allow up to 25 questions if you want to add role-specific or department-specific exit questions." } }
+        ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --dark:      #18181b;
+            --dark-lt:   #27272a;
+            --dark-card: #1c1c1f;
+            --amber:     #d97706;
+            --amber-lt:  #f59e0b;
+            --amber-pale:#fffbeb;
+            --amber-dim: rgba(217,119,6,0.12);
+            --border:    rgba(255,255,255,0.08);
+            --border-lt: rgba(255,255,255,0.12);
+            --text:      #fafafa;
+            --text-soft: rgba(255,255,255,0.6);
+            --text-mute: rgba(255,255,255,0.35);
+            /* content area (light) */
+            --ink:       #18181b;
+            --ink-mid:   #3f3f46;
+            --ink-soft:  #71717a;
+            --ink-mute:  #a1a1aa;
+            --bg:        #ffffff;
+            --bg-soft:   #fafaf9;
+            --b-std:     #e4e4e7;
+            --pro:       #6C3CE1;
+        }
+        *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Hanken Grotesk',sans-serif; background:var(--dark); color:var(--text); overflow-x:hidden; padding-bottom:80px; }
+        #prog { position:fixed; top:0; left:0; height:3px; width:0; background:linear-gradient(90deg,var(--amber),var(--amber-lt)); z-index:2000; transition:width 0.1s; }
+
+        /* NAV */
+        .nav { position:sticky; top:0; z-index:100; background:rgba(24,24,27,0.96); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); height:56px; display:flex; align-items:center; padding:0 24px; gap:8px; }
+        .nav-logo { display:flex; align-items:center; gap:8px; text-decoration:none; }
+        .nav-logo img { width:22px; height:22px; filter:brightness(10); }
+        .nav-logo-text { font-weight:800; font-size:0.88rem; color:var(--text); }
+        .nav-sep { color:var(--border-lt); }
+        .nav-crumb { font-size:0.78rem; color:var(--text-soft); }
+        .nav-crumb a { color:var(--text-soft); text-decoration:none; }
+        .nav-crumb a:hover { color:var(--amber-lt); }
+        .nav-cta { margin-left:auto; background:var(--amber); color:#fff; font-size:0.82rem; font-weight:700; padding:8px 18px; border-radius:6px; text-decoration:none; }
+        .nav-cta:hover { background:var(--amber-lt); }
+
+        /* HERO — dark */
+        .hero { background:var(--dark); padding:56px 24px 0; border-bottom:1px solid var(--border); }
+        .hero-inner { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 420px; gap:60px; align-items:start; }
+
+        .hero-eyebrow { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+        .tag-cat { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber-lt); }
+        .tag-free { font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:rgba(217,119,6,0.15); color:var(--amber-lt); border-radius:4px; padding:2px 8px; }
+
+        .hero h1 { font-size:clamp(1.9rem,4vw,2.75rem); font-weight:800; line-height:1.12; letter-spacing:-0.02em; color:var(--text); margin-bottom:14px; }
+        .hero h1 em { font-style:normal; color:var(--amber-lt); }
+        .hero-sub { font-size:1.04rem; color:var(--text-soft); line-height:1.68; max-width:460px; margin-bottom:28px; font-weight:400; }
+
+        .cta-wrap { margin-bottom:12px; }
+        .cta-primary { display:inline-flex; align-items:center; gap:8px; background:var(--amber); color:#fff; font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:1.05rem; padding:15px 32px; border-radius:8px; text-decoration:none; transition:all 0.15s; box-shadow:0 4px 16px rgba(217,119,6,0.3); }
+        .cta-primary:hover { background:var(--amber-lt); transform:translateY(-1px); }
+        .cta-primary svg { width:16px; height:16px; }
+        .cta-sub { font-size:0.8rem; color:var(--text-mute); margin-top:8px; }
+        .cta-sub span { margin:0 5px; }
+
+        /* PREVIEW — dark card */
+        .preview-card { background:var(--dark-card); border:1.5px solid var(--border-lt); border-radius:14px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,0.5); }
+        .pc-head { background:var(--amber); padding:14px 18px; }
+        .pc-head-title { font-weight:700; font-size:0.88rem; color:#fff; }
+        .pc-head-sub { font-size:0.7rem; color:rgba(255,255,255,0.7); margin-top:1px; }
+        .pc-prog { background:var(--dark-lt); border-bottom:1px solid var(--border); padding:9px 18px; display:flex; align-items:center; gap:10px; }
+        .pc-prog-track { flex:1; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
+        .pc-prog-fill { height:100%; background:var(--amber); border-radius:2px; transition:width 0.4s ease; }
+        .pc-prog-label { font-size:0.7rem; font-weight:600; color:var(--text-mute); white-space:nowrap; }
+        .pc-body { padding:18px; min-height:180px; }
+        .pc-q { font-weight:600; font-size:0.9rem; color:var(--text); margin-bottom:14px; line-height:1.45; }
+        .pc-opt { display:flex; flex-direction:column; gap:6px; }
+        .pc-opt-btn { padding:9px 12px; border:1.5px solid var(--border); border-radius:6px; cursor:pointer; font-family:'Hanken Grotesk',sans-serif; font-size:0.82rem; color:var(--text-soft); background:transparent; text-align:left; transition:all 0.15s; }
+        .pc-opt-btn:hover { border-color:var(--amber); color:var(--amber-lt); }
+        .pc-opt-btn.sel { border-color:var(--amber); background:var(--amber-dim); color:var(--amber-lt); }
+        .scale-row { display:flex; gap:5px; }
+        .scale-btn { flex:1; padding:10px 4px; border:1.5px solid var(--border); border-radius:6px; cursor:pointer; text-align:center; font-family:'Hanken Grotesk',sans-serif; font-size:0.8rem; font-weight:600; color:var(--text-soft); background:transparent; transition:all 0.15s; }
+        .scale-btn:hover { border-color:var(--amber); color:var(--amber-lt); }
+        .scale-btn.sel { border-color:var(--amber); background:var(--amber); color:#fff; }
+        .scale-labels { display:flex; justify-content:space-between; font-size:0.64rem; color:var(--text-mute); margin-top:4px; }
+        .pc-textarea { width:100%; border:1.5px solid var(--border); border-radius:6px; padding:10px 12px; resize:none; height:72px; font-family:'Hanken Grotesk',sans-serif; font-size:0.86rem; color:var(--text); background:transparent; outline:none; transition:border-color 0.15s; }
+        .pc-textarea:focus { border-color:var(--amber); }
+        .pc-textarea::placeholder { color:var(--text-mute); }
+        .pc-foot { border-top:1px solid var(--border); background:var(--dark-lt); padding:10px 18px; display:flex; align-items:center; justify-content:space-between; }
+        .pc-live { font-size:0.68rem; color:var(--text-mute); display:flex; align-items:center; gap:4px; }
+        .pc-live-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; }
+        .pc-nav { display:flex; gap:6px; }
+        .pc-btn { font-family:'Hanken Grotesk',sans-serif; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:5px; border:none; cursor:pointer; }
+        .pc-btn-back { background:rgba(255,255,255,0.08); color:var(--text-soft); }
+        .pc-btn-next { background:var(--amber); color:#fff; }
+        .pc-btn-next:disabled { background:rgba(255,255,255,0.08); color:var(--text-mute); cursor:not-allowed; }
+
+        /* TRUST BAR */
+        .trust-bar { background:var(--dark-lt); border-bottom:1px solid var(--border); padding:12px 24px; }
+        .trust-inner { max-width:1100px; margin:0 auto; display:flex; justify-content:center; gap:28px; flex-wrap:wrap; }
+        .trust-item { display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-soft); font-weight:500; }
+        .trust-check { color:var(--amber-lt); }
+
+        /* CONTENT — switches to light background */
+        .content-wrap { background:var(--bg); }
+        .content { max-width:1100px; margin:0 auto; padding:56px 24px 0; display:grid; grid-template-columns:1fr 260px; gap:56px; align-items:start; }
+        .article { min-width:0; }
+        .sec { margin-bottom:48px; }
+        .sec-eyebrow { font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--amber); margin-bottom:8px; }
+        .sec h2 { font-size:1.42rem; font-weight:800; color:var(--ink); margin-bottom:14px; letter-spacing:-0.01em; line-height:1.25; }
+        .sec p { font-size:0.97rem; line-height:1.78; color:var(--ink-mid); margin-bottom:12px; }
+        .sec p strong { color:var(--ink); font-weight:700; }
+        .sec p:last-child { margin-bottom:0; }
+
+        /* QUESTIONS */
+        .q-list { display:flex; flex-direction:column; gap:5px; }
+        .q-row { display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:10px; padding:11px 14px; background:var(--amber-pale); border:1px solid #fde68a; border-radius:7px; }
+        .q-n { font-size:0.7rem; font-weight:700; color:var(--amber); }
+        .q-t { font-size:0.9rem; color:var(--ink-mid); }
+        .q-badge { font-size:0.65rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border-radius:4px; padding:2px 7px; white-space:nowrap; }
+        .badge-mc    { background:#fef9c3; color:#713f12; }
+        .badge-scale { background:#eff6ff; color:#1d4ed8; }
+        .badge-yn    { background:#f0fdf4; color:#15803d; }
+        .badge-open  { background:#f5f3ff; color:#6C3CE1; }
+
+        /* HOW */
+        .how-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .how-card { text-align:center; padding:18px 14px; background:var(--amber-pale); border:1px solid #fde68a; border-radius:8px; }
+        .how-n { width:34px; height:34px; background:var(--amber); color:#fff; border-radius:50%; font-size:0.82rem; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 8px; }
+        .how-title { font-size:0.85rem; font-weight:700; color:var(--ink); margin-bottom:4px; }
+        .how-text { font-size:0.78rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* RESULTS */
+        .results-card { background:var(--dark); border-radius:10px; overflow:hidden; }
+        .rc-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .rc-head-title { font-weight:700; font-size:0.87rem; color:var(--text); }
+        .rc-sub { font-size:0.72rem; color:var(--text-mute); }
+        .rc-body { padding:16px 18px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .rc-reasons { }
+        .rc-reason-title { font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-mute); margin-bottom:10px; }
+        .rc-reason-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+        .rc-reason-label { font-size:0.78rem; color:var(--text-soft); flex:1; }
+        .rc-reason-bar { width:60px; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+        .rc-reason-fill { height:100%; border-radius:3px; background:var(--amber); transition:width 1s ease; width:0; }
+        .rc-reason-pct { font-size:0.72rem; font-weight:700; color:var(--amber-lt); width:28px; text-align:right; }
+        .rc-scores { }
+        .rc-score-title { font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-mute); margin-bottom:10px; }
+        .rc-score-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .rc-score-label { font-size:0.78rem; color:var(--text-soft); }
+        .rc-score-val { font-size:0.88rem; font-weight:700; color:var(--text); }
+        .pro-hook { margin:0 18px 16px; padding:12px 14px; background:rgba(108,60,225,0.15); border:1px solid rgba(108,60,225,0.3); border-radius:7px; display:flex; align-items:flex-start; gap:10px; }
+        .pro-badge { background:var(--pro); color:#fff; font-size:0.62rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; border-radius:3px; padding:3px 7px; flex-shrink:0; margin-top:1px; }
+        .pro-hook-text { font-size:0.82rem; color:rgba(255,255,255,0.7); line-height:1.6; }
+        .pro-hook-text a { color:#a78bfa; font-weight:600; text-decoration:none; }
+        .pro-hook-text a:hover { text-decoration:underline; }
+
+        /* FAQ */
+        .faq-list { display:flex; flex-direction:column; gap:6px; }
+        details.faq { background:var(--bg); border:1px solid var(--b-std); border-radius:7px; overflow:hidden; }
+        details.faq[open] { border-color:var(--amber); }
+        details.faq summary { padding:13px 16px; font-weight:600; font-size:0.9rem; color:var(--ink); cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:12px; }
+        details.faq summary::after { content:'+'; font-size:1.1rem; color:var(--amber); flex-shrink:0; transition:transform 0.2s; }
+        details.faq[open] summary::after { transform:rotate(45deg); }
+        details.faq summary::-webkit-details-marker { display:none; }
+        .faq-ans { padding:0 16px 14px; font-size:0.9rem; line-height:1.72; color:var(--ink-mid); }
+        .faq-ans a { color:var(--amber); text-decoration:none; }
+
+        /* RELATED */
+        .rel-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .rel-card { border:1px solid var(--b-std); border-radius:7px; padding:14px; text-decoration:none; background:var(--bg); transition:all 0.15s; }
+        .rel-card:hover { border-color:var(--amber); box-shadow:0 2px 10px rgba(217,119,6,0.1); }
+        .rel-cat { font-size:0.66rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--amber); margin-bottom:5px; }
+        .rel-title { font-size:0.85rem; font-weight:700; color:var(--ink); line-height:1.4; margin-bottom:3px; }
+        .rel-desc { font-size:0.76rem; color:var(--ink-soft); line-height:1.5; }
+
+        /* BOTTOM CTA */
+        .bottom-cta { background:var(--dark); border-radius:10px; padding:40px 32px; text-align:center; margin:52px 0; border:1px solid var(--border-lt); }
+        .bottom-cta h2 { font-size:1.55rem; font-weight:800; color:var(--text); margin-bottom:8px; letter-spacing:-0.01em; }
+        .bottom-cta p { font-size:0.96rem; color:var(--text-soft); margin-bottom:22px; }
+        .bottom-cta .cta-primary { display:inline-flex; }
+        .bottom-cta .cta-sub { color:var(--text-mute); margin-top:10px; }
+
+        /* SIDEBAR */
+        .sidebar { position:sticky; top:72px; }
+        .sb-cta-card { background:var(--amber); border-radius:8px; padding:18px; text-align:center; margin-bottom:14px; }
+        .sb-cta-card p { font-size:0.83rem; color:rgba(255,255,255,0.85); margin-bottom:12px; font-style:italic; line-height:1.5; }
+        .sb-cta-card a { display:block; background:#fff; color:var(--amber); font-weight:700; font-size:0.84rem; padding:10px; border-radius:6px; text-decoration:none; }
+        .sb-cta-card a:hover { background:var(--amber-pale); }
+        .sb-card { background:var(--amber-pale); border:1px solid #fde68a; border-radius:8px; padding:16px; margin-bottom:14px; }
+        .sb-head { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; }
+        .sb-meta { display:flex; flex-direction:column; gap:7px; }
+        .sb-meta-row { display:flex; justify-content:space-between; font-size:0.82rem; }
+        .sb-meta-label { color:var(--ink-soft); }
+        .sb-meta-val { font-weight:700; color:var(--ink); }
+        .sb-links { list-style:none; display:flex; flex-direction:column; gap:7px; }
+        .sb-links a { font-size:0.83rem; color:var(--amber); text-decoration:none; font-weight:500; }
+        .sb-links a:hover { text-decoration:underline; }
+
+        /* FOOTER */
+        .footer { background:var(--dark-lt); border-top:1px solid var(--border); padding:36px 24px; text-align:center; margin-top:0; }
+        .footer-logo { font-weight:800; color:var(--text); font-size:0.92rem; margin-bottom:5px; }
+        .footer p { font-size:0.8rem; color:var(--text-mute); margin-bottom:10px; }
+        .footer-links { list-style:none; display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:14px; }
+        .footer-links a { font-size:0.76rem; color:var(--text-mute); text-decoration:none; }
+        .footer-links a:hover { color:var(--text); }
+
+        /* MOBILE CTA */
+        #mobile-cta { display:none; position:fixed; bottom:0; left:0; right:0; z-index:500; background:var(--dark); border-top:1px solid var(--border-lt); padding:12px 20px 16px; box-shadow:0 -4px 20px rgba(0,0,0,0.4); }
+        #mobile-cta a { display:block; background:var(--amber); color:#fff; font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:0.97rem; text-align:center; padding:13px; border-radius:8px; text-decoration:none; }
+        #mobile-cta-sub { text-align:center; font-size:0.7rem; color:var(--text-mute); margin-top:5px; }
+
+        @media(max-width:900px) {
+            .hero-inner { grid-template-columns:1fr; }
+            .content { grid-template-columns:1fr; }
+            .sidebar { display:none; }
+            .how-grid { grid-template-columns:1fr; }
+            .rel-grid { grid-template-columns:1fr; }
+            .rc-body { grid-template-columns:1fr; }
+            #mobile-cta { display:block; }
+        }
+    </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HG140X6CQ6"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-HG140X6CQ6');</script>
+</head>
+<body>
+<div id="prog"></div>
+<div id="mobile-cta">
+    <a href="https://votegenerator.com/survey?template=exit-interview">Use This Template — Free</a>
+    <div id="mobile-cta-sub">No signup required · Anonymous · 10 questions</div>
+</div>
+
+<nav class="nav">
+    <a href="https://votegenerator.com" class="nav-logo">
+        <img src="/logo.svg" alt="VoteGenerator">
+        <span class="nav-logo-text">VoteGenerator</span>
+    </a>
+    <span class="nav-sep">/</span>
+    <span class="nav-crumb"><a href="/templates/">Templates</a> / <a href="/templates/employee-surveys/">Employee</a> / Exit Interview</span>
+    <a href="https://votegenerator.com/survey?template=exit-interview" class="nav-cta">Use This Template</a>
+</nav>
+
+<section class="hero" id="hero">
+    <div class="hero-inner">
+        <div class="hero-left">
+            <div class="hero-eyebrow">
+                <span class="tag-cat">Exit Interview Template</span>
+                <span class="tag-free">Free</span>
+            </div>
+            <h1>Free Exit Interview<br>Survey Template</h1>
+            <p class="hero-sub">Find out why employees <em>really</em> leave. 10 structured questions, fully anonymous. The honest data you can't get in a face-to-face exit interview.</p>
+            <div class="cta-wrap">
+                <a href="https://votegenerator.com/survey?template=exit-interview" class="cta-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Use This Template
+                </a>
+                <p class="cta-sub">No signup required <span>·</span> Free forever <span>·</span> Ready in 60 seconds</p>
+            </div>
+        </div>
+        <div class="preview-card">
+            <div class="pc-head">
+                <div class="pc-head-title">Exit Interview Survey</div>
+                <div class="pc-head-sub">Anonymous · 10 questions · ~8 minutes</div>
+            </div>
+            <div class="pc-prog">
+                <div class="pc-prog-track"><div class="pc-prog-fill" id="pv-fill" style="width:10%"></div></div>
+                <span class="pc-prog-label" id="pv-label">1 of 10</span>
+            </div>
+            <div class="pc-body" id="pv-body"></div>
+            <div class="pc-foot">
+                <div class="pc-live"><span class="pc-live-dot"></span> Live demo</div>
+                <div class="pc-nav">
+                    <button class="pc-btn pc-btn-back" id="pv-back" onclick="pvNav(-1)" style="display:none">Back</button>
+                    <button class="pc-btn pc-btn-next" id="pv-next" onclick="pvNav(1)" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="trust-bar">
+    <div class="trust-inner">
+        <div class="trust-item"><span class="trust-check">✓</span> 100% anonymous</div>
+        <div class="trust-item"><span class="trust-check">✓</span> No login for respondents</div>
+        <div class="trust-item"><span class="trust-check">✓</span> 10 structured questions</div>
+        <div class="trust-item"><span class="trust-check">✓</span> Results update live</div>
+        <div class="trust-item"><span class="trust-check">✓</span> Free up to 100 responses</div>
+    </div>
+</div>
+
+<div class="content-wrap">
+<div class="content">
+<main class="article">
+
+    <div class="sec" id="questions">
+        <div class="sec-eyebrow">Template Questions</div>
+        <h2>All 10 Exit Interview Questions</h2>
+        <p>These 10 questions cover every dimension that drives voluntary turnover: reasons for leaving, retention triggers, role satisfaction, management quality, compensation, culture, and employer brand. Each is fully editable — this is the maximum for the free tier, which fits most exit interview needs perfectly.</p>
+        <div class="q-list">
+            <div class="q-row"><span class="q-n">01</span><span class="q-t">What is your primary reason for leaving?</span><span class="q-badge badge-mc">Multiple Choice</span></div>
+            <div class="q-row"><span class="q-n">02</span><span class="q-t">What could we have done to retain you?</span><span class="q-badge badge-open">Open Text</span></div>
+            <div class="q-row"><span class="q-n">03</span><span class="q-t">How long did you consider leaving before making this decision?</span><span class="q-badge badge-mc">Multiple Choice</span></div>
+            <div class="q-row"><span class="q-n">04</span><span class="q-t">How satisfied were you with your role overall?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">05</span><span class="q-t">How satisfied were you with your manager?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">06</span><span class="q-t">How satisfied were you with your compensation?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">07</span><span class="q-t">How would you rate the overall company culture?</span><span class="q-badge badge-scale">Scale 1–5</span></div>
+            <div class="q-row"><span class="q-n">08</span><span class="q-t">Would you recommend this company to a friend as a place to work?</span><span class="q-badge badge-yn">Yes / No</span></div>
+            <div class="q-row"><span class="q-n">09</span><span class="q-t">What did you enjoy most about working here?</span><span class="q-badge badge-open">Open Text</span></div>
+            <div class="q-row"><span class="q-n">10</span><span class="q-t">What is the one thing we could most improve for future employees?</span><span class="q-badge badge-open">Open Text</span></div>
+        </div>
+    </div>
+
+    <div class="sec" id="why">
+        <div class="sec-eyebrow">Why This Template</div>
+        <h2>Why Anonymous Beats Face-to-Face</h2>
+        <p>In-person exit interviews feel candid but rarely are. Departing employees hold back — they don't want to burn bridges, they worry about references, and they're already emotionally done with the place. They say "better opportunity" even when the real answer is "my manager was impossible to work with."</p>
+        <p>An anonymous survey removes all of that. No eye contact. No career consequences. No social pressure. Research consistently shows anonymous exit surveys capture significantly more actionable data than in-person equivalents — particularly on sensitive topics like management quality and compensation.</p>
+        <p><strong>Question 3</strong> ("How long did you consider leaving?") is often the most revealing. Employees who decided within the last month are reacting to something specific. Employees who decided 6+ months ago reveal a systemic issue — they stayed while actively job hunting, which is expensive for you.</p>
+    </div>
+
+    <div class="sec" id="how">
+        <div class="sec-eyebrow">How It Works</div>
+        <h2>3 Steps. Done Before They Leave.</h2>
+        <div class="how-grid">
+            <div class="how-card"><div class="how-n">1</div><div class="how-title">Send in their final week</div><div class="how-text">Not their last day. Send the link on Monday of their final week — they have time to respond thoughtfully.</div></div>
+            <div class="how-card"><div class="how-n">2</div><div class="how-title">Emphasise anonymity</div><div class="how-text">Tell them explicitly it's anonymous and their responses will not be shared with their manager. This is the key to honest answers.</div></div>
+            <div class="how-card"><div class="how-n">3</div><div class="how-title">Act on the patterns</div><div class="how-text">One exit is anecdote. Five exits with the same reason is a pattern. Review monthly and share themes — not individual responses — with leadership.</div></div>
+        </div>
+    </div>
+
+    <div class="sec" id="results">
+        <div class="sec-eyebrow">Sample Results</div>
+        <h2>What Your Exit Data Looks Like</h2>
+        <p>After 12 exit surveys over one quarter, here's the kind of insight you get — the reasons breakdown on the left is the most valuable data in your entire HR stack:</p>
+        <div class="results-card">
+            <div class="rc-head">
+                <span class="rc-head-title">Exit Interview Survey · Q1 2026 · 12 responses</span>
+                <span class="rc-sub">Aggregated · Anonymous</span>
+            </div>
+            <div class="rc-body" id="results-body">
+                <div class="rc-reasons">
+                    <div class="rc-reason-title">Primary Reasons for Leaving</div>
+                    <div class="rc-reason-row"><span class="rc-reason-label">Better compensation</span><div class="rc-reason-bar"><div class="rc-reason-fill" data-w="58"></div></div><span class="rc-reason-pct">58%</span></div>
+                    <div class="rc-reason-row"><span class="rc-reason-label">Career growth</span><div class="rc-reason-bar"><div class="rc-reason-fill" data-w="42"></div></div><span class="rc-reason-pct">42%</span></div>
+                    <div class="rc-reason-row"><span class="rc-reason-label">Manager issues</span><div class="rc-reason-bar"><div class="rc-reason-fill" data-w="33"></div></div><span class="rc-reason-pct">33%</span></div>
+                    <div class="rc-reason-row"><span class="rc-reason-label">Work-life balance</span><div class="rc-reason-bar"><div class="rc-reason-fill" data-w="25"></div></div><span class="rc-reason-pct">25%</span></div>
+                    <div class="rc-reason-row"><span class="rc-reason-label">Company direction</span><div class="rc-reason-bar"><div class="rc-reason-fill" data-w="17"></div></div><span class="rc-reason-pct">17%</span></div>
+                </div>
+                <div class="rc-scores">
+                    <div class="rc-score-title">Satisfaction at Exit</div>
+                    <div class="rc-score-row"><span class="rc-score-label">Role overall</span><span class="rc-score-val">3.4 / 5</span></div>
+                    <div class="rc-score-row"><span class="rc-score-label">Manager</span><span class="rc-score-val">2.9 / 5</span></div>
+                    <div class="rc-score-row"><span class="rc-score-label">Compensation</span><span class="rc-score-val">2.7 / 5</span></div>
+                    <div class="rc-score-row"><span class="rc-score-label">Culture</span><span class="rc-score-val">3.8 / 5</span></div>
+                    <div class="rc-score-row"><span class="rc-score-label">Would recommend</span><span class="rc-score-val">58% Yes</span></div>
+                </div>
+            </div>
+            <div class="pro-hook">
+                <span class="pro-badge">Pro</span>
+                <span class="pro-hook-text"><strong>CSV export for HR records</strong> — structured exit data for analysis in Excel, reporting to leadership, or combining with turnover metrics. Plus scheduled close after 2 weeks so surveys don't stay open indefinitely. <a href="https://votegenerator.com/pricing">Upgrade to Pro from $19/month →</a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sec" id="faq">
+        <div class="sec-eyebrow">FAQ</div>
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <details class="faq"><summary>Is this exit interview survey template free?</summary><div class="faq-ans">Yes. Free with no signup required. The free plan allows up to 100 responses. For HR departments running multiple exits, <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> includes CSV export for HR records and up to 10,000 responses.</div></details>
+            <details class="faq"><summary>Should exit interviews be anonymous?</summary><div class="faq-ans">Yes. Anonymous surveys get significantly more honest answers than in-person exit interviews. Departing employees fear burning bridges and affecting references. Anonymity removes that fear — they tell you what they actually think. VoteGenerator stores no names or email addresses by default.</div></details>
+            <details class="faq"><summary>What questions should an exit interview cover?</summary><div class="faq-ans">The most valuable exit questions cover: primary reason for leaving, retention triggers, role satisfaction, manager effectiveness, compensation, company culture, and employer brand (would they recommend you as an employer). This template covers all six areas in 10 structured questions.</div></details>
+            <details class="faq"><summary>How do I get departing employees to complete it?</summary><div class="faq-ans">Send the link on Monday of their final week — not their last day. Explicitly tell them it is completely anonymous and their responses will not be shared with their manager. Keep it under 10 minutes. Completion rates typically run 60–80% when surveys are short, anonymous, and timed correctly.</div></details>
+            <details class="faq"><summary>How do I export exit interview data for HR records?</summary><div class="faq-ans">Free accounts download a PNG screenshot of results. <a href="https://votegenerator.com/pricing">Pro accounts ($19/month)</a> include CSV and Excel export — structured data files for HR reporting, pattern analysis across multiple exits, and leadership presentations.</div></details>
+            <details class="faq"><summary>Can I add more questions?</summary><div class="faq-ans">The template has 10 questions — the maximum on the free tier. <a href="https://votegenerator.com/pricing">Pro ($19/month)</a> allows up to 25 questions if you need role-specific or department-specific exit questions in addition to these core ones.</div></details>
+        </div>
+    </div>
+
+    <div class="sec" id="related">
+        <div class="sec-eyebrow">Related Templates</div>
+        <h2>More Employee Survey Templates</h2>
+        <div class="rel-grid">
+            <a href="/templates/employee-engagement-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Employee Engagement Survey</div><div class="rel-desc">10 Gallup-inspired questions to measure engagement before it becomes an exit.</div></a>
+            <a href="/templates/weekly-pulse-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Weekly Pulse Survey</div><div class="rel-desc">5 questions every week to catch morale drops before they become resignations.</div></a>
+            <a href="/templates/employee-satisfaction-survey" class="rel-card"><div class="rel-cat">Employee</div><div class="rel-title">Employee Satisfaction Survey</div><div class="rel-desc">8 questions on compensation, balance, management, and culture.</div></a>
+        </div>
+    </div>
+
+    <div class="bottom-cta">
+        <h2>Get honest exit data starting today</h2>
+        <p>10 questions. Fully anonymous. No signup required from anyone.</p>
+        <a href="https://votegenerator.com/survey?template=exit-interview" class="cta-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Use This Template — Free
+        </a>
+        <p class="cta-sub">No signup required · Free up to 100 responses · Pro from $19/month</p>
+    </div>
+
+</main>
+<aside class="sidebar">
+    <div class="sb-cta-card">
+        <p>"Find out why they're <em>really</em> leaving. Anonymous. Ready in 60 seconds."</p>
+        <a href="https://votegenerator.com/survey?template=exit-interview">Use This Template →</a>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Template Details</div>
+        <div class="sb-meta">
+            <div class="sb-meta-row"><span class="sb-meta-label">Questions</span><span class="sb-meta-val">10</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Types</span><span class="sb-meta-val">MC, Scale, Open</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Free responses</span><span class="sb-meta-val">100</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">Est. completion</span><span class="sb-meta-val">7–10 min</span></div>
+            <div class="sb-meta-row"><span class="sb-meta-label">When to send</span><span class="sb-meta-val">Final week</span></div>
+        </div>
+    </div>
+    <div class="sb-card">
+        <div class="sb-head">Related Templates</div>
+        <ul class="sb-links">
+            <li><a href="/templates/employee-engagement-survey">Employee Engagement Survey</a></li>
+            <li><a href="/templates/weekly-pulse-survey">Weekly Pulse Survey</a></li>
+            <li><a href="/templates/employee-satisfaction-survey">Employee Satisfaction Survey</a></li>
+            <li><a href="/templates/manager-effectiveness-survey">Manager Effectiveness Survey</a></li>
+        </ul>
+    </div>
+</aside>
+</div>
+</div>
+
+<footer class="footer">
+    <div class="footer-logo">VoteGenerator</div>
+    <p>Free exit interview survey template. Anonymous. No signup. Up to 100 responses free.</p>
+    <ul class="footer-links">
+        <li><a href="https://votegenerator.com">Home</a></li>
+        <li><a href="/templates/">Templates</a></li>
+        <li><a href="https://votegenerator.com/blog">Blog</a></li>
+        <li><a href="https://votegenerator.com/pricing">Pricing</a></li>
+        <li><a href="https://votegenerator.com/privacy">Privacy</a></li>
+    </ul>
+    <p>&copy; 2026 VoteGenerator. All rights reserved.</p>
+</footer>
+
+<script>
+const REASONS=['Better compensation','Career growth opportunity','Manager / leadership','Work-life balance','Company direction','Relocation','Personal reasons'];
+const PV_QS=[
+    {q:'What is your primary reason for leaving?', type:'mc'},
+    {q:'How satisfied were you with your role overall?', type:'scale',min:'Very dissatisfied',max:'Very satisfied'},
+    {q:'How satisfied were you with your manager?', type:'scale',min:'Very dissatisfied',max:'Very satisfied'},
+    {q:'Would you recommend this company to a friend as a place to work?', type:'yn'},
+    {q:'What is the one thing we could most improve for future employees?', type:'open'},
+];
+let cur=0,ans={};
+function pvRender(){
+    const q=PV_QS[cur];
+    document.getElementById('pv-fill').style.width=((cur+1)/10*100)+'%';
+    document.getElementById('pv-label').textContent=(cur+1)+' of 10';
+    let h=`<div class="pc-q">${q.q}</div>`;
+    if(q.type==='mc'){
+        h+='<div class="pc-opt">';
+        REASONS.forEach((r,i)=>{const s=ans[cur]===i?'sel':'';h+=`<button class="pc-opt-btn ${s}" onclick="pvMC(${i})">${r}</button>`;});
+        h+='</div>';
+    } else if(q.type==='scale'){
+        h+='<div class="scale-row">';
+        [1,2,3,4,5].forEach(v=>{const s=ans[cur]===v?'sel':'';h+=`<button class="scale-btn ${s}" onclick="pvScale(${v})">${v}</button>`;});
+        h+=`</div><div class="scale-labels"><span>${q.min}</span><span>${q.max}</span></div>`;
+    } else if(q.type==='yn'){
+        const ys=ans[cur]===1?'sel':'',ns=ans[cur]===0?'sel':'';
+        h+=`<div style="display:flex;gap:8px"><button class="pc-opt-btn ${ys}" style="flex:1;text-align:center" onclick="pvYN(1)">Yes ✓</button><button class="pc-opt-btn ${ns}" style="flex:1;text-align:center" onclick="pvYN(0)">No ✗</button></div>`;
+    } else {
+        h+=`<textarea class="pc-textarea" placeholder="Your honest answer helps future employees..." oninput="pvText(this.value)">${ans[cur]||''}</textarea>`;
+    }
+    document.getElementById('pv-body').innerHTML=h;
+    const nx=document.getElementById('pv-next');
+    const last=cur>=PV_QS.length-1;
+    nx.disabled=ans[cur]===undefined&&q.type!=='open';
+    nx.textContent=last?'Submit ✓':'Next';
+    document.getElementById('pv-back').style.display=cur>0?'block':'none';
+}
+function pvMC(i){ans[cur]=i;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvScale(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvYN(v){ans[cur]=v;document.getElementById('pv-next').disabled=false;pvRender();}
+function pvText(v){ans[cur]=v||' ';}
+function pvNav(dir){
+    const last=cur>=PV_QS.length-1;
+    if(dir===1&&last){
+        document.getElementById('pv-body').innerHTML=`<div style="text-align:center;padding:20px 0"><div style="font-size:2rem;margin-bottom:8px">✓</div><div style="font-weight:700;color:var(--text);margin-bottom:4px">Thank you for completing the demo</div><div style="font-size:0.83rem;color:var(--text-soft);margin-bottom:14px">Your real survey will collect anonymous responses from departing employees.</div><a href="https://votegenerator.com/survey?template=exit-interview" style="background:var(--amber);color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:0.86rem;padding:10px 20px;border-radius:6px;text-decoration:none">Use This Template →</a></div>`;
+        document.getElementById('pv-fill').style.width='100%';
+        document.getElementById('pv-label').textContent='Complete';
+        document.getElementById('pv-next').style.display='none';
+        document.getElementById('pv-back').style.display='block';
+        return;
+    }
+    cur=Math.max(0,Math.min(PV_QS.length-1,cur+dir));
+    if(dir===1)document.getElementById('pv-next').style.display='block';
+    pvRender();
+}
+pvRender();
+
+new IntersectionObserver(entries=>{
+    if(entries[0].isIntersecting){
+        document.querySelectorAll('.rc-reason-fill').forEach(b=>{b.style.width=b.dataset.w+'%';});
+    }
+},{threshold:0.3}).observe(document.getElementById('results'));
+
+const prog=document.getElementById('prog');
+const mobileCta=document.getElementById('mobile-cta');
+const heroEl=document.getElementById('hero');
+window.addEventListener('scroll',()=>{
+    const d=document.documentElement;
+    prog.style.width=(window.scrollY/(d.scrollHeight-d.clientHeight)*100)+'%';
+    if(window.innerWidth<=900)mobileCta.style.display=heroEl.getBoundingClientRect().bottom<0?'block':'none';
+},{passive:true});
+</script>
+</body>
+</html>

@@ -872,6 +872,49 @@ const SOFTWARE_ONBOARDING_TEMPLATE: SurveyTemplate = {
     ],
 };
 
+// podcast-content-survey → product.ts (or a new community.ts)
+export const PODCAST_CONTENT_TEMPLATE: SurveyTemplate = {
+  id: 'podcast-content-survey',
+  name: 'Podcast Content Survey',
+  emoji: '🎙️',
+  color: 'text-purple-700',
+  description: 'Episode quality, topic preferences, guest feedback, format, and listener NPS for podcast creators.',
+  category: 'product',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'pc-quality',
+      title: 'Episode Quality',
+      description: 'How was this episode?',
+      questions: [
+        { id: 'pc-q1', type: 'scale', question: 'How would you rate the overall quality of this podcast?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+        { id: 'pc-q2', type: 'scale', question: 'How relevant and valuable are the topics covered to you?', minValue: 1, maxValue: 5, minLabel: 'Not relevant', maxLabel: 'Highly relevant', required: true },
+        { id: 'pc-q3', type: 'scale', question: 'How engaging and well-delivered is the host?', minValue: 1, maxValue: 5, minLabel: 'Not engaging', maxLabel: 'Very engaging', required: true },
+        { id: 'pc-q4', type: 'scale', question: 'How would you rate the quality of guests and interviews?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+      ],
+    },
+    {
+      id: 'pc-format',
+      title: 'Format and Discovery',
+      description: 'Episode length, format, and how you found us',
+      questions: [
+        { id: 'pc-q5', type: 'scale', question: 'How well does the episode length work for you?', minValue: 1, maxValue: 5, minLabel: 'Too long or short', maxLabel: 'Perfect length', required: true },
+        { id: 'pc-q6', type: 'multiple_choice', question: 'What format would you most like to see more of?', options: [{ id: 'interview', text: 'Guest interviews' }, { id: 'solo', text: 'Solo host episodes' }, { id: 'panel', text: 'Panel discussions' }, { id: 'stories', text: 'Case studies and stories' }, { id: 'qa', text: 'Q&A episodes' }], required: false },
+        { id: 'pc-q7', type: 'multiple_choice', question: 'How did you first discover this podcast?', options: [{ id: 'spotify', text: 'Spotify' }, { id: 'apple', text: 'Apple Podcasts' }, { id: 'youtube', text: 'YouTube' }, { id: 'recommend', text: 'Word of mouth' }, { id: 'social', text: 'Social media' }, { id: 'other', text: 'Other' }], required: false },
+      ],
+    },
+    {
+      id: 'pc-loyalty',
+      title: 'Loyalty and Feedback',
+      description: 'Would you recommend us?',
+      questions: [
+        { id: 'pc-q8', type: 'nps', question: 'How likely are you to recommend this podcast to a friend or colleague?', minValue: 0, maxValue: 10, required: true },
+        { id: 'pc-q9', type: 'textarea', question: 'What topics or guests would you most like to see covered in future episodes?', placeholder: 'Your suggestions go directly to the production team...', required: false },
+      ],
+    },
+  ],
+};
+
 // ============================================================================
 // EXPORT
 // ============================================================================
@@ -883,4 +926,5 @@ export const PRODUCT_TEMPLATES: SurveyTemplate[] = [
     IT_SUPPORT_TEMPLATE,
     APP_USABILITY_TEMPLATE,
     SOFTWARE_ONBOARDING_TEMPLATE,
+    PODCAST_CONTENT_TEMPLATE,
 ];

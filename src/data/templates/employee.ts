@@ -2218,6 +2218,55 @@ export const TEAM_BUILDING_TEMPLATE: SurveyTemplate = {
   ],
 };
 
+
+
+// new-hire-30-60-90-survey → employee.ts
+export const NEW_HIRE_30_60_90_TEMPLATE: SurveyTemplate = {
+  id: 'new-hire-30-60-90-survey',
+  name: 'New Hire 30-60-90 Day Survey',
+  emoji: '📅',
+  color: 'text-indigo-700',
+  description: 'Onboarding clarity, role confidence, culture fit, and manager support at 30, 60, and 90 days.',
+  category: 'employee',
+  recommendedSettings: { anonymousMode: true, showProgress: true, allowBack: true },
+  sections: [
+    {
+      id: 'nh-clarity',
+      title: 'Role and Onboarding Clarity',
+      description: 'How clear is your role and what success looks like?',
+      questions: [
+        { id: 'nh-q1', type: 'scale', question: 'How clear are you on your role, responsibilities, and what success looks like?', minValue: 1, maxValue: 5, minLabel: 'Very unclear', maxLabel: 'Very clear', required: true },
+        { id: 'nh-q2', type: 'scale', question: 'How well organised and thorough was your onboarding experience?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+        { id: 'nh-q3', type: 'scale', question: 'How effective was the training and guidance you received to do your job?', minValue: 1, maxValue: 5, minLabel: 'Very poor', maxLabel: 'Excellent', required: true },
+      ],
+    },
+    {
+      id: 'nh-support',
+      title: 'Support and Culture',
+      description: 'Manager, team, and culture experience',
+      questions: [
+        { id: 'nh-q4', type: 'scale', question: 'How well supported have you felt by your manager so far?', minValue: 1, maxValue: 5, minLabel: 'Not supported', maxLabel: 'Very supported', required: true },
+        { id: 'nh-q5', type: 'scale', question: 'How welcomed have you felt by your team and colleagues?', minValue: 1, maxValue: 5, minLabel: 'Not welcomed', maxLabel: 'Very welcomed', required: true },
+        { id: 'nh-q6', type: 'scale', question: 'How well do you have the tools, access, and resources needed to do your job?', minValue: 1, maxValue: 5, minLabel: 'Major gaps', maxLabel: 'Everything I need', required: true },
+        { id: 'nh-q7', type: 'scale', question: 'How well does the company culture match what you expected when you joined?', minValue: 1, maxValue: 5, minLabel: 'Very different', maxLabel: 'Exactly as expected', required: true },
+      ],
+    },
+    {
+      id: 'nh-confidence',
+      title: 'Confidence and Feedback',
+      description: 'How confident are you feeling?',
+      questions: [
+        { id: 'nh-q8', type: 'scale', question: 'How confident do you feel in your ability to perform well in your role?', minValue: 1, maxValue: 5, minLabel: 'Not confident', maxLabel: 'Very confident', required: true },
+        { id: 'nh-q9', type: 'nps', question: 'How likely are you to recommend this company as a great place to work to someone in your network?', minValue: 0, maxValue: 10, required: true },
+        { id: 'nh-q10', type: 'textarea', question: 'What is the one thing we could have done better to support your start here?', placeholder: 'Your honest feedback helps us improve onboarding for future new starters...', required: false },
+      ],
+    },
+  ],
+};
+
+
+
+
 // ============================================================================
 // EXPORT
 // ============================================================================
@@ -2238,4 +2287,5 @@ export const EMPLOYEE_TEMPLATES: SurveyTemplate[] = [
     CANTEEN_FOOD_TEMPLATE,
     CANDIDATE_EXPERIENCE_TEMPLATE,      // new
     TEAM_BUILDING_TEMPLATE,             // new
+    NEW_HIRE_30_60_90_TEMPLATE,
 ];

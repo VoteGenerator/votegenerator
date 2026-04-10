@@ -62,7 +62,7 @@ const TemplatesPage: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {CATEGORIES.map((cat) => (
-                        
+                        <a
                             key={cat.slug}
                             href={`/templates/${cat.slug}/`}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-full text-sm font-medium text-slate-700 hover:text-indigo-700 transition-all shadow-sm"

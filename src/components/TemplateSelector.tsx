@@ -739,6 +739,49 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 </div>
                             </div>
                             
+{/* ── Survey Category Hub ── */}
+<div className="mb-12">
+    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+        <ClipboardList className="w-5 h-5 text-teal-600" />
+        Browse Survey Categories
+    </h2>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {[
+            { label: 'Employee & HR', emoji: '👥', slug: 'employee-surveys', count: 17 },
+            { label: 'Customer Feedback', emoji: '⭐', slug: 'customer-feedback', count: 31 },
+            { label: 'Events', emoji: '🎉', slug: 'event-surveys', count: 5 },
+            { label: 'Education', emoji: '🎓', slug: 'education-surveys', count: 8 },
+            { label: 'Product & Tech', emoji: '🚀', slug: 'product-surveys', count: 7 },
+            { label: 'Healthcare', emoji: '🏥', slug: 'healthcare-surveys', count: 3 },
+            { label: 'Hospitality', emoji: '🏨', slug: 'hospitality-surveys', count: 2 },
+            { label: 'Property', emoji: '🏠', slug: 'property-surveys', count: 4 },
+            { label: 'Marketing', emoji: '🎯', slug: 'marketing-surveys', count: 2 },
+            { label: 'Membership', emoji: '🏅', slug: 'membership-surveys', count: 2 },
+            { label: 'Procurement', emoji: '📋', slug: 'procurement-surveys', count: 1 },
+            { label: 'Community', emoji: '🤝', slug: 'community-surveys', count: 3 },
+            { label: 'Civic & Nonprofit', emoji: '🏛️', slug: 'civic-surveys', count: 2 },
+        ].map((cat) => (
+            
+                key={cat.slug}
+                href={`/templates/${cat.slug}/`}
+                className="group flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl transition-all hover:shadow-md"
+            >
+                <span className="text-2xl">{cat.emoji}</span>
+                <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700 leading-tight">
+                        {cat.label}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">{cat.count} templates</p>
+                </div>
+                <ArrowRight size={14} className="ml-auto text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+            </a>
+        ))}
+    </div>
+</div></div>
+
+
+
+
                             {/* Featured Surveys - Customer & Employee */}
                             {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
                                 <div className="mb-8">

@@ -15,15 +15,12 @@ import {
     PollTemplate,
 } from './pollTemplates';
 import { CREATOR_TEMPLATES } from './creatorTemplates';
-
 // Merge all templates
 const ALL_TEMPLATES = [...POLL_TEMPLATES, ...CREATOR_TEMPLATES];
-
 // Extended categories (add creators if not in base)
 const EXTENDED_CATEGORIES = TEMPLATE_CATEGORIES.find(c => c.id === 'creators')
     ? TEMPLATE_CATEGORIES
     : [...TEMPLATE_CATEGORIES.slice(0, -1), { id: 'creators', label: 'Content Creators', icon: '🎬' }, ...TEMPLATE_CATEGORIES.slice(-1)];
-
 // Icon mapping for poll types
 const POLL_TYPE_ICONS: Record<string, React.ElementType> = {
     multiple: CheckCircle,
@@ -35,7 +32,6 @@ const POLL_TYPE_ICONS: Record<string, React.ElementType> = {
     rsvp: Users,
     survey: ClipboardList,
 };
-
 // Poll type labels
 const POLL_TYPE_LABELS: Record<string, string> = {
     multiple: 'Choice',
@@ -47,7 +43,6 @@ const POLL_TYPE_LABELS: Record<string, string> = {
     rsvp: 'RSVP',
     survey: 'Survey',
 };
-
 // Creator platform config
 const CREATOR_PLATFORMS = [
     { 
@@ -84,7 +79,6 @@ const CREATOR_PLATFORMS = [
         description: 'Create polls that work seamlessly across subreddits and communities'
     },
 ];
-
 // Featured survey categories (multi-question surveys)
 const FEATURED_SURVEY_CATEGORIES = [
     {
@@ -110,13 +104,11 @@ const FEATURED_SURVEY_CATEGORIES = [
         description: 'In-depth surveys for team engagement and workplace feedback'
     },
 ];
-
 interface TemplateSelectorProps {
     onSelectTemplate: (template: PollTemplate) => void;
     onClose?: () => void;
     isModal?: boolean;
 }
-
 // Template Card Component
 const TemplateCard: React.FC<{
     template: PollTemplate;
@@ -262,7 +254,6 @@ const TemplateCard: React.FC<{
         </motion.div>
     );
 };
-
 // Creator Platform Card Component
 const CreatorPlatformCard: React.FC<{
     platform: typeof CREATOR_PLATFORMS[0];
@@ -303,7 +294,6 @@ const CreatorPlatformCard: React.FC<{
         </a>
     );
 };
-
 // Featured Survey Type Card Component
 const FeaturedSurveyCard: React.FC<{
     surveyCategory: typeof FEATURED_SURVEY_CATEGORIES[0];
@@ -363,6 +353,51 @@ const FeaturedSurveyCard: React.FC<{
     );
 };
 
+// Survey Category Hub data
+const SURVEY_CATEGORY_HUB = [
+    { label: 'Employee & HR', emoji: '👥', slug: 'employee-surveys', count: 17 },
+    { label: 'Customer Feedback', emoji: '⭐', slug: 'customer-feedback', count: 31 },
+    { label: 'Events', emoji: '🎉', slug: 'event-surveys', count: 5 },
+    { label: 'Education', emoji: '🎓', slug: 'education-surveys', count: 8 },
+    { label: 'Product & Tech', emoji: '🚀', slug: 'product-surveys', count: 7 },
+    { label: 'Healthcare', emoji: '🏥', slug: 'healthcare-surveys', count: 3 },
+    { label: 'Hospitality', emoji: '🏨', slug: 'hospitality-surveys', count: 2 },
+    { label: 'Property', emoji: '🏠', slug: 'property-surveys', count: 4 },
+    { label: 'Marketing', emoji: '🎯', slug: 'marketing-surveys', count: 2 },
+    { label: 'Membership', emoji: '🏅', slug: 'membership-surveys', count: 2 },
+    { label: 'Procurement', emoji: '📋', slug: 'procurement-surveys', count: 1 },
+    { label: 'Community', emoji: '🤝', slug: 'community-surveys', count: 3 },
+    { label: 'Civic & Nonprofit', emoji: '🏛️', slug: 'civic-surveys', count: 2 },
+];
+
+// Survey Category Hub Component
+const SurveyCategoryHub: React.FC = () => (
+    <div className="mb-12">
+        <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-teal-600" />
+            Browse Survey Categories
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {SURVEY_CATEGORY_HUB.map((cat) => (
+                <a
+                    key={cat.slug}
+                    href={`/templates/${cat.slug}/`}
+                    className="group flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl transition-all hover:shadow-md"
+                >
+                    <span className="text-2xl">{cat.emoji}</span>
+                    <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700 leading-tight">
+                            {cat.label}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-0.5">{cat.count} templates</p>
+                    </div>
+                    <ArrowRight size={14} className="ml-auto text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                </a>
+            ))}
+        </div>
+    </div>
+);
+
 // Main Template Selector
 const TemplateSelector: React.FC<TemplateSelectorProps> = ({ 
     onSelectTemplate, 
@@ -380,7 +415,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     
     // Handle hash navigation on mount and hash change
     useEffect(() => {
-        if (isModal) return; // Don't handle hash in modal mode
+        if (isModal) return;
         
         const handleHashNavigation = () => {
             const hash = window.location.hash.toLowerCase();
@@ -403,31 +438,18 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             }
         };
         
-        // Run on mount
         handleHashNavigation();
-        
-        // Listen for hash changes
         window.addEventListener('hashchange', handleHashNavigation);
         return () => window.removeEventListener('hashchange', handleHashNavigation);
     }, [isModal]);
     
-    // Filter templates by category, search, and type
+    // Filter templates
     const filteredTemplates = ALL_TEMPLATES.filter(template => {
-        // Type filter (polls vs surveys vs creators)
-        if (typeFilter === 'polls' && (template.pollType === 'survey' || template.category === 'creators')) {
-            return false;
-        }
-        if (typeFilter === 'surveys' && template.pollType !== 'survey') {
-            return false;
-        }
-        if (typeFilter === 'creators' && template.category !== 'creators') {
-            return false;
-        }
+        if (typeFilter === 'polls' && (template.pollType === 'survey' || template.category === 'creators')) return false;
+        if (typeFilter === 'surveys' && template.pollType !== 'survey') return false;
+        if (typeFilter === 'creators' && template.category !== 'creators') return false;
         
-        // Category filter
         const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-        
-        // Search filter
         if (!searchQuery.trim()) return matchesCategory;
         
         const query = searchQuery.toLowerCase();
@@ -440,20 +462,16 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         return matchesCategory && matchesSearch;
     });
     
-    // Separate templates by type for section display
     const pollTemplates = filteredTemplates.filter(t => t.pollType !== 'survey' && t.category !== 'creators');
     const surveyTemplates = filteredTemplates.filter(t => t.pollType === 'survey');
     const creatorTemplates = filteredTemplates.filter(t => t.category === 'creators');
     
-    // Group creator templates by platform
     const youtubeTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('youtube-'));
     const twitchTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('twitch-'));
     const redditTemplates = CREATOR_TEMPLATES.filter(t => t.id.startsWith('reddit-'));
     
-    // Group MULTI-QUESTION survey templates for Featured section
-    // These are comprehensive surveys with multiple questions
     const csatTemplates = ALL_TEMPLATES.filter(t => 
-        t.pollType === 'survey' && // ONLY multi-question surveys
+        t.pollType === 'survey' &&
         (t.id.toLowerCase().includes('csat') || 
          t.id.toLowerCase().includes('nps') ||
          t.id.toLowerCase().includes('customer') ||
@@ -464,7 +482,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     );
     
     const employeeTemplates = ALL_TEMPLATES.filter(t => 
-        t.pollType === 'survey' && // ONLY multi-question surveys
+        t.pollType === 'survey' &&
         (t.id.toLowerCase().includes('employee') || 
          t.id.toLowerCase().includes('engagement') ||
          t.id.toLowerCase().includes('workplace') ||
@@ -475,7 +493,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
          t.name.toLowerCase().includes('morale'))
     );
     
-    // Count totals
     const totalPolls = ALL_TEMPLATES.filter(t => t.pollType !== 'survey' && t.category !== 'creators').length;
     const totalSurveys = ALL_TEMPLATES.filter(t => t.pollType === 'survey').length;
     const totalCreators = CREATOR_TEMPLATES.length;
@@ -554,7 +571,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 </div>
             </div>
             
-            {/* Type Filter Toggle (Polls vs Surveys vs Creators) */}
+            {/* Type Filter Toggle */}
             {!isModal && (
                 <div className="px-4 pb-4">
                     <div className="max-w-5xl mx-auto">
@@ -570,8 +587,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                         key={type.id}
                                         onClick={() => {
                                             setTypeFilter(type.id as 'all' | 'polls' | 'surveys' | 'creators');
-                                            setSelectedCategory('all'); // Reset category when changing type
-                                            // Update URL hash
+                                            setSelectedCategory('all');
                                             if (type.id !== 'all') {
                                                 window.history.pushState({}, '', `/templates#${type.id}`);
                                             } else {
@@ -598,7 +614,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 </div>
             )}
             
-            {/* Category Pills - Hide when viewing creators (they have their own sections) */}
+            {/* Category Pills */}
             {typeFilter !== 'creators' && (
                 <div className={`${isModal ? 'px-6 py-4' : 'px-4 pb-8'}`}>
                     <div className="max-w-5xl mx-auto">
@@ -609,7 +625,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             className="flex flex-wrap justify-center gap-2"
                         >
                             {EXTENDED_CATEGORIES.filter(cat => cat.id !== 'creators').map((cat) => {
-                                // Count based on current type filter
                                 let count: number;
                                 if (cat.id === 'all') {
                                     count = filteredTemplates.length;
@@ -640,7 +655,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             })}
                         </motion.div>
                         
-                        {/* Results count */}
                         {searchQuery && (
                             <p className="text-center text-sm text-slate-500 mt-4">
                                 Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} 
@@ -655,26 +669,15 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             <div className={`${isModal ? 'px-6 pb-6 max-h-[60vh] overflow-y-auto' : 'px-4 pb-16'}`}>
                 <div className="max-w-5xl mx-auto">
                     
-                    {/* CREATORS VIEW - Platform Cards + Templates */}
+                    {/* CREATORS VIEW */}
                     {typeFilter === 'creators' && (
                         <div ref={creatorsSectionRef} className="scroll-mt-48">
-                            {/* Platform Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-12">
-                                <CreatorPlatformCard 
-                                    platform={CREATOR_PLATFORMS[0]} 
-                                    templates={youtubeTemplates} 
-                                />
-                                <CreatorPlatformCard 
-                                    platform={CREATOR_PLATFORMS[1]} 
-                                    templates={twitchTemplates} 
-                                />
-                                <CreatorPlatformCard 
-                                    platform={CREATOR_PLATFORMS[2]} 
-                                    templates={redditTemplates} 
-                                />
+                                <CreatorPlatformCard platform={CREATOR_PLATFORMS[0]} templates={youtubeTemplates} />
+                                <CreatorPlatformCard platform={CREATOR_PLATFORMS[1]} templates={twitchTemplates} />
+                                <CreatorPlatformCard platform={CREATOR_PLATFORMS[2]} templates={redditTemplates} />
                             </div>
                             
-                            {/* All Creator Templates */}
                             <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                                 <Play className="w-5 h-5 text-purple-600" />
                                 All Creator Templates
@@ -693,10 +696,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         </div>
                     )}
                     
-                    {/* ALL VIEW - Show all sections */}
+                    {/* ALL VIEW */}
                     {typeFilter === 'all' && !searchQuery && selectedCategory === 'all' && (
                         <>
-                            {/* Creator Platform Cards (compact) */}
+                            {/* Creator Platform Cards */}
                             <div ref={creatorsSectionRef} className="mb-12 scroll-mt-48">
                                 <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                                     <Play className="w-5 h-5 text-purple-600" />
@@ -738,52 +741,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     })}
                                 </div>
                             </div>
-                            
-{/* ── Survey Category Hub ── */}
-<div className="mb-12">
-    <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-        <ClipboardList className="w-5 h-5 text-teal-600" />
-        Browse Survey Categories
-    </h2>
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {[
-            { label: 'Employee & HR', emoji: '👥', slug: 'employee-surveys', count: 17 },
-            { label: 'Customer Feedback', emoji: '⭐', slug: 'customer-feedback', count: 31 },
-            { label: 'Events', emoji: '🎉', slug: 'event-surveys', count: 5 },
-            { label: 'Education', emoji: '🎓', slug: 'education-surveys', count: 8 },
-            { label: 'Product & Tech', emoji: '🚀', slug: 'product-surveys', count: 7 },
-            { label: 'Healthcare', emoji: '🏥', slug: 'healthcare-surveys', count: 3 },
-            { label: 'Hospitality', emoji: '🏨', slug: 'hospitality-surveys', count: 2 },
-            { label: 'Property', emoji: '🏠', slug: 'property-surveys', count: 4 },
-            { label: 'Marketing', emoji: '🎯', slug: 'marketing-surveys', count: 2 },
-            { label: 'Membership', emoji: '🏅', slug: 'membership-surveys', count: 2 },
-            { label: 'Procurement', emoji: '📋', slug: 'procurement-surveys', count: 1 },
-            { label: 'Community', emoji: '🤝', slug: 'community-surveys', count: 3 },
-            { label: 'Civic & Nonprofit', emoji: '🏛️', slug: 'civic-surveys', count: 2 },
-        ].map((cat) => (
-            <a
-                key={cat.slug}
-                href={`/templates/${cat.slug}/`}
-                className="group flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl transition-all hover:shadow-md"
-            >
-                <span className="text-2xl">{cat.emoji}</span>
-                <div className="min-w-0">
-                    <p className="font-semibold text-slate-800 text-sm group-hover:text-indigo-700 leading-tight">
-                        {cat.label}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">{cat.count} templates</p>
-                </div>
-                <ArrowRight size={14} className="ml-auto text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-            </a>
-        ))}
-    </div>
-</div>
-</div>
 
+                            {/* Survey Category Hub */}
+                            <SurveyCategoryHub />
 
-
-
-                            {/* Featured Surveys - Customer & Employee */}
+                            {/* Featured Surveys */}
                             {(csatTemplates.length > 0 || employeeTemplates.length > 0) && (
                                 <div className="mb-8">
                                     <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Surveys</h3>
@@ -837,10 +799,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                         Multi-Question Surveys
                                         <span className="text-sm font-normal text-slate-500">({surveyTemplates.length} templates)</span>
                                     </h2>
-                                    
-                                    {/* All Survey Templates Grid (multi-question surveys only) */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {/* Create Blank Survey Card */}
                                         <a
                                             href="/survey"
                                             className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-teal-300 hover:border-teal-500 bg-gradient-to-br from-teal-50 to-emerald-50 transition-all duration-300 hover:shadow-lg"
@@ -882,7 +841,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                {/* Featured Surveys - Show when viewing surveys */}
                                 {typeFilter === 'surveys' && selectedCategory === 'all' && (csatTemplates.length > 0 || employeeTemplates.length > 0) && (
                                     <div className="mb-8">
                                         <h3 className="text-lg font-bold text-slate-900 mb-4">Featured Surveys</h3>
@@ -911,7 +869,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                     ref={typeFilter === 'polls' ? pollsSectionRef : surveysSectionRef}
                                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                                 >
-                                    {/* Create Blank Survey Card - Show in surveys view */}
                                     {typeFilter === 'surveys' && (
                                         <a
                                             href="/survey"
@@ -944,7 +901,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         </AnimatePresence>
                     )}
                     
-                    {/* SEARCH/CATEGORY FILTERED VIEW (not 'all' type) */}
+                    {/* SEARCH/CATEGORY FILTERED VIEW */}
                     {typeFilter === 'all' && (searchQuery || selectedCategory !== 'all') && (
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -1008,7 +965,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         </div>
     );
 
-    // If modal, wrap in modal container
     if (isModal) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1024,8 +980,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             </div>
         );
     }
-
     return content;
 };
-
 export default TemplateSelector;

@@ -761,7 +761,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             { label: 'Community', emoji: '🤝', slug: 'community-surveys', count: 3 },
             { label: 'Civic & Nonprofit', emoji: '🏛️', slug: 'civic-surveys', count: 2 },
         ].map((cat) => (
-            
+            <a
                 key={cat.slug}
                 href={`/templates/${cat.slug}/`}
                 className="group flex items-center gap-3 p-4 bg-white border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-xl transition-all hover:shadow-md"
@@ -777,7 +777,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             </a>
         ))}
     </div>
-</div></div>
+</div>
+</div>
 
 
 

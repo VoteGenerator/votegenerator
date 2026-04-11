@@ -38,6 +38,7 @@ import BlogPostAnonymousSurvey from './blog/BlogPostAnonymousSurvey';
 import BlogPost50Questions from './blog/BlogPost50Questions';
 import { getPoll, getPollAsAdmin, getResults, hasVoted, PollStatusError } from '../services/voteGeneratorService';
 import { Poll, RunoffResult } from '../types';
+import ShortsStudio from './ShortsStudio';
 
 type ViewState = 
     | { type: 'create' }
@@ -526,6 +527,8 @@ const shouldShowVoterAdWallAfter = (poll: Poll, isAdmin: boolean): boolean => {
                 <BlogPostAnonymousSurvey />
             ) : window.location.pathname === '/blog/employee-survey-questions' ? (
                 <BlogPost50Questions />
+            ) : window.location.pathname === '/shorts-studio' ? (
+                <ShortsStudio />
             ) : (
             <>
             {/* Header */}

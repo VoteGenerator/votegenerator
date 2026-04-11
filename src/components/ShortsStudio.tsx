@@ -1,6 +1,35 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 
-const TEMPLATES = [
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface Template {
+  id: string;
+  name: string;
+  category: string;
+  slug: string;
+  color: string;
+  bg: string;
+  emoji: string;
+}
+
+interface Generated {
+  youtube_title: string;
+  youtube_description: string;
+  youtube_tags: string[];
+  opening_hook: string;
+  opening_subtext: string;
+  ending_headline: string;
+  ending_subtext: string;
+  voiceover_script: string;
+}
+
+interface CopyState {
+  [key: string]: boolean;
+}
+
+// ── Template data ──────────────────────────────────────────────────────────
+
+const TEMPLATES: Template[] = [
   { id: "employee-engagement-survey", name: "Employee Engagement Survey", category: "HR & Culture", slug: "employee-engagement-survey", color: "#059669", bg: "from-emerald-600 to-teal-700", emoji: "👥" },
   { id: "employee-satisfaction-survey", name: "Employee Satisfaction Survey", category: "HR & Culture", slug: "employee-satisfaction-survey", color: "#059669", bg: "from-green-600 to-emerald-700", emoji: "😊" },
   { id: "exit-interview-survey", name: "Exit Interview Survey", category: "HR & Culture", slug: "exit-interview-survey", color: "#475569", bg: "from-slate-600 to-gray-700", emoji: "🚪" },
@@ -70,26 +99,28 @@ const TEMPLATES = [
   { id: "museum-visitor-survey", name: "Museum Visitor Survey", category: "Civic", slug: "museum-visitor-survey", color: "#78716c", bg: "from-stone-600 to-amber-700", emoji: "🏛️" },
 ];
 
-const CATEGORIES = [...new Set(TEMPLATES.map(t => t.category))];
+const CATEGORIES: string[] = ["All", ...Array.from(new Set(TEMPLATES.map((t: Template) => t.category)))];
 
-export default function ShortsStudio() {
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [categoryFilter, setCategoryFilter] = useState("All");
-  const [generated, setGenerated] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [copied, setCopied] = useState({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const openCardRef = useRef(null);
-  const endCardRef = useRef(null);
+// ── Component ──────────────────────────────────────────────────────────────
 
-  const filteredTemplates = TEMPLATES.filter(t => {
+export default function ShortsStudio(): React.ReactElement {
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const [generated, setGenerated] = useState<Generated | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<CopyState>({});
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const openCardRef = useRef<HTMLDivElement>(null);
+  const endCardRef = useRef<HTMLDivElement>(null);
+
+  const filteredTemplates: Template[] = TEMPLATES.filter((t: Template) => {
     const matchesCategory = categoryFilter === "All" || t.category === categoryFilter;
     const matchesSearch = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const generate = async () => {
+  const generate = async (): Promise<void> => {
     if (!selectedTemplate) return;
     setLoading(true);
     setError(null);
@@ -106,12 +137,12 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
 {
   "youtube_title": "60 chars max, punchy, keyword-rich, includes 'free' or a number if natural",
   "youtube_description": "150-200 words. Hook first line. Describe the template and its use case. Include URL. End with 3-5 hashtags. Professional tone.",
-  "youtube_tags": ["tag1", "tag2", ...],
+  "youtube_tags": ["tag1", "tag2"],
   "opening_hook": "8-12 words MAX. A pain point question or bold statement. Visceral and direct. This appears as BIG TEXT on screen. No punctuation at end except ?",
   "opening_subtext": "4-6 words. Secondary line under hook. Softer. Descriptive.",
   "ending_headline": "6-8 words MAX. Action-oriented CTA. Big text.",
-  "ending_subtext": "votegenerator.com — always this exact text",
-  "voiceover_script": "30-45 second script for ElevenLabs. Conversational, energetic, no filler words. Structure: Hook (3s) → Problem (8s) → Solution (10s) → Features (10s) → CTA (5s). Use short punchy sentences. Write exactly what should be spoken — no stage directions, no brackets, no notes."
+  "ending_subtext": "votegenerator.com",
+  "voiceover_script": "30-45 second script for ElevenLabs. Conversational, energetic, no filler words. Structure: Hook (3s) then Problem (8s) then Solution (10s) then Features (10s) then CTA (5s). Use short punchy sentences. Write exactly what should be spoken, no stage directions, no brackets, no notes."
 }`;
 
     try {
@@ -126,8 +157,8 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
       });
 
       const data = await response.json();
-      const text = data.content[0].text.trim().replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(text);
+      const text: string = data.content[0].text.trim().replace(/```json|```/g, "").trim();
+      const parsed: Generated = JSON.parse(text);
       setGenerated(parsed);
     } catch (e) {
       setError("Generation failed. Please try again.");
@@ -136,26 +167,21 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
     }
   };
 
-  const copyToClipboard = async (text, key) => {
+  const copyToClipboard = async (text: string, key: string): Promise<void> => {
     await navigator.clipboard.writeText(text);
-    setCopied(prev => ({ ...prev, [key]: true }));
-    setTimeout(() => setCopied(prev => ({ ...prev, [key]: false })), 2000);
+    setCopied((prev: CopyState) => ({ ...prev, [key]: true }));
+    setTimeout(() => setCopied((prev: CopyState) => ({ ...prev, [key]: false })), 2000);
   };
 
-  const CopyBtn = ({ text, label }) => (
+  const CopyBtn = ({ text, label }: { text: string; label: string }): React.ReactElement => (
     <button
       onClick={() => copyToClipboard(text, label)}
       style={{
         background: copied[label] ? "#10b981" : "#1e293b",
         color: copied[label] ? "#fff" : "#94a3b8",
         border: "1px solid " + (copied[label] ? "#10b981" : "#334155"),
-        borderRadius: "6px",
-        padding: "4px 12px",
-        fontSize: "12px",
-        cursor: "pointer",
-        transition: "all 0.2s",
-        fontWeight: 600,
-        letterSpacing: "0.03em"
+        borderRadius: "6px", padding: "4px 12px", fontSize: "12px",
+        cursor: "pointer", transition: "all 0.2s", fontWeight: 600, letterSpacing: "0.03em"
       }}
     >
       {copied[label] ? "✓ Copied" : "Copy"}
@@ -183,16 +209,12 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
             <input
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: "100%", background: "#0f172a", border: "1px solid #1e293b",
-                borderRadius: "8px", padding: "8px 12px", color: "#f1f5f9",
-                fontSize: "13px", outline: "none", boxSizing: "border-box"
-              }}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              style={{ width: "100%", background: "#0f172a", border: "1px solid #1e293b", borderRadius: "8px", padding: "8px 12px", color: "#f1f5f9", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
             />
           </div>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid #1e293b", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            {["All", ...CATEGORIES].map(cat => (
+            {CATEGORIES.map((cat: string) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
@@ -209,12 +231,13 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
             ))}
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
-            {filteredTemplates.map(t => (
+            {filteredTemplates.map((t: Template) => (
               <button
                 key={t.id}
                 onClick={() => { setSelectedTemplate(t); setGenerated(null); }}
                 style={{
-                  width: "100%", textAlign: "left", background: selectedTemplate?.id === t.id ? "#1e293b" : "transparent",
+                  width: "100%", textAlign: "left",
+                  background: selectedTemplate?.id === t.id ? "#1e293b" : "transparent",
                   border: "1px solid " + (selectedTemplate?.id === t.id ? "#6366f1" : "transparent"),
                   borderRadius: "8px", padding: "10px 12px", cursor: "pointer",
                   display: "flex", alignItems: "center", gap: "10px",
@@ -245,11 +268,12 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                 style={{
                   width: "100%", padding: "12px", borderRadius: "10px",
                   background: loading ? "#1e293b" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                  color: loading ? "#475569" : "#fff", border: "none", cursor: loading ? "not-allowed" : "pointer",
+                  color: loading ? "#475569" : "#fff", border: "none",
+                  cursor: loading ? "not-allowed" : "pointer",
                   fontWeight: 800, fontSize: "14px", letterSpacing: "-0.01em", transition: "all 0.2s"
                 }}
               >
-                {loading ? "Generating..." : `⚡ Generate Shorts Assets`}
+                {loading ? "Generating..." : "⚡ Generate Shorts Assets"}
               </button>
             </div>
           )}
@@ -301,47 +325,24 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                         border: "1px solid " + selectedTemplate.color + "44"
                       }}
                     >
-                      {/* Noise texture overlay */}
-                      <div style={{
-                        position: "absolute", inset: 0, opacity: 0.03,
-                        backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")"
-                      }} />
-
-                      {/* Top brand bar */}
+                      <div style={{ position: "absolute", inset: 0, opacity: 0.03, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
                       <div style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
                         <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: selectedTemplate.color }} />
-                        <div style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                          VoteGenerator
-                        </div>
+                        <div style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", textTransform: "uppercase" }}>VoteGenerator</div>
                       </div>
-
-                      {/* Main content */}
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px 24px" }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px" }}>
                         <div style={{ fontSize: "9px", fontWeight: 700, color: selectedTemplate.color, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "16px", opacity: 0.9 }}>
                           {selectedTemplate.category}
                         </div>
-                        <div style={{
-                          fontSize: "28px", fontWeight: 900, lineHeight: 1.05,
-                          color: "#ffffff", letterSpacing: "-0.03em", marginBottom: "16px"
-                        }}>
+                        <div style={{ fontSize: "28px", fontWeight: 900, lineHeight: 1.05, color: "#ffffff", letterSpacing: "-0.03em", marginBottom: "16px" }}>
                           {generated.opening_hook}
                         </div>
-                        <div style={{
-                          fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.55)",
-                          lineHeight: 1.4
-                        }}>
+                        <div style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>
                           {generated.opening_subtext}
                         </div>
                       </div>
-
-                      {/* Bottom */}
-                      <div style={{
-                        padding: "20px 24px",
-                        background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)"
-                      }}>
-                        <div style={{ fontSize: "9px", fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                          Free · No Signup Required
-                        </div>
+                      <div style={{ padding: "20px 24px", background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)" }}>
+                        <div style={{ fontSize: "9px", fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Free · No Signup Required</div>
                       </div>
                     </div>
                   </div>
@@ -358,60 +359,30 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                         border: "1px solid #1e293b"
                       }}
                     >
-                      {/* Glow */}
-                      <div style={{
-                        position: "absolute", bottom: "-60px", left: "50%", transform: "translateX(-50%)",
-                        width: "200px", height: "200px", borderRadius: "50%",
-                        background: selectedTemplate.color + "33", filter: "blur(60px)", pointerEvents: "none"
-                      }} />
-
-                      {/* Top */}
+                      <div style={{ position: "absolute", bottom: "-60px", left: "50%", transform: "translateX(-50%)", width: "200px", height: "200px", borderRadius: "50%", background: selectedTemplate.color + "33", filter: "blur(60px)", pointerEvents: "none" }} />
                       <div style={{ padding: "20px 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
                         <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: selectedTemplate.color }} />
-                        <div style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                          VoteGenerator
-                        </div>
+                        <div style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>VoteGenerator</div>
                       </div>
-
-                      {/* Main */}
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px" }}>
-                        <div style={{
-                          width: "48px", height: "48px", borderRadius: "14px",
-                          background: `linear-gradient(135deg, ${selectedTemplate.color}, ${selectedTemplate.color}99)`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "24px", marginBottom: "24px"
-                        }}>
+                        <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: `linear-gradient(135deg, ${selectedTemplate.color}, ${selectedTemplate.color}99)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", marginBottom: "24px" }}>
                           {selectedTemplate.emoji}
                         </div>
-                        <div style={{
-                          fontSize: "26px", fontWeight: 900, lineHeight: 1.05,
-                          color: "#ffffff", letterSpacing: "-0.03em", marginBottom: "20px"
-                        }}>
+                        <div style={{ fontSize: "26px", fontWeight: 900, lineHeight: 1.05, color: "#ffffff", letterSpacing: "-0.03em", marginBottom: "20px" }}>
                           {generated.ending_headline}
                         </div>
-                        <div style={{
-                          display: "inline-block",
-                          background: selectedTemplate.color + "22",
-                          border: "1px solid " + selectedTemplate.color + "66",
-                          borderRadius: "8px", padding: "8px 14px",
-                          fontSize: "14px", fontWeight: 800, color: selectedTemplate.color,
-                          letterSpacing: "-0.01em"
-                        }}>
+                        <div style={{ display: "inline-block", background: selectedTemplate.color + "22", border: "1px solid " + selectedTemplate.color + "66", borderRadius: "8px", padding: "8px 14px", fontSize: "14px", fontWeight: 800, color: selectedTemplate.color, letterSpacing: "-0.01em" }}>
                           votegenerator.com
                         </div>
                       </div>
-
-                      {/* Bottom */}
                       <div style={{ padding: "20px 24px" }}>
-                        <div style={{ fontSize: "9px", fontWeight: 700, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                          Free Survey Tool · 50,000+ Teams
-                        </div>
+                        <div style={{ fontSize: "9px", fontWeight: 700, color: "rgba(255,255,255,0.25)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Free Survey Tool · 50,000+ Teams</div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "12px", color: "#475569" }}>
-                  💡 Right-click → Save image, or screenshot for best quality
+                  💡 Right-click the card and save as image, or use a screenshot tool
                 </div>
               </div>
 
@@ -433,19 +404,15 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                 </div>
                 <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
 
-                  {/* Title */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", letterSpacing: "0.06em", textTransform: "uppercase" }}>Title</div>
                       <CopyBtn text={generated.youtube_title} label="title" />
                     </div>
-                    <div style={{ fontSize: "16px", fontWeight: 700, color: "#f1f5f9", lineHeight: 1.4 }}>
-                      {generated.youtube_title}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#334155", marginTop: "4px" }}>{generated.youtube_title?.length || 0}/100 chars</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700, color: "#f1f5f9", lineHeight: 1.4 }}>{generated.youtube_title}</div>
+                    <div style={{ fontSize: "11px", color: "#334155", marginTop: "4px" }}>{generated.youtube_title?.length ?? 0}/100 chars</div>
                   </div>
 
-                  {/* URL */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", letterSpacing: "0.06em", textTransform: "uppercase" }}>URL</div>
@@ -456,7 +423,6 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                     </div>
                   </div>
 
-                  {/* Description */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", letterSpacing: "0.06em", textTransform: "uppercase" }}>Description</div>
@@ -467,19 +433,14 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this exact stru
                     </div>
                   </div>
 
-                  {/* Tags */}
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                       <div style={{ fontSize: "11px", fontWeight: 700, color: "#475569", letterSpacing: "0.06em", textTransform: "uppercase" }}>Tags</div>
-                      <CopyBtn text={generated.youtube_tags?.join(", ")} label="tags" />
+                      <CopyBtn text={generated.youtube_tags?.join(", ") ?? ""} label="tags" />
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                      {generated.youtube_tags?.map((tag, i) => (
-                        <span key={i} style={{
-                          background: "#1e293b", border: "1px solid #334155",
-                          borderRadius: "4px", padding: "3px 8px",
-                          fontSize: "12px", color: "#64748b"
-                        }}>
+                      {generated.youtube_tags?.map((tag: string, i: number) => (
+                        <span key={i} style={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "4px", padding: "3px 8px", fontSize: "12px", color: "#64748b" }}>
                           {tag}
                         </span>
                       ))}

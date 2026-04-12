@@ -172,8 +172,14 @@
 
 [[redirects]]
   from = "/templates"
+  to = "/templates/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/"
   to = "/templates.html"
   status = 200
+  force = true
 
 # ============================================================================
 # Legal & Policy Pages - Dedicated HTML files (like contact.html)

@@ -318,6 +318,165 @@
   status = 200
 
 # ============================================================================
+# ADD THESE to netlify.toml BEFORE the SPA fallback catch-all
+# Category hub pages — each needs its own redirect to serve the static HTML
+# ============================================================================
+
+[[redirects]]
+  from = "/templates/employee-surveys"
+  to = "/templates/employee-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/employee-surveys/"
+  to = "/templates/employee-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/customer-feedback"
+  to = "/templates/customer-feedback/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/customer-feedback/"
+  to = "/templates/customer-feedback.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/education-surveys"
+  to = "/templates/education-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/education-surveys/"
+  to = "/templates/education-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/event-surveys"
+  to = "/templates/event-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/event-surveys/"
+  to = "/templates/event-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/product-surveys"
+  to = "/templates/product-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/product-surveys/"
+  to = "/templates/product-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/healthcare-surveys"
+  to = "/templates/healthcare-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/healthcare-surveys/"
+  to = "/templates/healthcare-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/hospitality-surveys"
+  to = "/templates/hospitality-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/hospitality-surveys/"
+  to = "/templates/hospitality-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/property-surveys"
+  to = "/templates/property-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/property-surveys/"
+  to = "/templates/property-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/marketing-surveys"
+  to = "/templates/marketing-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/marketing-surveys/"
+  to = "/templates/marketing-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/membership-surveys"
+  to = "/templates/membership-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/membership-surveys/"
+  to = "/templates/membership-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/procurement-surveys"
+  to = "/templates/procurement-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/procurement-surveys/"
+  to = "/templates/procurement-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/community-surveys"
+  to = "/templates/community-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/community-surveys/"
+  to = "/templates/community-surveys.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/templates/civic-surveys"
+  to = "/templates/civic-surveys/"
+  status = 301
+
+[[redirects]]
+  from = "/templates/civic-surveys/"
+  to = "/templates/civic-surveys.html"
+  status = 200
+  force = true
+
+# Also redirect .html template pages to clean URLs (catches any direct .html visits)
+[[redirects]]
+  from = "/templates/*.html"
+  to = "/templates/:splat"
+  status = 301
+  force = true
+
+
+
+
+
+# ============================================================================
 # SPA Routes
 # ============================================================================
 [[redirects]]

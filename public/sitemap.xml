@@ -1,824 +1,221 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- CORE PAGES                                                       -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/create</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/survey</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/pricing</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://votegenerator.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://votegenerator.com/create</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://votegenerator.com/survey</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://votegenerator.com/templates/</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://votegenerator.com/pricing</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- SEO LANDING PAGES                                               -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/employee-survey</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/customer-feedback</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/online-rsvp</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/feedback-form</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/compare</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <url><loc>https://votegenerator.com/employee-survey</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/customer-feedback</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/compare</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- COMPANY PAGES                                                   -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/faq</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/help</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/about</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/privacy</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/terms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/refund</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
+  <url><loc>https://votegenerator.com/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/help</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://votegenerator.com/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://votegenerator.com/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://votegenerator.com/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://votegenerator.com/terms</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://votegenerator.com/refund</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- TEMPLATE CATEGORY HUBS (13 pages)                               -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/employee-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/customer-feedback/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/event-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/education-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/product-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/healthcare-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/community-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/civic-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/hospitality-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/membership-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/procurement-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/property-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/marketing-surveys/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/employee-surveys/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/customer-feedback/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/education-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/event-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/product-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/healthcare-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/hospitality-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/property-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/marketing-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/membership-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/procurement-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/community-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/civic-surveys/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- EMPLOYEE & HR TEMPLATES (16 pages)                              -->
+  <!-- HR & CULTURE TEMPLATES (17 pages)                               -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/employee-engagement-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/employee-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/job-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/exit-interview-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/weekly-pulse-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/onboarding-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/360-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/diversity-inclusion-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/employee-wellbeing-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/internship-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/employee-recognition-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/employee-benefits-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/remote-work-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/canteen-food-service-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/healthcare-staff-satisfaction/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/new-hire-30-60-90-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/employee-engagement-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/employee-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/exit-interview-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/weekly-pulse-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/job-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/360-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/diversity-inclusion-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/employee-wellbeing-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/remote-work-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/internship-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/employee-recognition-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/employee-benefits-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/canteen-food-service-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://votegenerator.com/templates/employee-mental-health-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/candidate-experience-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/team-building-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/new-hire-30-60-90-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- CUSTOMER FEEDBACK TEMPLATES (11 pages)                          -->
+  <!-- CUSTOMER FEEDBACK TEMPLATES (15 pages)                          -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/customer-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/nps-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/post-purchase-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/restaurant-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/customer-churn-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/sales-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/real-estate-agent-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/insurance-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/spa-wellness-feedback/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/food-delivery-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/gym-fitness-class-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-<url>
-  <loc>https://votegenerator.com/templates/subscription-service-survey/</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-
-
+  <url><loc>https://votegenerator.com/templates/customer-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/nps-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/restaurant-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/customer-churn-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/food-delivery-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/gym-fitness-class-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/subscription-service-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/client-satisfaction-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/templates/personal-trainer-feedback-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/spa-wellness-feedback/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/retail-customer-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/real-estate-agent-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/insurance-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/sales-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/coworking-space-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- EVENTS & PLANNING TEMPLATES (3 pages)                           -->
+  <!-- EDUCATION TEMPLATES (8 pages)                                   -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/event-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/meeting-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/conference-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-<url>
-  <loc>https://votegenerator.com/templates/speaker-evaluation-survey/</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-
+  <url><loc>https://votegenerator.com/templates/course-evaluation-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/training-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/student-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/school-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/alumni-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/school-parent-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/childcare-parent-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/online-course-feedback-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- EDUCATION TEMPLATES (4 pages)                                   -->
+  <!-- EVENTS TEMPLATES (4 pages)                                      -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/course-evaluation-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/training-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/student-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/school-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-  <loc>https://votegenerator.com/templates/school-parent-survey/</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
+  <url><loc>https://votegenerator.com/templates/event-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/conference-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/meeting-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/speaker-evaluation-survey/</loc><lastmod>2026-04-09</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- PRODUCT & BUSINESS TEMPLATES (7 pages)                          -->
+  <!-- PRODUCT & TECH TEMPLATES (7 pages)                              -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/product-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/product-market-fit-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/website-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/market-research-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/it-support-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/app-usability-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/software-onboarding-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/product-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/product-market-fit-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/website-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/app-usability-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/software-onboarding-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/it-support-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/market-research-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- HEALTHCARE TEMPLATES (3 pages)                                  -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/patient-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/dental-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/patient-discharge-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- COMMUNITY TEMPLATES (1 page)                                    -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/volunteer-feedback-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- CIVIC & NONPROFIT TEMPLATES (3 pages)                           -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/community-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/nonprofit-impact-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/museum-visitor-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/patient-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/dental-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/patient-discharge-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- HOSPITALITY TEMPLATES (1 page)                                  -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/hotel-guest-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/hotel-guest-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- MEMBERSHIP & CLUBS TEMPLATES (2 pages)                          -->
+  <!-- PROPERTY TEMPLATES (4 pages)                                    -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/membership-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/podcast-content-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/tenant-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/vacation-rental-guest-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/hoa-resident-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/student-housing-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MARKETING TEMPLATES (1 page)                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <url><loc>https://votegenerator.com/templates/brand-awareness-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MEMBERSHIP TEMPLATES (2 pages)                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <url><loc>https://votegenerator.com/templates/membership-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/podcast-content-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- PROCUREMENT TEMPLATES (1 page)                                  -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/vendor-evaluation-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/vendor-evaluation-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- PROPERTY & HOUSING TEMPLATES (2 pages)                          -->
+  <!-- COMMUNITY TEMPLATES (3 pages)                                   -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/tenant-satisfaction-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/templates/student-housing-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/volunteer-feedback-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/community-satisfaction-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/templates/nonprofit-impact-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- MARKETING & BRAND TEMPLATES (1 page)                            -->
+  <!-- CIVIC TEMPLATES (1 page)                                        -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/templates/brand-awareness-survey/</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/templates/museum-visitor-survey/</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — POLLS & GUIDES                                           -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/how-to-create-a-poll.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/poll-types-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/ranked-choice-voting.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/team-meeting-poll.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/visual-poll-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/rsvp-poll-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/blog/how-to-create-a-poll.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/poll-types-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/ranked-choice-voting.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/team-meeting-poll.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/visual-poll-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/rsvp-poll-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — SURVEYS                                                  -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/how-to-create-a-survey.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/how-to-write-survey-questions.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/quick-survey-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/anonymous-survey-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/rating-scale-survey.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/customer-satisfaction-survey.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/how-to-survey-customers.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/nps-survey-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://votegenerator.com/blog/how-to-create-a-survey.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/how-to-write-survey-questions.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/quick-survey-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/anonymous-survey-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/rating-scale-survey.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/customer-satisfaction-survey.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/how-to-survey-customers.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/nps-survey-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — EMPLOYEE SURVEYS                                         -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/how-to-survey-employees.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/employee-engagement-survey-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/employee-satisfaction-survey.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/are-work-surveys-anonymous.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/blog/how-to-survey-employees.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/employee-engagement-survey-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/employee-satisfaction-survey.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/are-work-surveys-anonymous.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — TEMPLATES                                                -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/employee-survey-questions.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/employee-survey-templates.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/free-poll-templates.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/this-or-that-questions.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://votegenerator.com/blog/employee-survey-questions.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/employee-survey-templates.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/free-poll-templates.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/this-or-that-questions.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — COMPARISONS                                              -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/free-poll-maker-comparison.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/free-survey-maker-tools.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/free-employee-survey-tools.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/votegenerator-vs-strawpoll.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/votegenerator-vs-surveymonkey.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/mentimeter-alternatives-free.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://votegenerator.com/blog/free-poll-maker-comparison.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/free-survey-maker-tools.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/free-employee-survey-tools.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/votegenerator-vs-strawpoll.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/votegenerator-vs-surveymonkey.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://votegenerator.com/blog/mentimeter-alternatives-free.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- BLOG — PLATFORM GUIDES                                          -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <url>
-    <loc>https://votegenerator.com/blog/twitch-poll-guide.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://votegenerator.com/blog/reddit-poll-alternative.html</loc>
-    <lastmod>2026-04-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-<url>
-  <loc>https://votegenerator.com/templates/childcare-parent-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/candidate-experience-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/client-satisfaction-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/personal-trainer-feedback-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/online-course-feedback-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/team-building-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://votegenerator.com/templates/coworking-space-survey.html</loc>
-  <lastmod>2026-04-09</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.7</priority>
-</url>
-
-
-
+  <url><loc>https://votegenerator.com/blog/twitch-poll-guide.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://votegenerator.com/blog/reddit-poll-alternative.html</loc><lastmod>2026-04-08</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
 </urlset>

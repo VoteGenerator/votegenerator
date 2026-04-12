@@ -48,6 +48,7 @@ const FREE_NAV_ITEMS: NavItem[] = [
     { label: 'Create Survey', href: '/survey', icon: ClipboardList },
     { label: 'Templates', href: '/templates', icon: LayoutTemplate },
     { label: 'Pricing', href: '/pricing' },
+    { label: 'Blog', href: '/blog' }, 
 ];
 
 // ============================================================================

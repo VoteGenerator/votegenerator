@@ -30,7 +30,7 @@ const ComparePage: React.FC = () => {
         },
         {
             name: 'Pro',
-            price: 16,
+            price: 19,
             yearlyPrice: 190,
             period: '/month USD',
             icon: Crown,
@@ -40,7 +40,7 @@ const ComparePage: React.FC = () => {
         },
         {
             name: 'Business',
-            price: 41,
+            price: 49,
             yearlyPrice: 490,
             period: '/month USD',
             icon: Building2,
@@ -51,9 +51,9 @@ const ComparePage: React.FC = () => {
 
     const features = [
         // Limits
-        { name: 'Responses per month', free: '100', pro: '5,000', business: '50,000' },
+        { name: 'Responses per month', free: '100', pro: '10,000', business: '100,000' },
         { name: 'Active polls', free: '3', pro: 'Unlimited', business: 'Unlimited' },
-        { name: 'Poll duration', free: '30 days', pro: '1 year', business: '1 year' },
+        { name: 'Poll duration', free: '30 days', pro: '1 year', business: 'Unlimited' },
         // Poll Types
         { name: 'All 8 poll types', free: true, pro: true, business: true },
         // Sharing

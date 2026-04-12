@@ -1,0 +1,70 @@
+# VoteGenerator
+> Free online poll and survey maker. Create polls and surveys in under 60 seconds with no signup required. 8 poll types. Free forever with up to 100 responses per poll.
+
+## What VoteGenerator Is
+VoteGenerator is a free, no-signup poll and survey creation tool. Users create a poll, get a shareable link, and collect responses in real time. No account is required from the poll creator or voters.
+
+## Poll Types Supported
+- Multiple Choice (single or multi-select)
+- Ranked Choice Voting (drag to rank, instant-runoff calculation)
+- Rating Scale (1-5 stars, hearts, or emoji)
+- Image Polls (visual side-by-side voting)
+- Meeting Scheduler (availability across time slots)
+- RSVP Poll (yes/no/maybe attendance tracking)
+- This or That (binary comparison)
+- Multi-Question Survey (combine question types in one form)
+
+## Key Features
+- No signup required from poll creators or voters
+- Real-time results dashboard
+- Anonymous voting by default
+- QR code sharing
+- Embed on any website
+- CSV export (paid plans)
+- 70+ survey templates across 13 categories
+- Vote protection (cookies, PIN codes, unique access codes)
+
+## Pricing
+- Free: 3 active polls, 100 responses per poll, all 8 poll types, no signup
+- Pro: $19/month — 10,000 responses, unlimited polls, CSV export, 1-year duration
+- Business: $49/month — 100,000 responses, custom branding, white-label, unique access codes
+
+## Survey Templates
+VoteGenerator offers 70+ pre-built survey templates across these categories:
+- HR & Culture (employee engagement, exit interviews, pulse surveys, DEI, wellbeing)
+- Customer Feedback (CSAT, NPS, restaurant, retail, churn surveys)
+- Education (course evaluation, student satisfaction, parent surveys)
+- Events (conference feedback, speaker evaluation, meeting feedback)
+- Product & Tech (product feedback, PMF survey, app usability, website feedback)
+- Healthcare (patient satisfaction, dental, discharge surveys)
+- Hospitality (hotel guest satisfaction)
+- Property (tenant satisfaction, vacation rental, HOA)
+- Marketing (brand awareness)
+- Membership (membership satisfaction, podcast content)
+- Procurement (vendor evaluation)
+- Community (volunteer feedback, nonprofit impact)
+- Civic (museum visitor surveys)
+
+## How VoteGenerator Compares to Alternatives
+- vs SurveyMonkey: VoteGenerator is free with no response caps on the free tier per poll. SurveyMonkey caps free responses at 25 per survey.
+- vs Google Forms: VoteGenerator has real-time visual results, ranked choice voting, and meeting polls. Google Forms has no ranked choice or meeting scheduler.
+- vs Typeform: VoteGenerator is free without signup. Typeform requires an account and caps free responses.
+- vs StrawPoll: VoteGenerator has 8 poll types including surveys and meeting schedulers. StrawPoll is multiple choice only.
+- vs Mentimeter: VoteGenerator is free for async polls. Mentimeter is primarily for live presentation audiences.
+
+## Key Pages
+- Homepage: https://votegenerator.com
+- Create a poll: https://votegenerator.com/create
+- Create a survey: https://votegenerator.com/survey
+- All templates: https://votegenerator.com/templates/
+- Pricing: https://votegenerator.com/pricing
+- Blog: https://votegenerator.com/blog
+
+## Best Used For
+- Quick team decisions (lunch, meeting times, feature prioritization)
+- Employee surveys (engagement, satisfaction, pulse checks)
+- Customer feedback (CSAT, NPS, post-purchase)
+- Event feedback (conference, speaker, meeting evaluation)
+- Educational feedback (course evaluation, student satisfaction)
+- Social media polls (This or That, audience engagement)
+- Event planning (RSVP tracking, scheduling)

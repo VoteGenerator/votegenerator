@@ -1,16 +1,13 @@
 # VoteGenerator Robots.txt
 # Allow all pages except admin/support pages
-
 User-agent: *
 Allow: /
-
 # Block admin and support pages
 Disallow: /admin-support
 Disallow: /admin-support.html
 Disallow: /recover
 Disallow: /recover.html
 Disallow: /api/admin/
-
 # Allow search engines to index main pages
 Allow: /pricing
 Allow: /demo
@@ -20,5 +17,27 @@ Allow: /about
 Allow: /contact
 Allow: /help
 Allow: /create
-
+Allow: /templates
+ 
+ 
+# AI Crawlers — explicitly welcome
+User-agent: GPTBot
+Allow: /
+ 
+User-agent: ClaudeBot
+Allow: /
+ 
+User-agent: PerplexityBot
+Allow: /
+ 
+User-agent: Googlebot-Extended
+Allow: /
+ 
+User-agent: anthropic-ai
+Allow: /
+ 
+User-agent: CCBot
+Allow: /
+ 
 Sitemap: https://votegenerator.com/sitemap.xml
+ 

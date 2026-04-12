@@ -30,6 +30,7 @@ export default defineConfig({
                 'quick-survey': resolve(__dirname, 'quick-survey.html'),
                 'ranked-choice-voting': resolve(__dirname, 'ranked-choice-voting.html'),
                 'faq': resolve(__dirname, 'faq.html'),
+                'templates': resolve(__dirname, 'templates.html'),
             },
         },
     },
